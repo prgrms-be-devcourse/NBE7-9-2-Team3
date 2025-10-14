@@ -30,7 +30,7 @@ public class MemberControllerTest {
     @DisplayName("t1: 회원 가입 성공 후, 동일 이메일로 중복 가입 시도 시 실패")
     void t1_joinSuccessAndThenFailOnDuplicate() throws Exception {
 
-        String email = "sequential@test.com"; // 테스트에 사용할 이메일
+        String email = "sequential@test.com";
         String password = "securepassword";
         String nickname = "순차테스터";
 
@@ -43,9 +43,7 @@ public class MemberControllerTest {
             }
             """.formatted(email, password, nickname);
 
-        // --------------------------------------------------------
         // 1. 성공 케이스 (정상 회원가입)
-        // --------------------------------------------------------
 
         System.out.println("--- 1차 시도: 정상 가입 ---");
         ResultActions firstAttempt = mvc
@@ -62,12 +60,8 @@ public class MemberControllerTest {
             .andExpect(jsonPath("$.resultCode").value("200"))
             .andExpect(jsonPath("$.msg").value("회원가입이 완료되었습니다."))
             .andExpect(jsonPath("$.data.memberId").isNumber());
-        // 💡 필드명 memberid로 수정. createDate 검증은 Auditing 문제 해결 후 추가합니다.
 
-
-        // --------------------------------------------------------
         // 2. 실패 케이스 (동일 이메일로 중복 가입 시도)
-        // --------------------------------------------------------
 
         System.out.println("--- 2차 시도: 중복 가입 시도 ---");
         ResultActions secondAttempt = mvc
