@@ -57,7 +57,7 @@ public class MemberControllerTest {
         firstAttempt
             // 성공 검증
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.resultCode").value("200"))
+            .andExpect(jsonPath("$.resultCode").value("201"))
             .andExpect(jsonPath("$.msg").value("회원가입이 완료되었습니다."))
             .andExpect(jsonPath("$.data.memberId").isNumber());
 
