@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import org.example.backend.domain.member.entity.Member;
 
 public record MemberJoinResponseDto(
-    Long memberid,
+    Long memberId,
     String email,
     LocalDateTime createDate,
     String nickname,
