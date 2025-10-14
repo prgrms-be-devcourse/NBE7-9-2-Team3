@@ -35,3 +35,24 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+*.gz
+hs_err_pid*
+replay_pid*
+
+# H2 local database files (never commit)
+*.mv.db
+*.h2.db
+*.trace.db
+*.lock.db
+
+# Local env files
+.env
+.env.*
