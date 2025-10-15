@@ -47,14 +47,15 @@ public class PointService {
                 .toList();
     }
 
-    /*
-    결제
-    - 현재는 구매자, 판매자 포인트 증감 및 로그 저장 기능만
-    - 판매상태, 포인트 검증은 도입 예정
-     */
+
+    //결제
     public void purchaseItem(PurchaseRequestDto request) {
         Member buyer = memberRepository.findById(request.buyerId()).orElse(null);
         Member seller = memberRepository.findById(request.sellerId()).orElse(null);
+
+        if (buyer.getPoints() < request.amount()) {
+            throw new RuntimeException("포인트가 부족합니다.")
+        }
 
         Long buyerNewPoints = buyer.getPoints() - request.amount();
         Long sellerNewPoints = seller.getPoints() + request.amount();
