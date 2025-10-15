@@ -56,3 +56,7 @@ replay_pid*
 # Local env files
 .env
 .env.*
+# Spring Boot application configuration files
+application*.yml
+application*.yaml
+application*.properties
