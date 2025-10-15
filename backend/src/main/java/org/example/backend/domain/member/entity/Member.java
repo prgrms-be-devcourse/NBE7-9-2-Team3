@@ -1,16 +1,13 @@
 package org.example.backend.domain.member.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import java.time.LocalDateTime;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -48,9 +45,14 @@ public class Member {
         this.nickname = nickname;
         this.profileImage = profileImage;
     }
+  
     public Member(long id,String email, String nickname) {
         this.email = email;
         this.memberId = id;
         this.nickname = nickname;
+
+    public void updatePoints(Long newPoint) {
+        this.points = newPoint;
+
     }
 }
