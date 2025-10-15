@@ -22,7 +22,8 @@ public class PointService {
 
     // 포인트 충전
     public void chargePoint(ChargePointsRequestDto request) {
-        Member member = memberRepository.findById(request.memberId()).orElse(null);
+        Member member = memberRepository.findById(request.memberId())
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
         Long newPoints = member.getPoints() + request.amount();
 
         member.updatePoints(newPoints);
@@ -36,7 +37,8 @@ public class PointService {
     - 내역 타입 별 조회 기능 도입 예정
      */
     public List<PointHistoryResponseDto> getPointHistory(Long id) {
-        Member member = memberRepository.findById(id).orElse(null);
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다."));
         List<Point> pointHistory = pointRepository.findAllByMemberOrderByCreateDateDesc(member);
         if (pointHistory.isEmpty()) {
             throw new RuntimeException("포인트 내역이 존재하지 않습니다.");
@@ -48,13 +50,15 @@ public class PointService {
     }
 
 
-    //결제
+    // 결제
     public void purchaseItem(PurchaseRequestDto request) {
-        Member buyer = memberRepository.findById(request.buyerId()).orElse(null);
-        Member seller = memberRepository.findById(request.sellerId()).orElse(null);
+        Member buyer = memberRepository.findById(request.buyerId())
+                .orElseThrow(() -> new RuntimeException("구매자가 존재하지 않습니다."));
+        Member seller = memberRepository.findById(request.sellerId())
+                .orElseThrow(() -> new RuntimeException("판매자가 존재하지 않습니다."));
 
         if (buyer.getPoints() < request.amount()) {
-            throw new RuntimeException("포인트가 부족합니다.")
+            throw new RuntimeException("포인트가 부족합니다.");
         }
 
         Long buyerNewPoints = buyer.getPoints() - request.amount();
