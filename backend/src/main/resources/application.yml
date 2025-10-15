@@ -1,6 +1,7 @@
 spring:
   profiles:
-    active: test # ?? ??? test, ???? dev? ???
+    active: test
+  jpa:
     hibernate:
       ddl-auto: update
     properties:
@@ -26,3 +27,9 @@ springdoc:
     tags-sorter: alpha
   api-docs:
     path: /api-docs
+
+# JWT 설정
+custom:
+  jwt:
+    secretPattern: "mySecretKey123456789012345678901234567890"  # 32자 이상의 시크릿 키
+    expireSeconds: "#{60*60*24}"
