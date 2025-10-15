@@ -68,7 +68,7 @@ public class RequestContext {
         setCookie(name, null);
     }
 
-    // 현재 인증된 사용자 정보 가져오기 (권장)
+    // 현재 인증된 사용자 정보 가져오기
     public Member getCurrentMember() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
@@ -79,7 +79,7 @@ public class RequestContext {
         return userDetails.getMember();
     }
 
-    // 편의 메서드들 (getCurrentMember() 사용)
+    // 편의 메서드들
     public Long getCurrentMemberId() {
         return getCurrentMember().getMemberId();
     }
