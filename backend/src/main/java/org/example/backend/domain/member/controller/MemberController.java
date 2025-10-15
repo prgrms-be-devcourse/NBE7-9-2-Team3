@@ -4,6 +4,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinResponseDto;
+import org.example.backend.domain.member.dto.MemberLoginRequestDto;
+import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.service.MemberService;
 import org.example.backend.global.rsdata.RsData;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,5 +23,9 @@ public class MemberController {
     @PostMapping("/join")
     public RsData<MemberJoinResponseDto> join(@Valid @RequestBody MemberJoinRequestDto request) {
         return memberService.join(request);
+    }
+    @PostMapping("/login")
+    public RsData<MemberLoginResponseDto> login(@Valid @RequestBody MemberLoginRequestDto request) {
+        return memberService.login(request);
     }
 }

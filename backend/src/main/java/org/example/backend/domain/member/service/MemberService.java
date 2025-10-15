@@ -4,6 +4,8 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinResponseDto;
+import org.example.backend.domain.member.dto.MemberLoginRequestDto;
+import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.global.exception.ServiceException;
@@ -19,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;;
 
     @Transactional
     public RsData<MemberJoinResponseDto> join(MemberJoinRequestDto request) {
@@ -51,5 +53,22 @@ public class MemberService {
         MemberJoinResponseDto response = MemberJoinResponseDto.from(savedMember);
 
         return new RsData<>("201", "회원가입이 완료되었습니다.", response);
+    }
+
+    public RsData<MemberLoginResponseDto> login(MemberLoginRequestDto request) {
+        Member member = memberRepository.findByEmail(request.email())
+            .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+
+        if (!passwordEncoder.matches(request.password(), member.getPassword())) {
+            throw new ServiceException("401", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
+        }
+
+        MemberLoginResponseDto response = new MemberLoginResponseDto(
+            member.getMemberId(),
+            member.getEmail(),
+            member.getNickname()
+        );
+
+        return new RsData<>("200", "로그인에 성공했습니다.", response);
     }
 }
