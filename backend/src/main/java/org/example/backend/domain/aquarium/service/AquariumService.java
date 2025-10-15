@@ -44,8 +44,11 @@ public class AquariumService {
   public boolean hasFish(Long id) {
     long fishCount = fishRepository.countByAquarium_Id(id);
 
-    if(fishCount >= 1) { return true; }
-    else { return false; }
+    if (fishCount >= 1) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public void moveFishToOwned(Long id) {

@@ -76,8 +76,11 @@ public class AquariumController {
   public RsData<String> checkFishInAquarium(@PathVariable Long id) {
     boolean hasFish = aquariumService.hasFish(id);
 
-    if(hasFish) {return new RsData<>("200", "어항의 물고기 존재 여부를 확인했습니다.", "물고기 존재");}
-    else {return new RsData<>("200", "어항의 물고기 존재 여부를 확인했습니다.", "물고기 없음");}
+    if (hasFish) {
+      return new RsData<>("200", "어항의 물고기 존재 여부를 확인했습니다.", "물고기 존재");
+    } else {
+      return new RsData<>("200", "어항의 물고기 존재 여부를 확인했습니다.", "물고기 없음");
+    }
   }
 
   // 삭제할 어항의 물고기를 '내가 키운 물고기' 어항으로 이동
