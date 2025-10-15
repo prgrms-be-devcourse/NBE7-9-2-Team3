@@ -19,6 +19,14 @@ public class CustomUserDetails implements UserDetails {
     return member.getMemberId();
   }
 
+  public String getEmail() {
+    return member.getEmail();
+  }
+
+  public String getNickname() {
+    return member.getNickname();
+  }
+
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of();
@@ -26,12 +34,31 @@ public class CustomUserDetails implements UserDetails {
 
   @Override
   public String getPassword() {
-    return "";
+    return member.getPassword();
   }
 
   @Override
   public String getUsername() {
-    return "";
+    return member.getEmail();
   }
 
+  @Override
+  public boolean isAccountNonExpired() {
+    return true;
+  }
+
+  @Override
+  public boolean isAccountNonLocked() {
+    return true;
+  }
+
+  @Override
+  public boolean isCredentialsNonExpired() {
+    return true;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return true;
+  }
 }
