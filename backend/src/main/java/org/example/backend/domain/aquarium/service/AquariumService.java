@@ -51,12 +51,24 @@ public class AquariumService {
     }
   }
 
-  public void moveFishToOwned(Long id) {
-    // 삭제할 어항의 모든 물고기 가져오기
-    List<Fish> fishList = fishRepository.findAllByAquarium_Id(id);
+  public void moveFishToOwnedAquarium(Long memberId, Long aquariumId) {
+    // 해당 member가 "내가 키운 물고기" 어항을 가지고 있는 지 확인
+    if(checkMemberHaveOwnedAquarium(memberId)) {
+      // true라면, 물고기 이동 실행
+      moveFish(memberId, aquariumId);
+    } else {
+      // false라면, "내가 키운 물고기" 어항 생성 후 물고기 이동 실행
+      createOwnedAquarium(memberId);
+      moveFish(memberId, aquariumId);
+    }
+  }
 
-    // '내가 키운 물고기' 어항은 항상 DB 첫 번째 어항(ID = 1)
-    Aquarium myOwnedAquarium = aquariumRepository.findById(1L)
+  public void moveFish(Long memberId, Long aquariumId) {
+    // 삭제할 어항의 모든 물고기 가져오기
+    List<Fish> fishList = fishRepository.findAllByAquarium_Id(aquariumId);
+
+    // '내가 키운 물고기' 어항 찾기
+    Aquarium myOwnedAquarium = aquariumRepository.findByMember_MemberIdAndOwnedAquariumTrue(memberId)
         .orElseThrow(() -> new RuntimeException("'내가 키운 물고기' 어항이 존재하지 않습니다."));
 
     // 물고기들을 '내가 키운 물고기' 어항으로 이동
@@ -64,6 +76,20 @@ public class AquariumService {
       fish.changeAquarium(myOwnedAquarium);
     }
     fishRepository.saveAll(fishList);
+  }
+
+  // "내가 키운 물고기" 어항을 가지고 있는 지 확인
+  public boolean checkMemberHaveOwnedAquarium(Long memberId) {
+    return aquariumRepository.existsByMember_MemberIdAndOwnedAquariumTrue(memberId);
+  }
+
+  // "내가 키운 물고기" 어항 생성
+  public void createOwnedAquarium(Long memberId) {
+    Member member = memberRepository.findById(memberId)
+        .orElseThrow(() -> new RuntimeException("member가 존재하지 않습니다."));
+    Aquarium aquarium = new Aquarium(member, "내가 키운 물고기", true);
+
+    aquariumRepository.save(aquarium);
   }
 
   public void delete(Long id) {

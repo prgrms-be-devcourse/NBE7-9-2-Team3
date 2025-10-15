@@ -85,8 +85,12 @@ public class AquariumController {
 
   // 삭제할 어항의 물고기를 '내가 키운 물고기' 어항으로 이동
   @PutMapping("/{id}/delete")
-  public RsData<Void> moveFishToOwnedAquarium(@PathVariable Long id) {
-    aquariumService.moveFishToOwned(id);
+  public RsData<Void> moveFishToOwnedAquarium(
+      @AuthenticationPrincipal CustomUserDetails userDetails,
+      @PathVariable Long id
+  ) {
+    Long memberId = userDetails.getId();
+    aquariumService.moveFishToOwnedAquarium(memberId, id);
 
     return new RsData<>("200", "물고기들이 '내가 키운 물고기' 어항으로 이동되었습니다.");
   }
