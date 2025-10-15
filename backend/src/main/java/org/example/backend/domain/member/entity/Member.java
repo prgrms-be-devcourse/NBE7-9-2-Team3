@@ -48,4 +48,8 @@ public class Member {
         this.nickname = nickname;
         this.profileImage = profileImage;
     }
+
+    public Long getMemberId() {
+      return memberId;
+    }
 }
