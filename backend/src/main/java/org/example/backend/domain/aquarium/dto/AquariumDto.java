@@ -11,7 +11,7 @@ public record AquariumDto(
 
   public AquariumDto(Aquarium aquarium) {
     this(
-        aquarium.getAquariumId(),
+        aquarium.getId(),
         aquarium.getName(),
         aquarium.getCreateDate()
     );

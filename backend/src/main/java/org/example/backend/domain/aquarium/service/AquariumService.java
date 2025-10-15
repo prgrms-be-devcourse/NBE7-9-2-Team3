@@ -42,7 +42,7 @@ public class AquariumService {
 
 
   public boolean hasFish(Long id) {
-    long fishCount = fishRepository.countByAquarium_AquariumId(id);
+    long fishCount = fishRepository.countByAquarium_Id(id);
 
     if(fishCount >= 1) { return true; }
     else { return false; }
@@ -50,7 +50,7 @@ public class AquariumService {
 
   public void moveFishToOwned(Long id) {
     // 삭제할 어항의 모든 물고기 가져오기
-    List<Fish> fishList = fishRepository.findAllByAquarium_AquariumId(id);
+    List<Fish> fishList = fishRepository.findAllByAquarium_Id(id);
 
     // '내가 키운 물고기' 어항은 항상 DB 첫 번째 어항(ID = 1)
     Aquarium myOwnedAquarium = aquariumRepository.findById(1L)
