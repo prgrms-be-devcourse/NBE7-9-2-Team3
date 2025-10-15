@@ -19,6 +19,10 @@ public class AquariumService {
   private final MemberRepository memberRepository;
   private final FishRepository fishRepository;
 
+  public long count() {
+    return aquariumRepository.count();
+  }
+
   public Aquarium create(Long memberId, String aquariumName) {
     Member member = memberRepository.findById(memberId).orElse(null);
 
@@ -29,7 +33,7 @@ public class AquariumService {
   }
 
   public List<Aquarium> findAllByMemberId(Long memberId) {
-    return aquariumRepository.findAllByMemberId(memberId);
+    return aquariumRepository.findAllByMember_MemberId(memberId);
   }
 
   public Optional<Aquarium> findById(Long id) {
@@ -38,7 +42,7 @@ public class AquariumService {
 
 
   public boolean hasFish(Long id) {
-    long fishCount = fishRepository.countByAquariumId(id);
+    long fishCount = fishRepository.countByAquarium_AquariumId(id);
 
     if(fishCount >= 1) { return true; }
     else { return false; }
@@ -46,7 +50,7 @@ public class AquariumService {
 
   public void moveFishToOwned(Long id) {
     // 삭제할 어항의 모든 물고기 가져오기
-    List<Fish> fishList = fishRepository.findAllByAquariumId(id);
+    List<Fish> fishList = fishRepository.findAllByAquarium_AquariumId(id);
 
     // '내가 키운 물고기' 어항은 항상 DB 첫 번째 어항(ID = 1)
     Aquarium myOwnedAquarium = aquariumRepository.findById(1L)

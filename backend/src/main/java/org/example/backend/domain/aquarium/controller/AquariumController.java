@@ -60,7 +60,7 @@ public class AquariumController {
   }
 
   // 어항 단건 조회
-  @GetMapping("{/id}")
+  @GetMapping("/{id}")
   public RsData<String> getAquariumName(@PathVariable Long id) {
     String aquariumName = aquariumService.findById(id).get().getName();
 
@@ -72,7 +72,7 @@ public class AquariumController {
   }
 
   // 삭제 전, 어항 속 물고기 존재 여부 확인
-  @GetMapping("{/id/delete}")
+  @GetMapping("/{id}/delete")
   public RsData<String> checkFishInAquarium(@PathVariable Long id) {
     boolean hasFish = aquariumService.hasFish(id);
 
@@ -81,7 +81,7 @@ public class AquariumController {
   }
 
   // 삭제할 어항의 물고기를 '내가 키운 물고기' 어항으로 이동
-  @PutMapping("{/id/delete}")
+  @PutMapping("/{id}/delete")
   public RsData<Void> moveFishToOwnedAquarium(@PathVariable Long id) {
     aquariumService.moveFishToOwned(id);
 
@@ -89,10 +89,10 @@ public class AquariumController {
   }
 
   // 어항 삭제
-  @DeleteMapping("{/id/delete}")
+  @DeleteMapping("/{id}/delete")
   public RsData<Void> deleteAquarium(@PathVariable Long id) {
-    aquariumService.delete(id);
     String aquariumName = aquariumService.findById(id).get().getName();
+    aquariumService.delete(id);
 
     return new RsData<>("204", "%s 어항이 삭제되었습니다.".formatted(aquariumName));
   }

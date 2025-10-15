@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AquariumRepository extends JpaRepository<Aquarium, Long> {
 
-  List<Aquarium> findAllByMemberId(Long memberId);
+  List<Aquarium> findAllByMember_MemberId(Long memberId);
 
 }

@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FishRepository extends JpaRepository<Fish, Long> {
 
-  long countByAquariumId(Long aquariumId);
+  long countByAquarium_AquariumId(Long aquariumId);
 
-  List<Fish> findAllByAquariumId(Long aquariumId);
+  List<Fish> findAllByAquarium_AquariumId(Long aquariumId);
 
 }
