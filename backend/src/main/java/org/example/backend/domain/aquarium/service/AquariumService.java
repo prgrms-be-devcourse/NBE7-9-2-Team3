@@ -24,7 +24,8 @@ public class AquariumService {
   }
 
   public Aquarium create(Long memberId, String aquariumName) {
-    Member member = memberRepository.findById(memberId).orElse(null);
+    Member member = memberRepository.findById(memberId)
+        .orElseThrow(() -> new RuntimeException("member가 존재하지 않습니다."));
 
     Aquarium aquarium = new Aquarium(member, aquariumName);
     aquariumRepository.save(aquarium);
