@@ -2,21 +2,14 @@ package org.example.backend.domain.aquarium.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.global.jpa.entity.BaseEntity;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Getter
@@ -30,8 +23,17 @@ public class Aquarium extends BaseEntity {
   @Column(length = 50)
   private String name;
 
+  // 기본값 = false
+  private boolean ownedAquarium;
+
   public Aquarium(Member member, String name) {
     this.member = member;
     this.name = name;
+  }
+
+  public Aquarium(Member member, String name, boolean ownedAquarium) {
+    this.member = member;
+    this.name = name;
+    this.ownedAquarium = ownedAquarium;
   }
 }
