@@ -33,7 +33,7 @@ public class MemberController {
         if (result.getData() != null) {
             // 로그인한 사용자 정보로 토큰 생성
             String accessToken = memberService.generateAccessToken(
-                memberService.findByEmail(request.email()).orElse(null)
+                memberService.findByEmail(request.email()).orElseThrow(null)
             );
             
             // HttpOnly 쿠키로 토큰 설정
