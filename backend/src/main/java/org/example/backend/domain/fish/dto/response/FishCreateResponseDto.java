@@ -11,7 +11,7 @@ public record FishCreateResponseDto(
 ) {
 
   public FishCreateResponseDto(Fish fish) {
-    this (
+    this(
         fish.getId(),
         fish.getSpecies(),
         fish.getSpecies(),

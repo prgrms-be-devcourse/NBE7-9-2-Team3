@@ -10,8 +10,9 @@ public record FishUpdateResponseDto(
     LocalDateTime createdDate,
     LocalDateTime modifiedDate
 ) {
+
   public FishUpdateResponseDto(Fish fish) {
-    this (
+    this(
         fish.getId(),
         fish.getSpecies(),
         fish.getName(),

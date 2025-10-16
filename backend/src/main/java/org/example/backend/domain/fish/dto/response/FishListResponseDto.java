@@ -8,7 +8,7 @@ public record FishListResponseDto(
 ) {
 
   public FishListResponseDto(Fish fish) {
-    this (
+    this(
         fish.getSpecies(),
         fish.getName()
     );
