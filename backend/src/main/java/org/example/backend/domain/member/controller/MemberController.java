@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.dto.MemberEditRequestDto;
+import org.example.backend.domain.member.dto.MemberEditResponseDto;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
@@ -53,8 +54,15 @@ public class MemberController {
     }
 
     @PutMapping("/me")
-    public RsData<MemberJoinResponseDto> edit(@Valid @RequestBody MemberEditRequestDto request) {
-        return memberService.edit(request);
+    public RsData<MemberEditResponseDto> edit(@Valid @RequestBody MemberEditRequestDto request) {
+        RsData<MemberEditResponseDto> result = memberService.edit(request);
+        
+        // 새로운 토큰이 있는 경우 쿠키 업데이트
+        if (result.getData() != null && result.getData().newAccessToken() != null) {
+            requestContext.setCookie("accessToken", result.getData().newAccessToken());
+        }
+        
+        return result;
     }
 
 
