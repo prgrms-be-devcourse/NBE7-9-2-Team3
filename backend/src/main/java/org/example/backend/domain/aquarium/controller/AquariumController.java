@@ -1,9 +1,12 @@
 package org.example.backend.domain.aquarium.controller;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.aquarium.dto.AquariumDto;
 import org.example.backend.domain.aquarium.dto.AquariumCreateRequestDto;
+import org.example.backend.domain.aquarium.dto.AquariumScheduleRequestDto;
+import org.example.backend.domain.aquarium.dto.AquariumScheduleResponseDto;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.service.AquariumService;
 import org.example.backend.global.rsdata.RsData;
@@ -102,6 +105,18 @@ public class AquariumController {
     aquariumService.delete(id);
 
     return new RsData<>("204", "%s 어항이 삭제되었습니다.".formatted(aquariumName));
+  }
+
+  // 어항 알림 스케줄 설정
+  @PostMapping("/{id}/schedule")
+  public RsData<AquariumScheduleResponseDto> scheduleSetting(
+      @PathVariable Long id,
+      @Valid @RequestBody AquariumScheduleRequestDto requestDto
+  ) {
+    Aquarium aquarium = aquariumService.scheduleSetting(id, requestDto);
+
+    AquariumScheduleResponseDto responseDto = new AquariumScheduleResponseDto(aquarium);
+    return new RsData<>("200", "물갈이&어항세척 스케줄 알림이 설정되었습니다.", responseDto);
   }
 
 }
