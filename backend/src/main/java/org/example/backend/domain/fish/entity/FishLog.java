@@ -19,11 +19,9 @@ public class FishLog {
     @Column(name = "log_id")
     private Long logId;
 
-    @Column(name = "aquarium_id", nullable = false)
-    private Long aquariumId;
-
-    @Column(name = "fish_id", nullable = false)
-    private Long fishId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fish_id", nullable = false)
+    private Fish fish;
 
     @Column(name = "status", nullable = false)
     private String status;

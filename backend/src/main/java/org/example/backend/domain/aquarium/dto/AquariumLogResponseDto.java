@@ -22,7 +22,7 @@ public class AquariumLogResponseDto {
     public static AquariumLogResponseDto from(AquariumLog aquariumLog) {
         return AquariumLogResponseDto.builder()
                 .logId(aquariumLog.getLogId())
-                .aquariumId(aquariumLog.getAquariumId())
+                .aquariumId(aquariumLog.getAquarium().getId())
                 .temperature(aquariumLog.getTemperature())
                 .ph(aquariumLog.getPh())
                 .logDate(aquariumLog.getLogDate())

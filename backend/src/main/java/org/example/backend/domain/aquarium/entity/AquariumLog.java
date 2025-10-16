@@ -19,8 +19,9 @@ public class AquariumLog {
     @Column(name = "log_id")
     private Long logId;
 
-    @Column(name = "aquarium_id", nullable = false)
-    private Long aquariumId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "aquarium_id", nullable = false)
+    private Aquarium aquarium;
 
     @Column(name = "temperature")
     private Double temperature;

@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @Builder
 public class FishLogRequestDto {
 
-    private Long aquariumId;
     private Long fishId;
     private String status;
     private LocalDateTime logDate;

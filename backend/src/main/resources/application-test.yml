@@ -1,12 +1,3 @@
 spring:
   datasource:
     url: jdbc:h2:mem:db_dev;MODE=MySQL
-
-  h2:
-  console:
-  enabled: true
-
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: true

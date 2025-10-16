@@ -11,38 +11,34 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/aquarium/{aquariumId}/fish/{fishId}/fishLog")
+@RequestMapping("/api/fish/{fishId}/fishLog")
 @RequiredArgsConstructor
 public class FishLogController {
     
     private final FishLogService fishLogService;
     
-    // Create - 특정 어항의 특정 물고기에 로그 생성
+    // Create - 특정 물고기에 로그 생성
     @PostMapping
     public ResponseEntity<FishLogResponseDto> createLog(
-            @PathVariable Long aquariumId,
             @PathVariable Long fishId,
             @RequestBody FishLogRequestDto requestDto) {
-        // aquariumId와 fishId를 requestDto에 설정
-        requestDto.setAquariumId(aquariumId);
+        // fishId를 requestDto에 설정
         requestDto.setFishId(fishId);
         FishLogResponseDto responseDto = fishLogService.createLog(requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
     }
     
-    // Read - 특정 어항의 특정 물고기의 모든 로그 조회
+    // Read - 특정 물고기의 모든 로그 조회
     @GetMapping
-    public ResponseEntity<List<FishLogResponseDto>> getLogsByAquariumIdAndFishId(
-            @PathVariable Long aquariumId,
+    public ResponseEntity<List<FishLogResponseDto>> getLogsByFishId(
             @PathVariable Long fishId) {
-        List<FishLogResponseDto> logs = fishLogService.getLogsByAquariumIdAndFishId(aquariumId, fishId);
+        List<FishLogResponseDto> logs = fishLogService.getLogsByFishId(fishId);
         return ResponseEntity.ok(logs);
     }
     
     // 특정 로그 조회
     @GetMapping("/{logId}")
     public ResponseEntity<FishLogResponseDto> getLogById(
-            @PathVariable Long aquariumId,
             @PathVariable Long fishId,
             @PathVariable Long logId) {
         FishLogResponseDto responseDto = fishLogService.getLogById(logId);
@@ -52,12 +48,10 @@ public class FishLogController {
     // Update - 로그 수정
     @PutMapping("/{logId}")
     public ResponseEntity<FishLogResponseDto> updateLog(
-            @PathVariable Long aquariumId,
             @PathVariable Long fishId,
             @PathVariable Long logId,
             @RequestBody FishLogRequestDto requestDto) {
-        // aquariumId와 fishId를 requestDto에 설정
-        requestDto.setAquariumId(aquariumId);
+        // fishId를 requestDto에 설정
         requestDto.setFishId(fishId);
         FishLogResponseDto responseDto = fishLogService.updateLog(logId, requestDto);
         return ResponseEntity.ok(responseDto);
@@ -66,7 +60,6 @@ public class FishLogController {
     // Delete - 로그 삭제
     @DeleteMapping("/{logId}")
     public ResponseEntity<Void> deleteLog(
-            @PathVariable Long aquariumId,
             @PathVariable Long fishId,
             @PathVariable Long logId) {
         fishLogService.deleteLog(logId);

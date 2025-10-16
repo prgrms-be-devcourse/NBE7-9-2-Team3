@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 public class FishLogResponseDto {
 
     private Long logId;
+    private Long aquariumId;
     private Long fishId;
     private String status;
     private LocalDateTime logDate;
@@ -21,7 +22,8 @@ public class FishLogResponseDto {
     public static FishLogResponseDto from(FishLog fishLog) {
         return FishLogResponseDto.builder()
                 .logId(fishLog.getLogId())
-                .fishId(fishLog.getFishId())
+                .aquariumId(fishLog.getFish().getAquarium().getId())
+                .fishId(fishLog.getFish().getId())
                 .status(fishLog.getStatus())
                 .logDate(fishLog.getLogDate())
                 .build();
