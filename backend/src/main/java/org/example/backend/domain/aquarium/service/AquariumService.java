@@ -44,7 +44,6 @@ public class AquariumService {
     return aquariumRepository.findById(id);
   }
 
-
   public boolean hasFish(Long id) {
     long fishCount = fishRepository.countByAquarium_Id(id);
 
@@ -116,9 +115,7 @@ public class AquariumService {
       - lastDate, nextDate = null
     - 기존의 cycleDate가 0이라면,
       - lastDate, nextDate를 현재 시간 기준으로 계산
-    - 기존의 cycleDate < 사용자로부터 입력 받은 cycleDate이라면,
-      - nextDate를 사용자로부터 입력 받은 cycleDate 기준으로 재 설정
-    - 기존의 cycleDate > 사용자로부터 입력 받은 cycleDate이라면,
+    - 기존의 cycleDate가 0이 아니라면,
       - nextDate를 사용자로부터 입력 받은 cycleDate 기준으로 재 설정
   */
   public Aquarium scheduleSetting(Long aquariumId, AquariumScheduleRequestDto requestDto) {
@@ -136,7 +133,7 @@ public class AquariumService {
     }
 
     LocalDateTime lastDate = aquarium.getLastDate();
-    LocalDateTime nextDate = aquarium.getNextDate();
+    LocalDateTime nextDate;
 
     // 기존의 cycleDate가 0이라면
     if (preCycleDate == 0) {
@@ -144,24 +141,15 @@ public class AquariumService {
       nextDate = lastDate.plusDays(cycleDate);
 
       aquarium.changeSchedule(cycleDate, lastDate, nextDate);
-      aquariumRepository.save(aquarium);
     }
-    // 기존의 cycleDate < 사용자로부터 입력 받은 cycleDate이라면,
-    else if (preCycleDate < cycleDate) {
+    // 기존의 cycleDate이 0이 아니라면,
+    else if (preCycleDate != 0) {
       nextDate = lastDate.plusDays(cycleDate);
 
       aquarium.changeSchedule(cycleDate, lastDate, nextDate);
-      aquariumRepository.save(aquarium);
-    }
-    // 기존의 cycleDate > 사용자로부터 입력 받은 cycleDate이라면
-    else if (preCycleDate > cycleDate) {
-      int changeNextDate = preCycleDate - cycleDate;
-      nextDate = nextDate.minusDays(changeNextDate);
-
-      aquarium.changeSchedule(cycleDate, lastDate, nextDate);
-      aquariumRepository.save(aquarium);
     }
 
+    aquariumRepository.save(aquarium);
     return aquarium;
   }
 }
