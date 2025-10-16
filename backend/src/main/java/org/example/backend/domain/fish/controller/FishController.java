@@ -3,10 +3,10 @@ package org.example.backend.domain.fish.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.domain.fish.dto.request.FishRequestDto;
-import org.example.backend.domain.fish.dto.response.FishCreateResponseDto;
-import org.example.backend.domain.fish.dto.response.FishListResponseDto;
-import org.example.backend.domain.fish.dto.response.FishUpdateResponseDto;
+import org.example.backend.domain.fish.dto.FishRequestDto;
+import org.example.backend.domain.fish.dto.FishCreateResponseDto;
+import org.example.backend.domain.fish.dto.FishListResponseDto;
+import org.example.backend.domain.fish.dto.FishUpdateResponseDto;
 import org.example.backend.domain.fish.entity.Fish;
 import org.example.backend.domain.fish.service.FishService;
 import org.example.backend.global.rsdata.RsData;

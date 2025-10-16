@@ -4,7 +4,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.repository.AquariumRepository;
-import org.example.backend.domain.fish.dto.request.FishRequestDto;
+import org.example.backend.domain.fish.dto.FishRequestDto;
 import org.example.backend.domain.fish.entity.Fish;
 import org.example.backend.domain.fish.repository.FishRepository;
 import org.springframework.stereotype.Service;

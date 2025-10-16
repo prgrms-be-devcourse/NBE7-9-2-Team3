@@ -1,4 +1,4 @@
-package org.example.backend.domain.fish.dto.response;
+package org.example.backend.domain.fish.dto;
 
 import org.example.backend.domain.fish.entity.Fish;
 
