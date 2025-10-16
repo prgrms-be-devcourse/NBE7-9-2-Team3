@@ -23,8 +23,8 @@ public record TradeResponseDto(
     public static TradeResponseDto from(Trade trade) {
         return new TradeResponseDto(
             trade.getTradeId(),
-            trade.getMember() != null ? trade.getMember().getMemberId() : null,
-            trade.getMember() != null ? trade.getMember().getNickname() : null,
+            trade.getMember().getMemberId(),
+            trade.getMember().getNickname(),
             trade.getBoardType(),
             trade.getTitle(),
             trade.getDescription(),
