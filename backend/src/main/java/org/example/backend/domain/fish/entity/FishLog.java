@@ -1,4 +1,4 @@
-package org.example.backend.domain.aquarium.entity;
+package org.example.backend.domain.fish.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -6,13 +6,13 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "aquarium_log")
+@Table(name = "fish_log")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AquariumLog {
+public class FishLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,15 +20,17 @@ public class AquariumLog {
     private Long logId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "aquarium_id", nullable = false)
-    private Aquarium aquarium;
+    @JoinColumn(name = "fish_id", nullable = false)
+    private Fish fish;
 
-    @Column(name = "temperature")
-    private Double temperature;
-
-    @Column(name = "ph")
-    private Double ph;
+    @Column(name = "status", nullable = false)
+    private String status;
 
     @Column(name = "log_date", nullable = false)
     private LocalDateTime logDate;
+    
+    @PrePersist
+    protected void onCreate() {
+        logDate = LocalDateTime.now();
+    }
 }

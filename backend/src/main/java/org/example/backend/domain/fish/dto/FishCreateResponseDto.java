@@ -14,7 +14,7 @@ public record FishCreateResponseDto(
     this(
         fish.getId(),
         fish.getSpecies(),
-        fish.getSpecies(),
+        fish.getName(),
         fish.getCreateDate()
     );
   }
