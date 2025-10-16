@@ -3,6 +3,7 @@ package org.example.backend.domain.member.service;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.dto.MemberEditRequestDto;
+import org.example.backend.domain.member.dto.MemberEditResponseDto;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
@@ -10,9 +11,11 @@ import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.global.exception.ServiceException;
-import org.example.backend.global.requestcontext.RequestContext;
 import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +27,6 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthTokenService authTokenService;
-    private final RequestContext requestContext;
 
     public Optional<Member> findById(Long id) {
         return memberRepository.findById(id);
@@ -36,6 +38,17 @@ public class MemberService {
 
     public Optional<Member> findByNickname(String nickname) {
         return memberRepository.findByNickname(nickname);
+    }
+
+    // 현재 인증된 사용자 ID 가져오기
+    private Long getCurrentMemberId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
+            throw new ServiceException("401", "인증되지 않은 사용자입니다.", HttpStatus.UNAUTHORIZED);
+        }
+        
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        return userDetails.getMember().getMemberId();
     }
 
     @Transactional
@@ -99,9 +112,9 @@ public class MemberService {
     }
 
     @Transactional
-    public RsData<MemberJoinResponseDto> edit(MemberEditRequestDto request){
+    public RsData<MemberEditResponseDto> edit(MemberEditRequestDto request){
         // 현재 로그인한 사용자 조회
-        Member member = memberRepository.findByMemberId(requestContext.getCurrentMemberId())
+        Member member = memberRepository.findByMemberId(getCurrentMemberId())
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
 
         //  현재 비밀번호 재확인
@@ -141,14 +154,14 @@ public class MemberService {
         // 데이터베이스에 저장
         Member updatedMember = memberRepository.save(member);
 
-        //토큰 정보가 변경된 경우 새로운 토큰 발급
+        // 토큰 정보가 변경된 경우 새로운 토큰 발급 (컨트롤러에서 처리)
+        String newAccessToken = null;
         if (emailChanged || nicknameChanged) {
-            String newAccessToken = authTokenService.genAccessToken(updatedMember);
-            requestContext.setCookie("accessToken", newAccessToken);
+            newAccessToken = authTokenService.genAccessToken(updatedMember);
         }
 
         // 응답 DTO 생성
-        MemberJoinResponseDto response = MemberJoinResponseDto.from(updatedMember);
+        MemberEditResponseDto response = MemberEditResponseDto.from(updatedMember, newAccessToken);
         return new RsData<>("200", "회원정보 수정에 성공했습니다.", response);
     }
 
