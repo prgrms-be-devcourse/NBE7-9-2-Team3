@@ -1,5 +1,6 @@
 package org.example.backend.domain.member.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
@@ -7,11 +8,14 @@ import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
 import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.service.MemberService;
+import org.example.backend.global.exception.ServiceException;
+import org.example.backend.global.requestcontext.RequestContext;
 import org.example.backend.global.rsdata.RsData;
-import org.springframework.web.bind.annotation.*;
-
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/members")
@@ -19,6 +23,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class MemberController {
 
     private final MemberService memberService;
+    private final RequestContext requestContext;
 
     @PostMapping("/join")
     public RsData<MemberJoinResponseDto> join(@Valid @RequestBody MemberJoinRequestDto request) {
@@ -33,16 +38,9 @@ public class MemberController {
         if (result.getData() != null) {
             // 로그인한 사용자 정보로 토큰 생성
             String accessToken = memberService.generateAccessToken(
-                memberService.findByEmail(request.email()).orElseThrow(()->new IllegalArgumentException("이메일로 찾을 수 없습니다. Email: " + request.email()))
-            );
-            
-            // HttpOnly 쿠키로 토큰 설정
-            Cookie cookie = new Cookie("accessToken", accessToken);
-            cookie.setHttpOnly(true);
-            cookie.setSecure(true); // HTTPS에서만 전송
-            cookie.setPath("/");
-            cookie.setMaxAge(7 * 24 * 60 * 60); // 7일
-            response.addCookie(cookie);
+                memberService.findByEmail(request.email()).orElseThrow(
+                    ()->new ServiceException("401","이메일로 찾을 수 없습니다. Email: " + request.email(), HttpStatus.CONFLICT)));
+            requestContext.setCookie("accessToken", accessToken);
         }
         
         return result;
