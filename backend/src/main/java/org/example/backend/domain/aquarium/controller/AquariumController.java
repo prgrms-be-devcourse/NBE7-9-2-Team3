@@ -3,8 +3,9 @@ package org.example.backend.domain.aquarium.controller;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.domain.aquarium.dto.AquariumDto;
+import org.example.backend.domain.aquarium.dto.AquariumListResponseDto;
 import org.example.backend.domain.aquarium.dto.AquariumCreateRequestDto;
+import org.example.backend.domain.aquarium.dto.AquariumResponseDto;
 import org.example.backend.domain.aquarium.dto.AquariumScheduleRequestDto;
 import org.example.backend.domain.aquarium.dto.AquariumScheduleResponseDto;
 import org.example.backend.domain.aquarium.entity.Aquarium;
@@ -30,7 +31,7 @@ public class AquariumController {
 
   // 어항 생성
   @PostMapping
-  public RsData<AquariumDto> createAquarium(
+  public RsData<AquariumListResponseDto> createAquarium(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @RequestBody AquariumCreateRequestDto aquariumCreateRequestDto
   ) {
@@ -38,18 +39,18 @@ public class AquariumController {
     String aquariumName = aquariumCreateRequestDto.aquariumName();
 
     Aquarium aquarium = aquariumService.create(memberId, aquariumName);
-    AquariumDto aquariumDto = new AquariumDto(aquarium);
+    AquariumListResponseDto aquariumListResponseDto = new AquariumListResponseDto(aquarium);
 
     return new RsData<>(
         "201",
         "%s 어항이 생성되었습니다.".formatted(aquariumName),
-        aquariumDto
+        aquariumListResponseDto
     );
   }
 
   // 어항 다건 조회
   @GetMapping
-  public RsData<List<AquariumDto>> getAquariums(
+  public RsData<List<AquariumListResponseDto>> getAquariums(
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
     Long memberId = userDetails.getId();
@@ -58,19 +59,23 @@ public class AquariumController {
         "200",
         "어항 목록이 조회되었습니다.",
         aquariumService.findAllByMemberId(memberId).reversed().stream()
-            .map(AquariumDto::new).toList()
+            .map(AquariumListResponseDto::new).toList()
     );
   }
 
   // 어항 단건 조회
   @GetMapping("/{id}")
-  public RsData<String> getAquariumName(@PathVariable Long id) {
+  public RsData<AquariumResponseDto> getAquariumName(@PathVariable Long id) {
     String aquariumName = aquariumService.findById(id).get().getName();
+    Aquarium aquarium = aquariumService.findById(id)
+        .orElseThrow(() -> new RuntimeException("어항이 존재하지 않습니다."));
+
+    AquariumResponseDto responseDto = new AquariumResponseDto(aquarium);
 
     return new RsData<>(
         "200",
         "%s 어항이 조회되었습니다.".formatted(aquariumName),
-        aquariumName
+        responseDto
     );
   }
 
