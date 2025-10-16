@@ -55,4 +55,11 @@ public class Member {
     public void updatePoints(Long newPoint) {
         this.points = newPoint;
     }
+
+    public void updateMemberInfo(String email, String password, String nickname, String profileImage) {
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.profileImage = profileImage;
+    }
 }
