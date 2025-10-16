@@ -26,7 +26,7 @@ public class TradeCommentService {
     private final TradeRepository tradeRepository;
 
     @Transactional
-    public TradeCommentResponseDto createComment(TradeCommentRequestDto request) {
+    public TradeCommentResponseDto createComment(BoardType boardType, TradeCommentRequestDto request) {
         Member member = memberRepository.findById(request.memberId())
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
 
@@ -34,12 +34,20 @@ public class TradeCommentService {
             .orElseThrow(
                 () -> new ServiceException("404", "존재하지 않는 게시글입니다.", HttpStatus.NOT_FOUND));
 
+        validateBoardType(trade, boardType);
+
         TradeComment comment = request.toEntity(member, trade);
         TradeComment saved = tradeCommentRepository.save(comment);
         return TradeCommentResponseDto.from(saved);
     }
 
-    public List<TradeCommentResponseDto> getAllComment(long tradeId) {
+    public List<TradeCommentResponseDto> getAllComment(BoardType boardType, Long tradeId) {
+        Trade trade = tradeRepository.findById(tradeId)
+            .orElseThrow(
+                () -> new ServiceException("404", "존재하지 않는 게시글입니다.", HttpStatus.NOT_FOUND));
+
+        validateBoardType(trade, boardType);
+
         return tradeCommentRepository.findByTradeTradeId(tradeId).stream()
             .map(TradeCommentResponseDto::from)
             .toList();

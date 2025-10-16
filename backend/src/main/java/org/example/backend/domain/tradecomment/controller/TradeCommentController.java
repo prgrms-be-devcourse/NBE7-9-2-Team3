@@ -31,7 +31,8 @@ public class TradeCommentController {
         @PathVariable String boardType,
         @PathVariable Long tradeId,
         @Valid @RequestBody TradeCommentRequestDto request) {
-        TradeCommentResponseDto comment = tradeCommentService.createComment(request);
+        BoardType type = BoardType.from(boardType);
+        TradeCommentResponseDto comment = tradeCommentService.createComment(type, request);
         return new RsData<>("201-1", "댓글 등록 성공", comment);
     }
 
@@ -39,7 +40,8 @@ public class TradeCommentController {
     public RsData<List<TradeCommentResponseDto>> getAllComments(
         @PathVariable String boardType,
         @PathVariable Long tradeId) {
-        List<TradeCommentResponseDto> comments = tradeCommentService.getAllComment(tradeId);
+        BoardType type = BoardType.from(boardType);
+        List<TradeCommentResponseDto> comments = tradeCommentService.getAllComment(type, tradeId);
         return new RsData<>("200-1", "댓글 목록 조회 성공", comments);
     }
 
