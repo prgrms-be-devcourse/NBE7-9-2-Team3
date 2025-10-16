@@ -7,7 +7,6 @@ import org.example.backend.domain.aquarium.dto.AquariumListResponseDto;
 import org.example.backend.domain.aquarium.dto.AquariumCreateRequestDto;
 import org.example.backend.domain.aquarium.dto.AquariumResponseDto;
 import org.example.backend.domain.aquarium.dto.AquariumScheduleRequestDto;
-import org.example.backend.domain.aquarium.dto.AquariumScheduleResponseDto;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.service.AquariumService;
 import org.example.backend.global.rsdata.RsData;
@@ -114,13 +113,13 @@ public class AquariumController {
 
   // 어항 알림 스케줄 설정
   @PostMapping("/{id}/schedule")
-  public RsData<AquariumScheduleResponseDto> scheduleSetting(
+  public RsData<AquariumResponseDto> scheduleSetting(
       @PathVariable Long id,
       @Valid @RequestBody AquariumScheduleRequestDto requestDto
   ) {
     Aquarium aquarium = aquariumService.scheduleSetting(id, requestDto);
 
-    AquariumScheduleResponseDto responseDto = new AquariumScheduleResponseDto(aquarium);
+    AquariumResponseDto responseDto = new AquariumResponseDto(aquarium);
     return new RsData<>("200", "물갈이&어항세척 스케줄 알림이 설정되었습니다.", responseDto);
   }
 
