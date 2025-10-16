@@ -8,6 +8,8 @@ import org.example.backend.domain.tradecomment.dto.TradeCommentRequestDto;
 import org.example.backend.domain.tradecomment.dto.TradeCommentResponseDto;
 import org.example.backend.domain.tradecomment.service.TradeCommentService;
 import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.security.CustomUserDetails;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -44,11 +45,12 @@ public class TradeCommentController {
 
     @PutMapping("/{boardType}/{tradeId}/comments/{commentId}")
     public RsData<TradeCommentResponseDto> updateComment(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable String boardType,
         @PathVariable Long tradeId,
         @PathVariable Long commentId,
-        @RequestParam Long memberId,
         @Valid @RequestBody TradeCommentRequestDto request) {
+        Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
         TradeCommentResponseDto comment = tradeCommentService.updateComment(type, tradeId,
             commentId,
@@ -58,10 +60,11 @@ public class TradeCommentController {
 
     @DeleteMapping("/{boardType}/{tradeId}/comments/{commentId}")
     public RsData<Void> deleteComment(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable String boardType,
         @PathVariable Long tradeId,
-        @PathVariable Long commentId,
-        @RequestParam Long memberId) {
+        @PathVariable Long commentId) {
+        Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
         tradeCommentService.deleteComment(type, tradeId, commentId, memberId);
         return new RsData<>("204-1", "댓글 삭제 성공");
