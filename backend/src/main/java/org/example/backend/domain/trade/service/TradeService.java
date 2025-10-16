@@ -27,6 +27,7 @@ public class TradeService {
     public TradeResponseDto createTrade(TradeRequestDto request, BoardType boardType) {
         Member member = memberRepository.findById(request.memberId())
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+
         Trade trade = request.toEntity(member, boardType);
         Trade saved = tradeRepository.save(trade);
         return TradeResponseDto.from(saved);
@@ -36,6 +37,7 @@ public class TradeService {
         if (boardType == null) {
             throw new ServiceException("400", "게시판 타입은 필수입니다.", HttpStatus.BAD_REQUEST);
         }
+
         return tradeRepository.findByBoardType(boardType).stream()
             .map(TradeResponseDto::from)
             .toList();
@@ -45,9 +47,9 @@ public class TradeService {
         Trade trade = tradeRepository
             .findById(id).orElseThrow(
                 () -> new ServiceException("404", "존재하지 않는 게시글입니다.", HttpStatus.NOT_FOUND));
-        if (!trade.getBoardType().equals(boardType)) {
-            throw new ServiceException("400", "해당 게시판의 게시글이 아닙니다.", HttpStatus.BAD_REQUEST);
-        }
+
+        validateBoardType(trade, boardType);
+
         return TradeResponseDto.from(trade);
     }
 
@@ -57,12 +59,10 @@ public class TradeService {
         Trade trade = tradeRepository.findById(tradeId)
             .orElseThrow(
                 () -> new ServiceException("404", "존재하지 않는 게시글입니다.", HttpStatus.NOT_FOUND));
-        if (!trade.getBoardType().equals(boardType)) {
-            throw new ServiceException("400", "해당 게시판의 게시글이 아닙니다.", HttpStatus.BAD_REQUEST);
-        }
-        if (!trade.getMember().getMemberId().equals(memberId)) {
-            throw new ServiceException("403", "게시글 수정 권한이 없습니다.", HttpStatus.FORBIDDEN);
-        }
+
+        validateBoardType(trade, boardType);
+        validateTradeOwner(trade, memberId);
+
         trade.update(
             request.title(),
             request.description(),
@@ -70,6 +70,7 @@ public class TradeService {
             request.status(),
             request.category()
         );
+
         return TradeResponseDto.from(trade);
     }
 
@@ -78,12 +79,22 @@ public class TradeService {
         Trade trade = tradeRepository.findById(tradeId)
             .orElseThrow(
                 () -> new ServiceException("404", "존재하지 않는 게시글입니다.", HttpStatus.NOT_FOUND));
+
+        validateBoardType(trade, boardType);
+        validateTradeOwner(trade, memberId);
+
+        tradeRepository.deleteById(tradeId);
+    }
+
+    private void validateBoardType(Trade trade, BoardType boardType) {
         if (!trade.getBoardType().equals(boardType)) {
             throw new ServiceException("400", "해당 게시판의 게시글이 아닙니다.", HttpStatus.BAD_REQUEST);
         }
+    }
+
+    private void validateTradeOwner(Trade trade, Long memberId) {
         if (!trade.getMember().getMemberId().equals(memberId)) {
-            throw new ServiceException("403", "게시판 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN);
+            throw new ServiceException("403", "게시글 작성자만 수정/삭제할 수 있습니다.", HttpStatus.FORBIDDEN);
         }
-        tradeRepository.deleteById(tradeId);
     }
 }

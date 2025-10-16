@@ -29,9 +29,11 @@ public class TradeCommentService {
     public TradeCommentResponseDto createComment(TradeCommentRequestDto request) {
         Member member = memberRepository.findById(request.memberId())
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+
         Trade trade = tradeRepository.findById(request.tradeId())
             .orElseThrow(
                 () -> new ServiceException("404", "존재하지 않는 게시글입니다.", HttpStatus.NOT_FOUND));
+
         TradeComment comment = request.toEntity(member, trade);
         TradeComment saved = tradeCommentRepository.save(comment);
         return TradeCommentResponseDto.from(saved);
@@ -48,15 +50,11 @@ public class TradeCommentService {
         Long memberId, TradeCommentRequestDto request) {
         TradeComment comment = tradeCommentRepository.findById(commentId)
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 댓글입니다.", HttpStatus.NOT_FOUND));
-        if (!comment.getTrade().getTradeId().equals(tradeId)) {
-            throw new ServiceException("400", "해당 게시글의 댓글이 아닙니다.", HttpStatus.BAD_REQUEST);
-        }
-        if (!comment.getTrade().getBoardType().equals(boardType)) {
-            throw new ServiceException("400", "해당 게시판의 게시글이 아닙니다.", HttpStatus.BAD_REQUEST);
-        }
-        if (!comment.getMember().getMemberId().equals(memberId)) {
-            throw new ServiceException("403", "댓글 수정 권한이 없습니다.", HttpStatus.FORBIDDEN);
-        }
+
+        validateTrade(comment, tradeId);
+        validateBoardType(comment.getTrade(), boardType);
+        validateCommentOwner(comment, memberId);
+
         comment.update(request.content());
         return TradeCommentResponseDto.from(comment);
     }
@@ -65,17 +63,29 @@ public class TradeCommentService {
     public void deleteComment(BoardType boardType, Long tradeId, Long commentId, Long memberId) {
         TradeComment comment = tradeCommentRepository.findById(commentId)
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 댓글입니다.", HttpStatus.NOT_FOUND));
-        if (!comment.getTrade().getTradeId().equals(tradeId)) {
-            throw new ServiceException("400", "해당 게시글의 댓글이 아닙니다.", HttpStatus.BAD_REQUEST);
-        }
-        if (!comment.getTrade().getBoardType().equals(boardType)) {
-            throw new ServiceException("400", "해당 게시판의 게시글이 아닙니다.", HttpStatus.BAD_REQUEST);
-        }
-        if (!comment.getMember().getMemberId().equals(memberId)) {
-            throw new ServiceException("403", "댓글 삭제 권한이 없습니다.", HttpStatus.FORBIDDEN);
-        }
+
+        validateTrade(comment, tradeId);
+        validateBoardType(comment.getTrade(), boardType);
+        validateCommentOwner(comment, memberId);
+
         tradeCommentRepository.deleteById(commentId);
     }
 
+    private void validateTrade(TradeComment comment, Long tradeId) {
+        if (!comment.getTrade().getTradeId().equals(tradeId)) {
+            throw new ServiceException("400", "해당 게시글의 댓글이 아닙니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
 
+    private void validateBoardType(Trade trade, BoardType boardType) {
+        if (!trade.getBoardType().equals(boardType)) {
+            throw new ServiceException("400", "해당 게시판의 게시글이 아닙니다.", HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    private void validateCommentOwner(TradeComment comment, Long memberId) {
+        if (!comment.getMember().getMemberId().equals(memberId)) {
+            throw new ServiceException("403", "댓글 작성자만 수정/삭제할 수 있습니다.", HttpStatus.FORBIDDEN);
+        }
+    }
 }
