@@ -128,7 +128,7 @@ public class AquariumService {
     int cycleDate = requestDto.cycleDate();  // 입력받은 cycleDate
 
     // 사용자로부터 입력 받은 cycleDate가 0이라면
-    if(cycleDate == 0) {
+    if (cycleDate == 0) {
       aquarium.changeSchedule(cycleDate, null, null);
       aquariumRepository.save(aquarium);
 
@@ -139,7 +139,7 @@ public class AquariumService {
     LocalDateTime nextDate = aquarium.getNextDate();
 
     // 기존의 cycleDate가 0이라면
-    if(preCycleDate == 0) {
+    if (preCycleDate == 0) {
       lastDate = LocalDateTime.now();
       nextDate = lastDate.plusDays(cycleDate);
 
@@ -147,14 +147,14 @@ public class AquariumService {
       aquariumRepository.save(aquarium);
     }
     // 기존의 cycleDate < 사용자로부터 입력 받은 cycleDate이라면,
-    else if(preCycleDate < cycleDate) {
+    else if (preCycleDate < cycleDate) {
       nextDate = lastDate.plusDays(cycleDate);
 
       aquarium.changeSchedule(cycleDate, lastDate, nextDate);
       aquariumRepository.save(aquarium);
     }
     // 기존의 cycleDate > 사용자로부터 입력 받은 cycleDate이라면
-    else if(preCycleDate > cycleDate) {
+    else if (preCycleDate > cycleDate) {
       int changeNextDate = preCycleDate - cycleDate;
       nextDate = nextDate.minusDays(changeNextDate);
 
