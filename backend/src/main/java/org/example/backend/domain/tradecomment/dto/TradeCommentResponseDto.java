@@ -15,9 +15,9 @@ public record TradeCommentResponseDto(
     public static TradeCommentResponseDto from(TradeComment comment) {
         return new TradeCommentResponseDto(
             comment.getCommentId(),
-            comment.getMember() != null ? comment.getMember().getMemberId() : null,
-            comment.getMember() != null ? comment.getMember().getNickname() : null,
-            comment.getTrade() != null ? comment.getTrade().getTradeId() : null,
+            comment.getMember().getMemberId(),
+            comment.getMember().getNickname(),
+            comment.getTrade().getTradeId(),
             comment.getContent(),
             comment.getCreateDate()
         );
