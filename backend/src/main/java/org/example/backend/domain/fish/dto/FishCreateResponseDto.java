@@ -1,4 +1,4 @@
-package org.example.backend.domain.fish.dto.response;
+package org.example.backend.domain.fish.dto;
 
 import java.time.LocalDateTime;
 import org.example.backend.domain.fish.entity.Fish;
@@ -14,7 +14,7 @@ public record FishCreateResponseDto(
     this(
         fish.getId(),
         fish.getSpecies(),
-        fish.getSpecies(),
+        fish.getName(),
         fish.getCreateDate()
     );
   }
