@@ -2,6 +2,7 @@ package org.example.backend.domain.member.service;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.member.dto.MemberEditRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
@@ -9,6 +10,7 @@ import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.global.exception.ServiceException;
+import org.example.backend.global.requestcontext.RequestContext;
 import org.example.backend.global.rsdata.RsData;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +24,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthTokenService authTokenService;
+    private final RequestContext requestContext;
 
     public Optional<Member> findById(Long id) {
         return memberRepository.findById(id);
@@ -87,13 +90,50 @@ public class MemberService {
             member.getEmail(),
             member.getNickname()
         );
-
         return new RsData<>("200", "로그인에 성공했습니다.", response);
     }
 
     // JWT 토큰을 별도로 생성하는 메서드
     public String generateAccessToken(Member member) {
         return authTokenService.genAccessToken(member);
+    }
+
+    @Transactional
+    public RsData<MemberJoinResponseDto> edit(MemberEditRequestDto request){
+        // 현재 로그인한 사용자 조회
+        Member member = memberRepository.findByMemberId(requestContext.getCurrentMemberId())
+            .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+
+        // 현재 비밀번호 재확인(만약에 액세스 토큰을 탈취됐을 경우를 상정)
+        if (!passwordEncoder.matches(request.currentPassword(), member.getPassword())) {
+            throw new ServiceException("401", "현재 비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
+        }
+
+        if (!member.getEmail().equals(request.email())) {
+            if (memberRepository.findByEmail(request.email()).isPresent()) {
+                throw new ServiceException("409", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT);
+            }
+        }
+
+        if (!member.getNickname().equals(request.nickname())) {
+            if (memberRepository.findByNickname(request.nickname()).isPresent()) {
+                throw new ServiceException("409", "이미 사용 중인 닉네임입니다.", HttpStatus.CONFLICT);
+            }
+        }
+
+        String encodedPassword = passwordEncoder.encode(request.newPassword());
+
+        member.updateMemberInfo(
+            request.email(),
+            encodedPassword,
+            request.nickname(),
+            request.profileImage()
+        );
+
+        Member updatedMember = memberRepository.save(member);
+
+        MemberJoinResponseDto response = MemberJoinResponseDto.from(updatedMember);
+        return new RsData<>("200", "회원정보 수정에 성공했습니다.", response);
     }
 
 }
