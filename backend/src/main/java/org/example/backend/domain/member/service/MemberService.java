@@ -2,6 +2,7 @@ package org.example.backend.domain.member.service;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.member.dto.MemberEditRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
@@ -98,29 +99,30 @@ public class MemberService {
     }
 
     @Transactional
-    public RsData<MemberJoinResponseDto> edit(MemberJoinRequestDto request){
+    public RsData<MemberJoinResponseDto> edit(MemberEditRequestDto request){
         // 현재 로그인한 사용자 조회
         Member member = memberRepository.findByMemberId(requestContext.getCurrentMemberId())
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
 
-        // 이메일 중복 체크 (현재 사용자와 다른 이메일인 경우)
+        // 현재 비밀번호 재확인(만약에 액세스 토큰을 탈취됐을 경우를 상정)
+        if (!passwordEncoder.matches(request.currentPassword(), member.getPassword())) {
+            throw new ServiceException("401", "현재 비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
+        }
+
         if (!member.getEmail().equals(request.email())) {
             if (memberRepository.findByEmail(request.email()).isPresent()) {
                 throw new ServiceException("409", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT);
             }
         }
 
-        // 닉네임 중복 체크 (현재 사용자와 다른 닉네임인 경우)
         if (!member.getNickname().equals(request.nickname())) {
             if (memberRepository.findByNickname(request.nickname()).isPresent()) {
                 throw new ServiceException("409", "이미 사용 중인 닉네임입니다.", HttpStatus.CONFLICT);
             }
         }
 
-        // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(request.password());
+        String encodedPassword = passwordEncoder.encode(request.newPassword());
 
-        // 회원 정보 업데이트
         member.updateMemberInfo(
             request.email(),
             encodedPassword,
@@ -128,10 +130,8 @@ public class MemberService {
             request.profileImage()
         );
 
-        // 데이터베이스에 저장
         Member updatedMember = memberRepository.save(member);
 
-        // 응답 DTO 생성
         MemberJoinResponseDto response = MemberJoinResponseDto.from(updatedMember);
         return new RsData<>("200", "회원정보 수정에 성공했습니다.", response);
     }

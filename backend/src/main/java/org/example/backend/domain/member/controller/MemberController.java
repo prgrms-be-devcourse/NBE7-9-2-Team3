@@ -3,6 +3,7 @@ package org.example.backend.domain.member.controller;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.member.dto.MemberEditRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
@@ -52,7 +53,7 @@ public class MemberController {
     }
 
     @PutMapping("/me")
-    public RsData<MemberJoinResponseDto> edit(@Valid @RequestBody MemberJoinRequestDto request) {
+    public RsData<MemberJoinResponseDto> edit(@Valid @RequestBody MemberEditRequestDto request) {
         return memberService.edit(request);
     }
 
