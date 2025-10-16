@@ -3,7 +3,7 @@ package org.example.backend.domain.aquarium.controller;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.aquarium.dto.AquariumDto;
-import org.example.backend.domain.aquarium.dto.request.AquariumCreateRequestDto;
+import org.example.backend.domain.aquarium.dto.AquariumCreateRequestDto;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.service.AquariumService;
 import org.example.backend.global.rsdata.RsData;

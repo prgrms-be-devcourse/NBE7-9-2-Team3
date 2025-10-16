@@ -1,4 +1,4 @@
-package org.example.backend.domain.fish.dto.response;
+package org.example.backend.domain.fish.dto;
 
 import java.time.LocalDateTime;
 import org.example.backend.domain.fish.entity.Fish;
