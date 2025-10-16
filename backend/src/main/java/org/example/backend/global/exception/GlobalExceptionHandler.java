@@ -55,4 +55,10 @@ public class GlobalExceptionHandler {
     public RsData<Void> handleAllExceptions(Exception e) {
         return new RsData<>("500", "서버 내부 오류가 발생했습니다.");
     }
+
+    @ExceptionHandler(SecurityException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public RsData<Void> handleSecurityException(SecurityException e) {
+        return new RsData<>("403-1", e.getMessage() != null ? e.getMessage() : "접근 권한이 없습니다.");
+    }
 }
