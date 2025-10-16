@@ -9,6 +9,7 @@ import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.global.exception.ServiceException;
+import org.example.backend.global.requestcontext.RequestContext;
 import org.example.backend.global.rsdata.RsData;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,6 +23,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthTokenService authTokenService;
+    private final RequestContext requestContext;
 
     public Optional<Member> findById(Long id) {
         return memberRepository.findById(id);
@@ -87,13 +89,51 @@ public class MemberService {
             member.getEmail(),
             member.getNickname()
         );
-
         return new RsData<>("200", "로그인에 성공했습니다.", response);
     }
 
     // JWT 토큰을 별도로 생성하는 메서드
     public String generateAccessToken(Member member) {
         return authTokenService.genAccessToken(member);
+    }
+
+    @Transactional
+    public RsData<MemberJoinResponseDto> edit(MemberJoinRequestDto request){
+        // 현재 로그인한 사용자 조회
+        Member member = memberRepository.findByMemberId(requestContext.getCurrentMemberId())
+            .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+
+        // 이메일 중복 체크 (현재 사용자와 다른 이메일인 경우)
+        if (!member.getEmail().equals(request.email())) {
+            if (memberRepository.findByEmail(request.email()).isPresent()) {
+                throw new ServiceException("409", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT);
+            }
+        }
+
+        // 닉네임 중복 체크 (현재 사용자와 다른 닉네임인 경우)
+        if (!member.getNickname().equals(request.nickname())) {
+            if (memberRepository.findByNickname(request.nickname()).isPresent()) {
+                throw new ServiceException("409", "이미 사용 중인 닉네임입니다.", HttpStatus.CONFLICT);
+            }
+        }
+
+        // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(request.password());
+
+        // 회원 정보 업데이트
+        member.updateMemberInfo(
+            request.email(),
+            encodedPassword,
+            request.nickname(),
+            request.profileImage()
+        );
+
+        // 데이터베이스에 저장
+        Member updatedMember = memberRepository.save(member);
+
+        // 응답 DTO 생성
+        MemberJoinResponseDto response = MemberJoinResponseDto.from(updatedMember);
+        return new RsData<>("200", "회원정보 수정에 성공했습니다.", response);
     }
 
 }
