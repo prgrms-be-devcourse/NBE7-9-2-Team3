@@ -39,7 +39,7 @@ public class MemberController {
             // 로그인한 사용자 정보로 토큰 생성
             String accessToken = memberService.generateAccessToken(
                 memberService.findByEmail(request.email()).orElseThrow(
-                    ()->new ServiceException("401","이메일로 찾을 수 없습니다. Email: " + request.email(), HttpStatus.CONFLICT)));
+                    ()->new ServiceException("404","이메일로 찾을 수 없습니다. Email: " + request.email(), HttpStatus.CONFLICT)));
             requestContext.setCookie("accessToken", accessToken);
         }
         
