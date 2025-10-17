@@ -2,7 +2,7 @@ package org.example.backend.domain.member.service;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.domain.follow.service.FollowService;
+import org.example.backend.domain.follow.service.FollowCountService;
 import org.example.backend.domain.member.dto.MemberEditRequestDto;
 import org.example.backend.domain.member.dto.MemberEditResponseDto;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
@@ -29,7 +29,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthTokenService authTokenService;
-    private final FollowService followService;
+    private final FollowCountService followCountService;
 
     public Optional<Member> findById(Long id) {
         return memberRepository.findById(id);
@@ -41,6 +41,11 @@ public class MemberService {
 
     public Optional<Member> findByNickname(String nickname) {
         return memberRepository.findByNickname(nickname);
+    }
+
+    // 멤버 존재 여부 확인
+    public boolean existsById(Long memberId) {
+        return memberRepository.existsById(memberId);
     }
 
     // 현재 인증된 사용자 ID 가져오기
@@ -172,7 +177,7 @@ public class MemberService {
         // 현재 로그인한 사용자 조회
         Member member = memberRepository.findByMemberId(getCurrentMemberId())
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
-        MemberResponseDto response = new MemberResponseDto(member,followService.getFollowerCount(member.getMemberId()),followService.getFollowingCount(member.getMemberId()));
+        MemberResponseDto response = new MemberResponseDto(member,followCountService.getFollowerCount(member.getMemberId()),followCountService.getFollowingCount(member.getMemberId()));
         return new RsData<>("200", "회원 정보 조회에 성공했습니다.", response);
     }
 
