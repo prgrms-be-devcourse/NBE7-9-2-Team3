@@ -1,8 +1,11 @@
 package org.example.backend.domain.aquarium.service;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.aquarium.dto.AquariumScheduleRequestDto;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.repository.AquariumRepository;
 import org.example.backend.domain.fish.entity.Fish;
@@ -40,7 +43,6 @@ public class AquariumService {
   public Optional<Aquarium> findById(Long id) {
     return aquariumRepository.findById(id);
   }
-
 
   public boolean hasFish(Long id) {
     long fishCount = fishRepository.countByAquarium_Id(id);
@@ -96,5 +98,58 @@ public class AquariumService {
 
   public void delete(Long id) {
     aquariumRepository.deleteById(id);
+  }
+
+  /*
+  어항 알림 스케줄 세팅
+
+  1. 기본 배경
+    - cycleDate의 기본 값은 0이다.
+    - cycleDate가 0이라면, 알림 기능은 작동하지 않는다.
+      - cycleDate = 0
+      - lastDate, nextDate  = null
+
+  2. 알림 스케줄 세팅 로직
+    - 사용자로부터 입력 받은 cycleDate가 0이라면,
+      - cycleDate = 0
+      - lastDate, nextDate = null
+    - 기존의 cycleDate가 0이라면,
+      - lastDate, nextDate를 현재 시간 기준으로 계산
+    - 기존의 cycleDate가 0이 아니라면,
+      - nextDate를 사용자로부터 입력 받은 cycleDate 기준으로 재 설정
+  */
+  public Aquarium scheduleSetting(Long aquariumId, AquariumScheduleRequestDto requestDto) {
+    Aquarium aquarium = aquariumRepository.findById(aquariumId)
+        .orElseThrow(() -> new RuntimeException("어항이 존재하지 않습니다."));
+    int preCycleDate = aquarium.getCycleDate();  // 기존의 cycleDate
+    int cycleDate = requestDto.cycleDate();  // 입력받은 cycleDate
+
+    // 사용자로부터 입력 받은 cycleDate가 0이라면
+    if (cycleDate == 0) {
+      aquarium.changeSchedule(cycleDate, null, null);
+      aquariumRepository.save(aquarium);
+
+      return aquarium;
+    }
+
+    LocalDateTime lastDate = aquarium.getLastDate();
+    LocalDateTime nextDate;
+
+    // 기존의 cycleDate가 0이라면
+    if (preCycleDate == 0) {
+      lastDate = LocalDateTime.now();
+      nextDate = lastDate.plusDays(cycleDate);
+
+      aquarium.changeSchedule(cycleDate, lastDate, nextDate);
+    }
+    // 기존의 cycleDate이 0이 아니라면,
+    else if (preCycleDate != 0) {
+      nextDate = lastDate.plusDays(cycleDate);
+
+      aquarium.changeSchedule(cycleDate, lastDate, nextDate);
+    }
+
+    aquariumRepository.save(aquarium);
+    return aquarium;
   }
 }
