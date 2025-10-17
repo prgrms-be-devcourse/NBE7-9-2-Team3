@@ -14,6 +14,10 @@ spring:
       idle-timeout: 30000
       max-lifetime: 1800000
       connection-timeout: 30000
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 25MB
 
 logging:
   level:
@@ -33,3 +37,15 @@ custom:
   jwt:
     secretPattern: "mySecretKey123456789012345678901234567890"  # 32자 이상의 시크릿 키
     expireSeconds: "#{60*60*24}"
+
+cloud:
+  aws:
+    s3:
+      bucket: nbe7-9-2-team03
+    region:
+      static: ap-northeast-2
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    stack:
+      auto: false
