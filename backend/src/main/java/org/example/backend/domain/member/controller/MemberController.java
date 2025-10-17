@@ -9,11 +9,13 @@ import org.example.backend.domain.member.dto.MemberJoinRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
 import org.example.backend.domain.member.dto.MemberLoginResponseDto;
+import org.example.backend.domain.member.dto.MemberResponseDto;
 import org.example.backend.domain.member.service.MemberService;
 import org.example.backend.global.exception.ServiceException;
 import org.example.backend.global.requestcontext.RequestContext;
 import org.example.backend.global.rsdata.RsData;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,8 +49,7 @@ public class MemberController {
         return result;
     }
     @PostMapping("/logout")
-    public RsData<MemberLoginResponseDto> logout(@Valid @RequestBody MemberLoginRequestDto request, HttpServletResponse response) {
-
+    public RsData<MemberLoginResponseDto> logout() {
         requestContext.deleteCookie("accessToken");
         return new RsData<>("200", "로그아웃에 성공했습니다.", null);
     }
@@ -62,6 +63,12 @@ public class MemberController {
             requestContext.setCookie("accessToken", result.getData().newAccessToken());
         }
         
+        return result;
+    }
+
+    @GetMapping("/me")
+    public RsData<MemberResponseDto> myPage(){
+        RsData<MemberResponseDto> result = memberService.myPage();
         return result;
     }
 
