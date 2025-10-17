@@ -9,12 +9,12 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 public class FollowListResponseDto {
-    private List<FollowResponseDto> follows;
+    private List<FollowResponseDto> users;
     private long totalCount;
 
     @Builder
-    public FollowListResponseDto(List<FollowResponseDto> follows, long totalCount) {
-        this.follows = follows;
+    public FollowListResponseDto(List<FollowResponseDto> users, long totalCount) {
+        this.users = users;
         this.totalCount = totalCount;
     }
 }

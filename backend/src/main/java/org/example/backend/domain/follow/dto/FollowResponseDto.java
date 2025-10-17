@@ -7,21 +7,14 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor
 public class FollowResponseDto {
-    private Long follower;
-    private String followerNickname;
-    private String followerProfileImage;
-    private Long followee;
-    private String followeeNickname;
-    private String followeeProfileImage;
+    private Long memberId;
+    private String nickname;
+    private String profileImage;
 
     @Builder
-    public FollowResponseDto(Long follower, String followerNickname, String followerProfileImage,
-                           Long followee, String followeeNickname, String followeeProfileImage) {
-        this.follower = follower;
-        this.followerNickname = followerNickname;
-        this.followerProfileImage = followerProfileImage;
-        this.followee = followee;
-        this.followeeNickname = followeeNickname;
-        this.followeeProfileImage = followeeProfileImage;
+    public FollowResponseDto(Long memberId, String nickname, String profileImage) {
+        this.memberId = memberId;
+        this.nickname = nickname;
+        this.profileImage = profileImage;
     }
 }

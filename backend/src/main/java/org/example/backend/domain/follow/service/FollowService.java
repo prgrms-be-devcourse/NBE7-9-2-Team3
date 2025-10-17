@@ -5,7 +5,6 @@ import org.example.backend.domain.follow.dto.*;
 import org.example.backend.domain.follow.entity.Follow;
 import org.example.backend.domain.follow.repository.FollowRepository;
 import org.example.backend.domain.member.entity.Member;
-import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.global.exception.ServiceException;
 import org.example.backend.global.rsdata.RsData;
 import org.springframework.http.HttpStatus;
@@ -13,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,7 +20,6 @@ import java.util.stream.Collectors;
 public class FollowService {
 
     private final FollowRepository followRepository;
-    private final MemberRepository memberRepository;
 
     // 팔로우하기
     public RsData<FollowResponseDto> follow(Long follower, Long followee) {
@@ -31,14 +28,15 @@ public class FollowService {
             throw new ServiceException("400", "자기 자신을 팔로우할 수 없습니다.", HttpStatus.BAD_REQUEST);
         }
 
-        Member followerMember = memberRepository.findById(follower)
-            .orElseThrow(
-                () -> new ServiceException("404", "팔로워를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+        // 멤버 존재 여부 확인
+        if (!followRepository.existsMemberById(follower)) {
+            throw new ServiceException("404", "팔로워를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
+        if (!followRepository.existsMemberById(followee)) {
+            throw new ServiceException("404", "팔로이를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
 
-        Member followeeMember = memberRepository.findById(followee)
-            .orElseThrow(
-                () -> new ServiceException("404", "팔로이를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
-
+        // 이미 팔로우하고 있는지 확인
         if (followRepository.existsByFollowerAndFollowee(follower, followee)) {
             throw new ServiceException("400", "이미 팔로우하고 있습니다.", HttpStatus.BAD_REQUEST);
         }
@@ -48,16 +46,13 @@ public class FollowService {
             .followee(followee)
             .build();
 
-        followEntity.validateNotSelfFollow();
-        followRepository.save(followEntity);
+        Follow savedFollow = followRepository.save(followEntity);
 
+        // 팔로우 완료 후 간단한 응답
         FollowResponseDto responseDto = FollowResponseDto.builder()
-            .follower(followerMember.getMemberId())
-            .followerNickname(followerMember.getNickname())
-            .followerProfileImage(followerMember.getProfileImage())
-            .followee(followeeMember.getMemberId())
-            .followeeNickname(followeeMember.getNickname())
-            .followeeProfileImage(followeeMember.getProfileImage())
+            .memberId(savedFollow.getFollowee())
+            .nickname("") // 팔로우 완료 시에는 상세 정보 불필요
+            .profileImage("")
             .build();
 
         return new RsData<>("200", "팔로우가 완료되었습니다.", responseDto);
@@ -65,11 +60,11 @@ public class FollowService {
 
     public RsData<Void> unfollow(Long follower, Long followee) {
 
-        if (!memberRepository.existsById(follower)) {
+        if (!followRepository.existsMemberById(follower)) {
             throw new ServiceException("404", "팔로워를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
 
-        if (!memberRepository.existsById(followee)) {
+        if (!followRepository.existsMemberById(followee)) {
             throw new ServiceException("404", "팔로이를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
 
@@ -84,39 +79,27 @@ public class FollowService {
 
     @Transactional(readOnly = true)
     public RsData<FollowListResponseDto> getFollowers(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-            .orElseThrow(
-                () -> new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+        if (!followRepository.existsMemberById(memberId)) {
+            throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
 
-        List<Follow> follows = followRepository.findByFollowee(memberId);
+        // 팔로워 목록과 멤버 정보를 함께 조회
+        List<Object[]> results = followRepository.findFollowersWithMemberInfo(memberId);
         long totalCount = followRepository.countByFollowee(memberId);
 
-        // 팔로워들의 ID 수집
-        List<Long> followerIds = follows.stream()
-            .map(Follow::getFollower)
-            .collect(Collectors.toList());
-
-        // 팔로워들의 정보 조회
-        Map<Long, Member> followerMap = memberRepository.findAllById(followerIds)
-            .stream()
-            .collect(Collectors.toMap(Member::getMemberId, follower -> follower));
-
-        List<FollowResponseDto> followDtos = follows.stream()
-            .map(follow -> {
-                Member follower = followerMap.get(follow.getFollower());
+        List<FollowResponseDto> userDtos = results.stream()
+            .map(result -> {
+                Member follower = (Member) result[1];
                 return FollowResponseDto.builder()
-                    .follower(follow.getFollower())
-                    .followerNickname(follower.getNickname())
-                    .followerProfileImage(follower.getProfileImage())
-                    .followee(follow.getFollowee())
-                    .followeeNickname(member.getNickname())
-                    .followeeProfileImage(member.getProfileImage())
+                    .memberId(follower.getMemberId())
+                    .nickname(follower.getNickname())
+                    .profileImage(follower.getProfileImage())
                     .build();
             })
             .collect(Collectors.toList());
 
         FollowListResponseDto responseDto = FollowListResponseDto.builder()
-            .follows(followDtos)
+            .users(userDtos)
             .totalCount(totalCount)
             .build();
 
@@ -126,39 +109,27 @@ public class FollowService {
     // 팔로잉 목록 조회
     @Transactional(readOnly = true)
     public RsData<FollowListResponseDto> getFollowings(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-            .orElseThrow(
-                () -> new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+        if (!followRepository.existsMemberById(memberId)) {
+            throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+        }
 
-        List<Follow> follows = followRepository.findByFollower(memberId);
+        // 팔로잉 목록과 멤버 정보를 함께 조회
+        List<Object[]> results = followRepository.findFollowingsWithMemberInfo(memberId);
         long totalCount = followRepository.countByFollower(memberId);
 
-        // 팔로이들의 ID 수집
-        List<Long> followeeIds = follows.stream()
-            .map(Follow::getFollowee)
-            .collect(Collectors.toList());
-
-        // 팔로이들의 정보 조회
-        Map<Long, Member> followeeMap = memberRepository.findAllById(followeeIds)
-            .stream()
-            .collect(Collectors.toMap(Member::getMemberId, followee -> followee));
-
-        List<FollowResponseDto> followDtos = follows.stream()
-            .map(follow -> {
-                Member followee = followeeMap.get(follow.getFollowee());
+        List<FollowResponseDto> userDtos = results.stream()
+            .map(result -> {
+                Member followee = (Member) result[1];
                 return FollowResponseDto.builder()
-                    .follower(follow.getFollower())
-                    .followerNickname(member.getNickname())
-                    .followerProfileImage(member.getProfileImage())
-                    .followee(follow.getFollowee())
-                    .followeeNickname(followee.getNickname())
-                    .followeeProfileImage(followee.getProfileImage())
+                    .memberId(followee.getMemberId())
+                    .nickname(followee.getNickname())
+                    .profileImage(followee.getProfileImage())
                     .build();
             })
             .collect(Collectors.toList());
 
         FollowListResponseDto responseDto = FollowListResponseDto.builder()
-            .follows(followDtos)
+            .users(userDtos)
             .totalCount(totalCount)
             .build();
 
@@ -168,7 +139,7 @@ public class FollowService {
     // 팔로워 수 조회
     @Transactional(readOnly = true)
     public long getFollowerCount(Long memberId) {
-        if (!memberRepository.existsById(memberId)) {
+        if (!followRepository.existsMemberById(memberId)) {
             throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
         return followRepository.countByFollowee(memberId);
@@ -177,7 +148,7 @@ public class FollowService {
     // 팔로잉 수 조회
     @Transactional(readOnly = true)
     public long getFollowingCount(Long memberId) {
-        if (!memberRepository.existsById(memberId)) {
+        if (!followRepository.existsMemberById(memberId)) {
             throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
         return followRepository.countByFollower(memberId);
