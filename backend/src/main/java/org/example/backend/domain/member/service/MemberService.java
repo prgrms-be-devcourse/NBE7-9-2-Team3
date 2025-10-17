@@ -2,12 +2,14 @@ package org.example.backend.domain.member.service;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.follow.service.FollowService;
 import org.example.backend.domain.member.dto.MemberEditRequestDto;
 import org.example.backend.domain.member.dto.MemberEditResponseDto;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
 import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
 import org.example.backend.domain.member.dto.MemberLoginResponseDto;
+import org.example.backend.domain.member.dto.MemberResponseDto;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.global.exception.ServiceException;
@@ -27,6 +29,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthTokenService authTokenService;
+    private final FollowService followService;
 
     public Optional<Member> findById(Long id) {
         return memberRepository.findById(id);
@@ -164,5 +167,14 @@ public class MemberService {
         MemberEditResponseDto response = MemberEditResponseDto.from(updatedMember, newAccessToken);
         return new RsData<>("200", "회원정보 수정에 성공했습니다.", response);
     }
+    @Transactional
+    public RsData<MemberResponseDto> myPage(){
+        // 현재 로그인한 사용자 조회
+        Member member = memberRepository.findByMemberId(getCurrentMemberId())
+            .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+        MemberResponseDto response = new MemberResponseDto(member,followService.getFollowerCount(member.getMemberId()),followService.getFollowingCount(member.getMemberId()));
+        return new RsData<>("200", "회원 정보 조회에 성공했습니다.", response);
+    }
+
 
 }
