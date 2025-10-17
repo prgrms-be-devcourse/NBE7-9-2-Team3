@@ -15,7 +15,6 @@ import org.example.backend.global.requestcontext.RequestContext;
 import org.example.backend.global.rsdata.RsData;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -34,7 +33,7 @@ public class MemberController {
 
     @PostMapping("/join")
     public RsData<MemberJoinResponseDto> join(
-        @Valid @ModelAttribute MemberJoinRequestDto request,
+        @Valid @RequestBody MemberJoinRequestDto request,
         @RequestPart(required = false) MultipartFile profileImageFile) {
         return memberService.join(request, profileImageFile);
     }
@@ -60,7 +59,7 @@ public class MemberController {
 
     @PutMapping("/me")
     public RsData<MemberEditResponseDto> edit(
-        @Valid @ModelAttribute MemberEditRequestDto request,
+        @Valid @RequestBody MemberEditRequestDto request,
         @RequestPart(required = false) MultipartFile profileImage) {
         RsData<MemberEditResponseDto> result = memberService.edit(request, profileImage);
         

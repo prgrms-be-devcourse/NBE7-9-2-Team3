@@ -46,6 +46,10 @@ public class MemberService {
         return memberRepository.findByNickname(nickname);
     }
 
+    public Optional<Member> findByMemberId(Long memberId) {
+        return memberRepository.findByMemberId(memberId);
+    }
+
     // 멤버 존재하지 않음 확인
     public boolean notExistsById(Long memberId) {
         return !memberRepository.existsById(memberId);

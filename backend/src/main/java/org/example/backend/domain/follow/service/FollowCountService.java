@@ -14,13 +14,13 @@ public class FollowCountService {
     // 팔로워 수 조회
     @Transactional(readOnly = true)
     public long getFollowerCount(Long memberId) {
-        return followRepository.countByFollowee(memberId);
+        return followRepository.countByFolloweeMemberId(memberId);
     }
 
     // 팔로잉 수 조회
     @Transactional(readOnly = true)
     public long getFollowingCount(Long memberId) {
-        return followRepository.countByFollower(memberId);
+        return followRepository.countByFollowerMemberId(memberId);
     }
 
 }
