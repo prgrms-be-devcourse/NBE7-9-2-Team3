@@ -1,43 +1,35 @@
 package org.example.backend.domain.follow.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.backend.domain.member.entity.Member;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "follow", 
-       uniqueConstraints = @UniqueConstraint(columnNames = {"follower", "followee"}))
-@IdClass(FollowId.class)
+       uniqueConstraints = @UniqueConstraint(columnNames = {"follower_id", "followee_id"}))
 public class Follow {
 
     @Id
-    @Column(name = "follower")
-    private Long follower;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     
-    @Id
-    @Column(name = "followee")
-    private Long followee;
-
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "follower_id")
+    private Member follower;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "followee_id")
+    private Member followee;
 
     @Builder
-    public Follow(Long follower, Long followee) {
+    public Follow(Member follower, Member followee) {
         this.follower = follower;
         this.followee = followee;
     }
 
-    // 자기 자신을 팔로우하는 것을 방지하는 로직
-    public void validateNotSelfFollow() {
-        if (this.follower.equals(this.followee)) {
-            throw new IllegalArgumentException("자기 자신을 팔로우할 수 없습니다.");
-        }
-    }
 }
