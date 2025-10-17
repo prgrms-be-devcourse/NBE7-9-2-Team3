@@ -16,6 +16,12 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+/**
+ * AWS S3 이미지 업로드/삭제 공통 서비스
+ *
+ * <p>허용 확장자: jpg, jpeg, png, gif, webp / 최대 크기: 5MB
+ * <p>업로드된 파일은 UUID로 고유한 이름 생성
+ */
 @Service
 @RequiredArgsConstructor
 public class ImageService {
@@ -28,12 +34,18 @@ public class ImageService {
     @Value("${cloud.aws.region.static}")
     private String region;
 
+    /** 허용되는 이미지 확장자 목록 */
     private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png",
         "gif", "webp");
 
+    /** 최대 파일 크기: 5MB */
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-    // 단일 파일 업로드
+    /**
+     * S3에 단일 파일 업로드
+     * @param directory S3 버킷 내 저장 경로 (예: "trade", "profile")
+     * @return 업로드된 파일의 S3 URL
+     */
     public String uploadFile(MultipartFile file, String directory) {
         validateFile(file);
         String fileName = generateFileName(file, directory);
@@ -59,14 +71,20 @@ public class ImageService {
         }
     }
 
-    // 여러 파일 업로드
+    /**
+     * S3에 여러 파일 업로드
+     * @return 업로드된 파일들의 S3 URL 리스트
+     */
     public List<String> uploadFiles(List<MultipartFile> files, String directory) {
         return files.stream()
             .map(file -> uploadFile(file, directory))
             .toList();
     }
 
-    // 단일 파일 삭제
+    /**
+     * S3에서 단일 파일 삭제
+     * @param fileUrl 삭제할 파일의 S3 URL
+     */
     public void deleteFile(String fileUrl) {
         try {
             String fileName = extractNameFromUrl(fileUrl);
@@ -83,12 +101,12 @@ public class ImageService {
         }
     }
 
-    // 여러 파일 삭제
+    /** S3에서 여러 파일 삭제 */
     public void deleteFiles(List<String> fileUrls) {
         fileUrls.forEach(this::deleteFile);
     }
 
-    // 파일 유효성 검증
+    /** 파일 유효성 검증 (크기, 확장자) */
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new ServiceException("400", "파일이 비어있습니다.", HttpStatus.BAD_REQUEST);
@@ -110,7 +128,10 @@ public class ImageService {
         }
     }
 
-    // 고유한 파일명 생성
+    /**
+     * UUID를 사용하여 고유한 파일명 생성
+     * @return "디렉토리/UUID.확장자" 형식
+     */
     private String generateFileName(MultipartFile file, String directory) {
         String originalFilename = file.getOriginalFilename();
         String extension = getFileExtension(originalFilename);
@@ -128,12 +149,20 @@ public class ImageService {
         return filename.substring(lastIndexOf + 1);
     }
 
-    // URL에서 파일명 추출
+    /**
+     * S3 URL에서 파일명(키) 추출
+     * 보안을 위해 자체 S3 버킷의 URL만 허용
+     */
     private String extractNameFromUrl(String fileUrl) {
         try {
             URL url = new URL(fileUrl);
-            String path = url.getPath();
 
+            // S3 URL 검증 (자체 버킷만 허용)
+            String expectedHost = bucket + ".s3." + region + ".amazonaws.com";
+            if (!url.getHost().equals(expectedHost)) {
+                throw new ServiceException("400", "허용되지 않은 URL입니다.", HttpStatus.BAD_REQUEST);
+            }
+            String path = url.getPath();
             return path.startsWith("/") ? path.substring(1) : path;
 
         } catch (MalformedURLException e) {

@@ -12,12 +12,15 @@ import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/market")
@@ -29,9 +32,10 @@ public class TradeController {
     @PostMapping("/{boardType}")
     public RsData<TradeResponseDto> createTrade(
         @PathVariable String boardType,
-        @Valid @RequestBody TradeRequestDto request) {
+        @Valid @ModelAttribute TradeRequestDto request,
+        @RequestPart(required = false) List<MultipartFile> images) {
         BoardType type = BoardType.from(boardType);
-        TradeResponseDto trade = tradeService.createTrade(request, type);
+        TradeResponseDto trade = tradeService.createTrade(request, type, images);
         return new RsData<>("201-1", "거래 게시글 등록 성공", trade);
     }
 
@@ -57,10 +61,11 @@ public class TradeController {
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable String boardType,
         @PathVariable Long tradeId,
-        @Valid @RequestBody TradeRequestDto request) {
+        @Valid @ModelAttribute TradeRequestDto request,
+        @RequestPart(required = false) List<MultipartFile> images) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
-        TradeResponseDto trade = tradeService.updateTrade(type, tradeId, memberId, request);
+        TradeResponseDto trade = tradeService.updateTrade(type, tradeId, memberId, request, images);
         return new RsData<>("200-3", "거래 게시글 수정 성공", trade);
     }
 
