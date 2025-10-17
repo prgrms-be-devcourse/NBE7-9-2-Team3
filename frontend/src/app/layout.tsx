@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "./components/navbar";
-import { AuthProvider } from "@/context";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
     title: "우리집 물고기",
