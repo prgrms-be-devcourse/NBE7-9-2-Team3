@@ -49,8 +49,7 @@ public class MemberController {
         return result;
     }
     @PostMapping("/logout")
-    public RsData<MemberLoginResponseDto> logout(@Valid @RequestBody MemberLoginRequestDto request, HttpServletResponse response) {
-
+    public RsData<MemberLoginResponseDto> logout() {
         requestContext.deleteCookie("accessToken");
         return new RsData<>("200", "로그아웃에 성공했습니다.", null);
     }
@@ -70,7 +69,7 @@ public class MemberController {
     @GetMapping("/me")
     public RsData<MemberResponseDto> myPage(){
         RsData<MemberResponseDto> result = memberService.myPage();
-        return new RsData<>("200","회원 정보 조회에 성공했습니다", null);
+        return result;
     }
 
 

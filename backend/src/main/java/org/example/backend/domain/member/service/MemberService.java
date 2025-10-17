@@ -51,10 +51,6 @@ public class MemberService {
     // 현재 인증된 사용자 ID 가져오기
     private Long getCurrentMemberId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails)) {
-            throw new ServiceException("401", "인증되지 않은 사용자입니다.", HttpStatus.UNAUTHORIZED);
-        }
-        
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         return userDetails.getMember().getMemberId();
     }
