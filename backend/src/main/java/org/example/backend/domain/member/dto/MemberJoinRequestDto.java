@@ -11,10 +11,8 @@ public record MemberJoinRequestDto(
 
     @NotBlank
     @Size(min = 8, max = 20)
-    String password, // 회원가입 요청 시 필수 정보 (누락된 부분)
+    String password,
 
     @NotBlank
-    String nickname,
-
-    String profileImage // 선택 사항일 수 있음
+    String nickname
 ) {}

@@ -31,10 +31,10 @@ public class FollowService {
         }
 
         // 멤버 존재 여부 확인
-        if (!memberService.existsById(follower)) {
+        if (memberService.notExistsById(follower)) {
             throw new ServiceException("404", "팔로워를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
-        if (!memberService.existsById(followee)) {
+        if (memberService.notExistsById(followee)) {
             throw new ServiceException("404", "팔로이를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
 
@@ -62,11 +62,11 @@ public class FollowService {
 
     public RsData<Void> unfollow(Long follower, Long followee) {
 
-        if (!memberService.existsById(follower)) {
+        if (memberService.notExistsById(follower)) {
             throw new ServiceException("404", "팔로워를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
 
-        if (!memberService.existsById(followee)) {
+        if (memberService.notExistsById(followee)) {
             throw new ServiceException("404", "팔로이를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
 
@@ -81,7 +81,7 @@ public class FollowService {
 
     @Transactional(readOnly = true)
     public RsData<FollowListResponseDto> getFollowers(Long memberId) {
-        if (!memberService.existsById(memberId)) {
+        if (memberService.notExistsById(memberId)) {
             throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
 
@@ -111,7 +111,7 @@ public class FollowService {
     // 팔로잉 목록 조회
     @Transactional(readOnly = true)
     public RsData<FollowListResponseDto> getFollowings(Long memberId) {
-        if (!memberService.existsById(memberId)) {
+        if (memberService.notExistsById(memberId)) {
             throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
 

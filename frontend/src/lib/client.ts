@@ -3,7 +3,7 @@ export function fetchApi(url: string, options?: RequestInit & { headers?: { [key
   
   // 기존 헤더와 새로 받은 헤더를 병합합니다.
   const headers = new Headers(newOptions.headers || {});
-  if (newOptions.body) {
+  if (newOptions.body && !(newOptions.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
   newOptions.headers = headers;

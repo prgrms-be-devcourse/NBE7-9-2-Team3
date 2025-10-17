@@ -1,6 +1,5 @@
 package org.example.backend.domain.member.controller;
 
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.dto.MemberEditRequestDto;
@@ -16,11 +15,14 @@ import org.example.backend.global.requestcontext.RequestContext;
 import org.example.backend.global.rsdata.RsData;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/members")
@@ -31,12 +33,14 @@ public class MemberController {
     private final RequestContext requestContext;
 
     @PostMapping("/join")
-    public RsData<MemberJoinResponseDto> join(@Valid @RequestBody MemberJoinRequestDto request) {
-        return memberService.join(request);
+    public RsData<MemberJoinResponseDto> join(
+        @Valid @ModelAttribute MemberJoinRequestDto request,
+        @RequestPart(required = false) MultipartFile profileImageFile) {
+        return memberService.join(request, profileImageFile);
     }
 
     @PostMapping("/login")
-    public RsData<MemberLoginResponseDto> login(@Valid @RequestBody MemberLoginRequestDto request, HttpServletResponse response) {
+    public RsData<MemberLoginResponseDto> login(@Valid @RequestBody MemberLoginRequestDto request) {
         RsData<MemberLoginResponseDto> result = memberService.login(request);
         // JWT 토큰을 HttpOnly 쿠키로 설정
         if (result.getData() != null) {
@@ -55,8 +59,10 @@ public class MemberController {
     }
 
     @PutMapping("/me")
-    public RsData<MemberEditResponseDto> edit(@Valid @RequestBody MemberEditRequestDto request) {
-        RsData<MemberEditResponseDto> result = memberService.edit(request);
+    public RsData<MemberEditResponseDto> edit(
+        @Valid @ModelAttribute MemberEditRequestDto request,
+        @RequestPart(required = false) MultipartFile profileImage) {
+        RsData<MemberEditResponseDto> result = memberService.edit(request, profileImage);
         
         // 새로운 토큰이 있는 경우 쿠키 업데이트
         if (result.getData() != null && result.getData().newAccessToken() != null) {
@@ -68,8 +74,7 @@ public class MemberController {
 
     @GetMapping("/me")
     public RsData<MemberResponseDto> myPage(){
-        RsData<MemberResponseDto> result = memberService.myPage();
-        return result;
+        return memberService.myPage();
     }
 
 

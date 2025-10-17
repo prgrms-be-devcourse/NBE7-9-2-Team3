@@ -9,7 +9,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  signup: (email: string, password: string, nickname: string, profileImage?: string) => Promise<void>;
+  signup: (email: string, password: string, nickname: string, profileImage?: File) => Promise<void>;
   loading: boolean;
 }
 
@@ -32,12 +32,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const isAuthenticated = !!user;
 
-  // 컴포넌트 마운트 시 사용자 정보 확인 (선택적)
+  // 컴포넌트 마운트 시 사용자 정보 확인
   useEffect(() => {
-    // 로그인 상태 확인을 시도하되, 실패해도 앱이 정상 작동하도록 함
-    checkAuthStatus().catch(() => {
-      // 조용히 실패 처리
-    });
+    checkAuthStatus();
   }, []);
 
   const checkAuthStatus = async () => {
@@ -47,13 +44,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(data.data);
       }
     } catch (error) {
-      // 네트워크 오류나 서버 연결 실패는 조용히 처리
+      // 로그인하지 않은 상태에서는 조용히 처리
       if (error instanceof Error && (
         error.message.includes('Failed to fetch') || 
-        error.message.includes('NetworkError') ||
-        error.message.includes('fetch')
+        error.message.includes('HTTP 401') ||
+        error.message.includes('HTTP 403') ||
+        error.message.includes('HTTP 404')
       )) {
-        console.warn('서버 연결을 확인할 수 없습니다. 로그인이 필요할 수 있습니다.');
+        // 로그인하지 않은 상태이므로 조용히 처리
+        console.log('사용자가 로그인하지 않았습니다.');
       } else {
         console.error('Auth check failed:', error);
       }
@@ -61,6 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     }
   };
+
 
   const login = async (email: string, password: string) => {
     setLoading(true);
@@ -76,6 +76,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           memberId: data.data.memberId,
           email: data.data.email,
           nickname: data.data.nickname,
+          profileImage: data.data.profileImage,
         });
       }
     } catch (error) {
@@ -86,19 +87,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signup = async (email: string, password: string, nickname: string, profileImage?: string) => {
+  const signup = async (email: string, password: string, nickname: string, profileImage?: File) => {
     setLoading(true);
     try {
-      const signupData: SignupRequest = { 
-        email, 
-        password, 
-        nickname, 
-        profileImage: profileImage || undefined 
-      };
+      const formData = new FormData();
+      formData.append('email', email.trim());
+      formData.append('password', password.trim());
+      formData.append('nickname', nickname.trim());
+      if (profileImage) {
+        formData.append('profileImageFile', profileImage);
+      }
       
       const data: ApiResponse<SignupResponse> = await fetchApi('/api/members/join', {
         method: 'POST',
-        body: JSON.stringify(signupData),
+        body: formData,
       });
 
       if (data.data) {
