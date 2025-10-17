@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import ImageUpload from '../components/ImageUpload';
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -11,7 +12,7 @@ export default function SignupPage() {
     password: '',
     confirmPassword: '',
     nickname: '',
-    profileImage: ''
+    profileImage: null as File | null
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const { signup, loading } = useAuth();
@@ -70,7 +71,7 @@ export default function SignupPage() {
     if (!validateForm()) return;
 
     try {
-      await signup(formData.email, formData.password, formData.nickname, formData.profileImage);
+      await signup(formData.email, formData.password, formData.nickname, formData.profileImage || undefined);
       router.push('/');
     } catch (error) {
       console.error('Signup error:', error);
@@ -186,19 +187,27 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label htmlFor="profileImage" className="block text-sm font-medium text-gray-700">
-                프로필 이미지 URL (선택사항)
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                프로필 이미지 (선택사항)
               </label>
-              <input
-                id="profileImage"
-                name="profileImage"
-                type="url"
-                value={formData.profileImage}
-                onChange={handleInputChange}
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="프로필 이미지 URL을 입력하세요"
-                disabled={loading}
+              <ImageUpload
+                onImageUpload={(file) => {
+                  setFormData(prev => ({ ...prev, profileImage: file }));
+                }}
+                directory="profile"
+                multiple={false}
+                className="mt-1"
               />
+              {formData.profileImage && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600">선택된 이미지:</p>
+                  <img 
+                    src={URL.createObjectURL(formData.profileImage)} 
+                    alt="프로필 미리보기" 
+                    className="w-16 h-16 object-cover rounded-full mt-1"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

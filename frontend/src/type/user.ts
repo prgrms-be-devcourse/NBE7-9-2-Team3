@@ -23,6 +23,7 @@ export interface LoginResponse {
   memberId: number;
   email: string;
   nickname: string;
+  profileImage?: string;
 }
 
 export interface SignupResponse {

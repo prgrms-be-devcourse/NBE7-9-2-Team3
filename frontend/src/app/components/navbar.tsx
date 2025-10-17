@@ -99,7 +99,22 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <span className="text-gray-700">안녕하세요, {user.nickname}님!</span>
+                <div className="flex items-center space-x-3">
+                  {user.profileImage ? (
+                    <img 
+                      src={user.profileImage} 
+                      alt="프로필" 
+                      className="w-8 h-8 rounded-full object-cover border-2 border-gray-300"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                  <span className="text-gray-700">안녕하세요, {user.nickname}님!</span>
+                </div>
                 <button
                   onClick={logout}
                   className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700"
