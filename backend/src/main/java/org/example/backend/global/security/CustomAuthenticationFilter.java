@@ -70,7 +70,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         if (!headerAuthorization.isBlank()) {
             if (!headerAuthorization.startsWith("Bearer "))
-                throw new ServiceException("401-2", "Authorization 헤더가 Bearer 형식이 아닙니다.", HttpStatus.UNAUTHORIZED);
+                throw new ServiceException("401", "Authorization 헤더가 Bearer 형식이 아닙니다.", HttpStatus.UNAUTHORIZED);
 
             accessToken = headerAuthorization.substring(7);
         } else {
@@ -78,13 +78,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (accessToken == null || accessToken.isBlank()) {
-            throw new ServiceException("401-1", "Access Token이 없습니다.", HttpStatus.UNAUTHORIZED);
+            throw new ServiceException("401", "Access Token이 없습니다.", HttpStatus.UNAUTHORIZED);
         }
 
         Map<String, Object> payload = authTokenService.payloadOrNull(accessToken);
 
         if (payload == null) {
-            throw new ServiceException("401-3", "Access Token이 유효하지 않습니다.", HttpStatus.UNAUTHORIZED);
+            throw new ServiceException("401", "Access Token이 유효하지 않습니다.", HttpStatus.UNAUTHORIZED);
         }
 
         long id = (long) payload.get("id");
