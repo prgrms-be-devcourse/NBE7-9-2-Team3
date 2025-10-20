@@ -28,7 +28,6 @@ public class TradeChatController {
      */
     @MessageMapping("/{roomId}")
     public void sendMessage(@DestinationVariable Long roomId, TradeChatMessageDto request) {
-        System.out.println("📩 [Controller] sendMessage() called with roomId=" + roomId);
         tradeChatService.sendMessage(roomId, request);
     }
 
