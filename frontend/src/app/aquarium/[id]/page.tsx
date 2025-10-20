@@ -697,7 +697,7 @@ export default function AquariumDetailPage() {
             onClick={handleAddEnvironment}
             className="bg-purple-200 text-purple-800 px-4 py-2 rounded-lg font-medium"
           >
-            + 환경 데이터 추가
+            + 추가
           </button>
         </div>
 
