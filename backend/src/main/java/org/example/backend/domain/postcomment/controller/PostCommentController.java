@@ -9,7 +9,7 @@ import org.example.backend.domain.postcomment.dto.PostCommentModifyRequestDto;
 import org.example.backend.domain.postcomment.dto.PostCommentReadResponseDto;
 import org.example.backend.domain.postcomment.entity.PostComment;
 import org.example.backend.domain.postcomment.service.PostCommentService;
-import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +33,7 @@ public class PostCommentController {
     // 게시글에 달린 댓글 확인
     @GetMapping
     @Transactional(readOnly = true)
-    public RsData<List<PostCommentReadResponseDto>> getPostComments(
+    public ApiResponse<List<PostCommentReadResponseDto>> getPostComments(
         @RequestParam Long postId
     ) {
 
@@ -46,7 +46,7 @@ public class PostCommentController {
             ))
             .toList();
 
-        return new RsData<>("200-1",
+        return new ApiResponse<>("200-1",
             "댓글 목록 조회",
             response
         );
@@ -54,7 +54,7 @@ public class PostCommentController {
 
     @GetMapping("/my")
     @Transactional(readOnly = true)
-    public RsData<List<MyPostCommentReadResponseDto>> getMyPostComments(
+    public ApiResponse<List<MyPostCommentReadResponseDto>> getMyPostComments(
         @RequestParam(required = false) BoardType boardType,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -68,7 +68,7 @@ public class PostCommentController {
             ))
             .toList();
 
-        return new RsData<>("200-1",
+        return new ApiResponse<>("200-1",
             "내가 쓴 댓글 목록 조회",
             response
         );
@@ -76,7 +76,7 @@ public class PostCommentController {
 
     @DeleteMapping("/{commentId}")
     @Transactional
-    public RsData<Void> deletePostComment(
+    public ApiResponse<Void> deletePostComment(
         @PathVariable Long commentId,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -91,7 +91,7 @@ public class PostCommentController {
 
         postCommentService.deletePostComment(postComment);
 
-        return  new RsData<>(
+        return  new ApiResponse<>(
             "200-1",
             "%d번 댓글 삭제".formatted(commentId)
         );
@@ -100,14 +100,14 @@ public class PostCommentController {
 
     @PostMapping
     @Transactional
-    public RsData<Void> createPostComment(
+    public ApiResponse<Void> createPostComment(
         @RequestBody PostCommentCreateRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
         postCommentService.createPostComment(reqBody, userDetails.getMember());
 
-        return new RsData<>(
+        return new ApiResponse<>(
             "201-1",
             "댓글이 생성되었습니다."
         );
@@ -116,7 +116,7 @@ public class PostCommentController {
 
     @PatchMapping("/{commentId}")
     @Transactional
-    public RsData<Void> modifyItem(
+    public ApiResponse<Void> modifyItem(
         @PathVariable Long commentId,
         @RequestBody PostCommentModifyRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -132,7 +132,7 @@ public class PostCommentController {
 
         postCommentService.modifyPostComment(postComment, reqBody);
 
-        return new RsData<>(
+        return new ApiResponse<>(
             "200-1",
             "%d번 댓글이 수정되었습니다.".formatted(commentId)
         );

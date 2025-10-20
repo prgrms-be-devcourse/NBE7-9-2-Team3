@@ -9,7 +9,7 @@ import org.example.backend.domain.fish.dto.FishListResponseDto;
 import org.example.backend.domain.fish.dto.FishUpdateResponseDto;
 import org.example.backend.domain.fish.entity.Fish;
 import org.example.backend.domain.fish.service.FishService;
-import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.response.ApiResponse;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,21 +28,21 @@ public class FishController {
 
   // 물고기 생성
   @PostMapping("/{aquariumId}/fish")
-  public RsData<FishCreateResponseDto> createFish(
+  public ApiResponse<FishCreateResponseDto> createFish(
       @PathVariable Long aquariumId,
       @RequestBody FishRequestDto fishRequestDto
   ) {
     Fish fish = fishService.createFish(aquariumId, fishRequestDto);
     FishCreateResponseDto fishCreateResponseDto = new FishCreateResponseDto(fish);
 
-    return new RsData<>("201", "물고기가 생성되었습니다.", fishCreateResponseDto);
+    return new ApiResponse<>("201", "물고기가 생성되었습니다.", fishCreateResponseDto);
   }
 
   // 물고기 다건 조회
   @GetMapping("/{aquariumId}/fish")
-  public RsData<List<FishListResponseDto>> getFishes(@PathVariable Long aquariumId) {
+  public ApiResponse<List<FishListResponseDto>> getFishes(@PathVariable Long aquariumId) {
 
-    return new RsData<>(
+    return new ApiResponse<>(
         "200",
         "물고기들이 조회되었습니다.",
         fishService.findAllByAquariumId(aquariumId).reversed().stream()
@@ -52,14 +52,14 @@ public class FishController {
 
   // 물고기 수정
   @PutMapping("/{aquariumId}/fish/{fishId}")
-  public RsData<FishUpdateResponseDto> updateFish(
+  public ApiResponse<FishUpdateResponseDto> updateFish(
       @PathVariable Long aquariumId, @PathVariable Long fishId,
       @RequestBody FishRequestDto fishRequestDto
   ) {
     Fish fish = fishService.updateFish(aquariumId, fishId, fishRequestDto);
     FishUpdateResponseDto fishUpdateResponseDto = new FishUpdateResponseDto(fish);
 
-    return new RsData<>(
+    return new ApiResponse<>(
         "200",
         "물고기 종과 이름이 수정되었습니다.",
         fishUpdateResponseDto
@@ -68,9 +68,9 @@ public class FishController {
 
   // 물고기 삭제
   @DeleteMapping("/{aquariumId}/fish/{fishId}")
-  public RsData<Void> deleteFish(@PathVariable Long aquariumId, @PathVariable Long fishId) {
+  public ApiResponse<Void> deleteFish(@PathVariable Long aquariumId, @PathVariable Long fishId) {
     fishService.deleteFish(aquariumId, fishId);
 
-    return new RsData<>("204", "물고기가 삭제되었습니다.");
+    return new ApiResponse<>("204", "물고기가 삭제되었습니다.");
   }
 }
