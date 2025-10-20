@@ -7,71 +7,75 @@ import org.example.backend.domain.trade.dto.TradeRequestDto;
 import org.example.backend.domain.trade.dto.TradeResponseDto;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.service.TradeService;
-import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/market")
+@RequestMapping("/api/market/{boardType}")
 @RequiredArgsConstructor
 public class TradeController {
 
     private final TradeService tradeService;
 
-    @PostMapping("/{boardType}")
-    public RsData<TradeResponseDto> createTrade(
+    @PostMapping
+    public ApiResponse<TradeResponseDto> createTrade(
         @PathVariable String boardType,
-        @Valid @RequestBody TradeRequestDto request) {
+        @Valid @ModelAttribute TradeRequestDto request,
+        @RequestPart(required = false) List<MultipartFile> images) {
         BoardType type = BoardType.from(boardType);
-        TradeResponseDto trade = tradeService.createTrade(request, type);
-        return new RsData<>("201-1", "거래 게시글 등록 성공", trade);
+        TradeResponseDto trade = tradeService.createTrade(request, type, images);
+        return ApiResponse.ok("거래 게시글 등록 성공", trade);
     }
 
-    @GetMapping("/{boardType}")
-    public RsData<List<TradeResponseDto>> getAllTrades(
+    @GetMapping
+    public ApiResponse<List<TradeResponseDto>> getAllTrades(
         @PathVariable String boardType) {
         BoardType type = BoardType.from(boardType);
         List<TradeResponseDto> trades = tradeService.getAllTrade(type);
-        return new RsData<>("200-1", "거래 게시글 목록 조회 성공", trades);
+        return ApiResponse.ok("거래 게시글 목록 조회 성공", trades);
     }
 
-    @GetMapping("/{boardType}/{tradeId}")
-    public RsData<TradeResponseDto> getTrade(
+    @GetMapping("/{tradeId}")
+    public ApiResponse<TradeResponseDto> getTrade(
         @PathVariable String boardType,
         @PathVariable Long tradeId) {
         BoardType type = BoardType.from(boardType);
         TradeResponseDto trade = tradeService.getTrade(type, tradeId);
-        return new RsData<>("200-2", "거래 게시글 조회 성공", trade);
+        return ApiResponse.ok("거래 게시글 조회 성공", trade);
     }
 
-    @PutMapping("/{boardType}/{tradeId}")
-    public RsData<TradeResponseDto> updateTrade(
+    @PutMapping("/{tradeId}")
+    public ApiResponse<TradeResponseDto> updateTrade(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable String boardType,
         @PathVariable Long tradeId,
-        @Valid @RequestBody TradeRequestDto request) {
+        @Valid @ModelAttribute TradeRequestDto request,
+        @RequestPart(required = false) List<MultipartFile> images) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
-        TradeResponseDto trade = tradeService.updateTrade(type, tradeId, memberId, request);
-        return new RsData<>("200-3", "거래 게시글 수정 성공", trade);
+        TradeResponseDto trade = tradeService.updateTrade(type, tradeId, memberId, request, images);
+        return ApiResponse.ok("거래 게시글 수정 성공", trade);
     }
 
-    @DeleteMapping("/{boardType}/{tradeId}")
-    public RsData<Void> deleteTrade(
+    @DeleteMapping("/{tradeId}")
+    public ApiResponse<Void> deleteTrade(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable String boardType,
         @PathVariable Long tradeId) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
         tradeService.deleteTrade(type, tradeId, memberId);
-        return new RsData<>("204-1", "거래 게시글 삭제 성공");
+        return ApiResponse.ok("거래 게시글 삭제 성공");
     }
 }

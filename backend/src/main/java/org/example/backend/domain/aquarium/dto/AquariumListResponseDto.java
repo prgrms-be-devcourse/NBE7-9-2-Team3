@@ -3,13 +3,13 @@ package org.example.backend.domain.aquarium.dto;
 import java.time.LocalDateTime;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 
-public record AquariumDto(
-    Long AquariumId,
-    String AquariumName,
+public record AquariumListResponseDto(
+    Long aquariumId,
+    String aquariumName,
     LocalDateTime createDate
 ) {
 
-  public AquariumDto(Aquarium aquarium) {
+  public AquariumListResponseDto(Aquarium aquarium) {
     this(
         aquarium.getId(),
         aquarium.getName(),

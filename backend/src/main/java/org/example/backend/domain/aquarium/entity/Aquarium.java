@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.PositiveOrZero;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +28,14 @@ public class Aquarium extends BaseEntity {
   // 기본값 = false
   private boolean ownedAquarium;
 
+  @Column(columnDefinition = "int default 0") // 기본값 = 0
+  @PositiveOrZero // 0 이상의 숫자만 가능
+  private int cycleDate;
+
+  private LocalDateTime lastDate;
+
+  private LocalDateTime nextDate;
+
   public Aquarium(Member member, String name) {
     this.member = member;
     this.name = name;
@@ -35,5 +45,11 @@ public class Aquarium extends BaseEntity {
     this.member = member;
     this.name = name;
     this.ownedAquarium = ownedAquarium;
+  }
+
+  public void changeSchedule(int cycleDate, LocalDateTime lastDate, LocalDateTime nextDate) {
+    this.cycleDate = cycleDate;
+    this.lastDate = lastDate;
+    this.nextDate = nextDate;
   }
 }

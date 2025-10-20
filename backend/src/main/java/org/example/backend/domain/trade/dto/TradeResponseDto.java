@@ -32,7 +32,7 @@ public record TradeResponseDto(
             trade.getStatus(),
             trade.getCategory(),
             trade.getCreateDate(),
-            null  // 이미지는 나중에 처리
+            trade.getImageUrls()
         );
     }
 }
