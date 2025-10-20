@@ -104,7 +104,7 @@ export default function AquariumsPage() {
       // 물고기 존재 시, "내가 키운 물고기" 어항으로 물고기 이동 여부 확인
       // 물고기 이동에 동의한다면, "내가 키운 물고기"로 물고기 이동시킨 후, 해당 어항 삭제
       // 물고기 이동에 동의하지 않는다면, 물고기 이동X, 어항 삭제X
-      if (responseData.data === "물고기 존재") {
+      if (responseData.data === true) {
         const confirmMove = window.confirm(
           '어항에 물고기가 존재합니다.\n물고기를 "🐟 🐡 내가 키운 물고기" 어항으로 이동 후, 삭제하시겠습니까?'
         );
@@ -144,7 +144,7 @@ export default function AquariumsPage() {
       }
 
       // 물고기 존재 안할 시, 해당 어항 바로 삭제 
-      else if (responseData.data === "물고기 없음") {
+      else if (responseData.data === false) {
         await fetch(`${baseUrl}/api/aquarium/${id}/delete`, {
           method: 'DELETE',
           credentials: 'include',
