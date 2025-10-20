@@ -23,11 +23,11 @@ public class ApiResponse<T> {
         return new ApiResponse<>("200", "성공", data);
     }
 
-    public static <T> ApiResponse<T> success(String message, T data) {
+    public static <T> ApiResponse<T> ok(String message, T data) {
         return new ApiResponse<>("200", message, data);
     }
 
-    public static ApiResponse<Void> success(String message) {
+    public static ApiResponse<Void> ok(String message) {
         return new ApiResponse<>("200", message, null);
     }
 
