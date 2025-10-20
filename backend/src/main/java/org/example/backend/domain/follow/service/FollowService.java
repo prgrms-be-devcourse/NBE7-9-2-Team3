@@ -7,7 +7,7 @@ import org.example.backend.domain.follow.repository.FollowRepository;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.service.MemberService;
 import org.example.backend.global.exception.ServiceException;
-import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +24,7 @@ public class FollowService {
     private final MemberService memberService;
 
     // 팔로우하기
-    public RsData<FollowResponseDto> follow(Long followerId, Long followeeId) {
+    public ApiResponse<FollowResponseDto> follow(Long followerId, Long followeeId) {
 
         if (followerId.equals(followeeId)) {
             throw new ServiceException("400", "자기 자신을 팔로우할 수 없습니다.", HttpStatus.BAD_REQUEST);
@@ -63,22 +63,22 @@ public class FollowService {
             .profileImage("")
             .build();
 
-        return new RsData<>("200", "팔로우가 완료되었습니다.", responseDto);
+        return new ApiResponse<>("200", "팔로우가 완료되었습니다.", responseDto);
     }
 
-    public RsData<Void> unfollow(Long followerId, Long followeeId) {
+    public ApiResponse<Void> unfollow(Long followerId, Long followeeId) {
 
         if (!followRepository.existsByFollowerMemberIdAndFolloweeMemberId(followerId, followeeId)) {
             throw new ServiceException("400", "팔로우 관계가 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
 
         followRepository.deleteByFollowerMemberIdAndFolloweeMemberId(followerId, followeeId);
-        return new RsData<>("200", "언팔로우가 완료되었습니다.", null);
+        return new ApiResponse<>("200", "언팔로우가 완료되었습니다.", null);
     }
 
 
     @Transactional(readOnly = true)
-    public RsData<FollowListResponseDto> getFollowers(Long memberId) {
+    public ApiResponse<FollowListResponseDto> getFollowers(Long memberId) {
         if (memberService.notExistsById(memberId)) {
             throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
@@ -103,12 +103,12 @@ public class FollowService {
             .totalCount(totalCount)
             .build();
 
-        return new RsData<>("200", "팔로워 목록을 조회했습니다.", responseDto);
+        return new ApiResponse<>("200", "팔로워 목록을 조회했습니다.", responseDto);
     }
 
     // 팔로잉 목록 조회
     @Transactional(readOnly = true)
-    public RsData<FollowListResponseDto> getFollowings(Long memberId) {
+    public ApiResponse<FollowListResponseDto> getFollowings(Long memberId) {
         if (memberService.notExistsById(memberId)) {
             throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
         }
@@ -133,7 +133,7 @@ public class FollowService {
             .totalCount(totalCount)
             .build();
 
-        return new RsData<>("200", "팔로잉 목록을 조회했습니다.", responseDto);
+        return new ApiResponse<>("200", "팔로잉 목록을 조회했습니다.", responseDto);
     }
 
     // 팔로잉 여부 확인(추후에 게시글 조회 시 사용)

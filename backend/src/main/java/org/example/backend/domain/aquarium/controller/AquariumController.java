@@ -9,7 +9,7 @@ import org.example.backend.domain.aquarium.dto.AquariumResponseDto;
 import org.example.backend.domain.aquarium.dto.AquariumScheduleRequestDto;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.service.AquariumService;
-import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -30,7 +30,7 @@ public class AquariumController {
 
   // 어항 생성
   @PostMapping
-  public RsData<AquariumListResponseDto> createAquarium(
+  public ApiResponse<AquariumListResponseDto> createAquarium(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @RequestBody AquariumCreateRequestDto aquariumCreateRequestDto
   ) {
@@ -40,7 +40,7 @@ public class AquariumController {
     Aquarium aquarium = aquariumService.create(memberId, aquariumName);
     AquariumListResponseDto aquariumListResponseDto = new AquariumListResponseDto(aquarium);
 
-    return new RsData<>(
+    return new ApiResponse<>(
         "201",
         "%s 어항이 생성되었습니다.".formatted(aquariumName),
         aquariumListResponseDto
@@ -49,29 +49,29 @@ public class AquariumController {
 
   // 어항 다건 조회
   @GetMapping
-  public RsData<List<AquariumListResponseDto>> getAquariums(
+  public ApiResponse<List<AquariumResponseDto>> getAquariums(
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
     Long memberId = userDetails.getId();
 
-    return new RsData<>(
+    return new ApiResponse<>(
         "200",
         "어항 목록이 조회되었습니다.",
         aquariumService.findAllByMemberId(memberId).reversed().stream()
-            .map(AquariumListResponseDto::new).toList()
+            .map(AquariumResponseDto::new).toList()
     );
   }
 
   // 어항 단건 조회
   @GetMapping("/{id}")
-  public RsData<AquariumResponseDto> getAquariumName(@PathVariable Long id) {
+  public ApiResponse<AquariumResponseDto> getAquariumName(@PathVariable Long id) {
     String aquariumName = aquariumService.findById(id).get().getName();
     Aquarium aquarium = aquariumService.findById(id)
         .orElseThrow(() -> new RuntimeException("어항이 존재하지 않습니다."));
 
     AquariumResponseDto responseDto = new AquariumResponseDto(aquarium);
 
-    return new RsData<>(
+    return new ApiResponse<>(
         "200",
         "%s 어항이 조회되었습니다.".formatted(aquariumName),
         responseDto
@@ -80,47 +80,47 @@ public class AquariumController {
 
   // 삭제 전, 어항 속 물고기 존재 여부 확인
   @GetMapping("/{id}/delete")
-  public RsData<String> checkFishInAquarium(@PathVariable Long id) {
+  public ApiResponse<String> checkFishInAquarium(@PathVariable Long id) {
     boolean hasFish = aquariumService.hasFish(id);
 
     if (hasFish) {
-      return new RsData<>("200", "어항의 물고기 존재 여부를 확인했습니다.", "물고기 존재");
+      return new ApiResponse<>("200", "어항의 물고기 존재 여부를 확인했습니다.", "물고기 존재");
     } else {
-      return new RsData<>("200", "어항의 물고기 존재 여부를 확인했습니다.", "물고기 없음");
+      return new ApiResponse<>("200", "어항의 물고기 존재 여부를 확인했습니다.", "물고기 없음");
     }
   }
 
   // 삭제할 어항의 물고기를 '내가 키운 물고기' 어항으로 이동
   @PutMapping("/{id}/delete")
-  public RsData<Void> moveFishToOwnedAquarium(
+  public ApiResponse<String> moveFishToOwnedAquarium(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @PathVariable Long id
   ) {
     Long memberId = userDetails.getId();
     aquariumService.moveFishToOwnedAquarium(memberId, id);
 
-    return new RsData<>("200", "물고기들이 '내가 키운 물고기' 어항으로 이동되었습니다.");
+    return new ApiResponse<>("200", "물고기들이 '내가 키운 물고기' 어항으로 이동되었습니다.", "물고기 이동 완료");
   }
 
   // 어항 삭제
   @DeleteMapping("/{id}/delete")
-  public RsData<Void> deleteAquarium(@PathVariable Long id) {
+  public ApiResponse<Void> deleteAquarium(@PathVariable Long id) {
     String aquariumName = aquariumService.findById(id).get().getName();
     aquariumService.delete(id);
 
-    return new RsData<>("204", "%s 어항이 삭제되었습니다.".formatted(aquariumName));
+    return new ApiResponse<>("204", "%s 어항이 삭제되었습니다.".formatted(aquariumName));
   }
 
   // 어항 알림 스케줄 설정
   @PostMapping("/{id}/schedule")
-  public RsData<AquariumResponseDto> scheduleSetting(
+  public ApiResponse<AquariumResponseDto> scheduleSetting(
       @PathVariable Long id,
       @Valid @RequestBody AquariumScheduleRequestDto requestDto
   ) {
     Aquarium aquarium = aquariumService.scheduleSetting(id, requestDto);
 
     AquariumResponseDto responseDto = new AquariumResponseDto(aquarium);
-    return new RsData<>("200", "물갈이&어항세척 스케줄 알림이 설정되었습니다.", responseDto);
+    return new ApiResponse<>("200", "물갈이&어항세척 스케줄 알림이 설정되었습니다.", responseDto);
   }
 
 }

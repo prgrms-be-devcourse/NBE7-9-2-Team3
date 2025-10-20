@@ -5,7 +5,7 @@ import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.domain.member.service.AuthTokenService;
 import org.example.backend.global.exception.ServiceException;
 import org.example.backend.global.requestcontext.RequestContext;
-import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.response.ApiResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,7 +40,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         try {
             authenticate(request, response, filterChain);
         } catch (ServiceException e) {
-            RsData<?> rsData = e.getRsData();
+            ApiResponse<?> rsData = e.getRsData();
             response.setContentType("application/json; charset=UTF-8");
             response.setStatus(rsData.getStatusCode());
             response.getWriter().write("""

@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 
 public record AquariumResponseDto(
-    Long AquariumId,
-    String AquariumName,
+    Long aquariumId,
+    String aquariumName,
     LocalDateTime createDate,
     int notifyCycleDate,
     LocalDateTime lastNotifyDate,
