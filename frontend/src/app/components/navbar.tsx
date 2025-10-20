@@ -84,7 +84,7 @@ export default function Navbar() {
               
               {isMarketOpen && (
                 <div className="absolute left-0 top-full w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                  <Link href="/market/used" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  <Link href="/market/secondhand" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     중고물품 거래
                   </Link>
                   <Link href="/market/fish" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
