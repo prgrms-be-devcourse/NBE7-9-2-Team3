@@ -6,9 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.global.exception.ServiceException;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -66,8 +66,7 @@ public class ImageService {
                 bucket, region, fileName);
 
         } catch (Exception e) {
-            throw new ServiceException("500", "파일 업로드에 실패했습니다.",
-                HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new BusinessException(ErrorCode.IMAGE_NOT_UPLOADED);
         }
     }
 
@@ -97,7 +96,7 @@ public class ImageService {
             s3Client.deleteObject(deleteObjectRequest);
 
         } catch (Exception e) {
-            throw new ServiceException("500", "파일 삭제에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new BusinessException(ErrorCode.IMAGE_NOT_UPLOADED);
         }
     }
 
@@ -109,22 +108,21 @@ public class ImageService {
     /** 파일 유효성 검증 (크기, 확장자) */
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new ServiceException("400", "파일이 비어있습니다.", HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.IMAGE_FILE_EMPTY);
         }
 
         if (file.getSize() > MAX_FILE_SIZE) {
-            throw new ServiceException("400", "파일 크기는 5MB를 초과할 수 없습니다.", HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.IMAGE_SIZE_EXCEEDED);
         }
 
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null) {
-            throw new ServiceException("400", "파일 이름이 유효하지 않습니다.", HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.IMAGE_NAME_INVALID);
         }
 
         String extension = getFileExtension(originalFilename).toLowerCase();
         if (!ALLOWED_EXTENSIONS.contains(extension)) {
-            throw new ServiceException("400", "허용하지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)",
-                HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.IMAGE_EXTENSION_NOT_ALLOWED);
         }
     }
 
@@ -160,14 +158,13 @@ public class ImageService {
             // S3 URL 검증 (자체 버킷만 허용)
             String expectedHost = bucket + ".s3." + region + ".amazonaws.com";
             if (!url.getHost().equals(expectedHost)) {
-                throw new ServiceException("400", "허용되지 않은 URL입니다.", HttpStatus.BAD_REQUEST);
+                throw new BusinessException(ErrorCode.IMAGE_URL_NOT_ALLOWED);
             }
             String path = url.getPath();
             return path.startsWith("/") ? path.substring(1) : path;
 
         } catch (MalformedURLException e) {
-            throw new ServiceException("400", "유효하지 않은 S3 URL 형식입니다: " + fileUrl,
-                HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.IMAGE_URL_INVALID);
         }
     }
 }

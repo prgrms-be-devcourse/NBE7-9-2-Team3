@@ -32,7 +32,8 @@ public enum ErrorCode {
 
     // ========== TradeComment 도메인 에러 ==========
     TRADE_COMMENT_NOT_FOUND("TC001", HttpStatus.NOT_FOUND, "존재하지 않는 댓글입니다."),
-    TRADE_COMMENT_OWNER_MISMATCH("TC002", HttpStatus.FORBIDDEN, "댓글 작성자만 수정/삭제할 수 있습니다."),
+    TRADE_COMMENT_POST_MISMATCH("TC002", HttpStatus.BAD_REQUEST, "해당 게시글의 댓글이 아닙니다."),
+    TRADE_COMMENT_OWNER_MISMATCH("TC003", HttpStatus.FORBIDDEN, "댓글 작성자만 수정/삭제할 수 있습니다."),
 
     // ========== Follow 도메인 에러 ==========
     FOLLOW_SELF_FOLLOW("F001", HttpStatus.BAD_REQUEST, "자기 자신을 팔로우할 수 없습니다."),
@@ -53,7 +54,17 @@ public enum ErrorCode {
     POINT_HISTORY_NOT_FOUND("P002", HttpStatus.NOT_FOUND, "포인트 내역이 존재하지 않습니다."),
     POINT_INSUFFICIENT("P003", HttpStatus.BAD_REQUEST, "포인트가 부족합니다."),
     POINT_BUYER_NOT_FOUND("P004", HttpStatus.NOT_FOUND, "구매자가 존재하지 않습니다."),
-    POINT_SELLER_NOT_FOUND("P005", HttpStatus.NOT_FOUND, "판매자가 존재하지 않습니다.");
+    POINT_SELLER_NOT_FOUND("P005", HttpStatus.NOT_FOUND, "판매자가 존재하지 않습니다."),
+
+    // ========== Image 도메인 에러 ==========
+    IMAGE_NOT_UPLOADED("I001", HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다."),
+    IMAGE_NOT_DELETED("I002", HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제에 실패했습니다."),
+    IMAGE_FILE_EMPTY("I003", HttpStatus.BAD_REQUEST, "파일이 비어있습니다."),
+    IMAGE_SIZE_EXCEEDED("I004", HttpStatus.BAD_REQUEST, "파일 크기는 5MB를 초과할 수 없습니다."),
+    IMAGE_NAME_INVALID("I005", HttpStatus.BAD_REQUEST, "파일 이름이 유효하지 않습니다."),
+    IMAGE_EXTENSION_NOT_ALLOWED("I006", HttpStatus.BAD_REQUEST, "허용하지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)"),
+    IMAGE_URL_NOT_ALLOWED("I007", HttpStatus.BAD_REQUEST, "허용되지 않은 URL입니다."),
+    IMAGE_URL_INVALID("I008", HttpStatus.BAD_REQUEST, "유효하지 않은 S3 URL 형식입니다.");
 
     private final String code;
     private final HttpStatus status;
