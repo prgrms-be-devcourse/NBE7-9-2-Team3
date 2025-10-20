@@ -6,9 +6,9 @@ import org.example.backend.domain.follow.entity.Follow;
 import org.example.backend.domain.follow.repository.FollowRepository;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.service.MemberService;
-import org.example.backend.global.exception.ServiceException;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.example.backend.global.response.ApiResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,27 +27,27 @@ public class FollowService {
     public ApiResponse<FollowResponseDto> follow(Long followerId, Long followeeId) {
 
         if (followerId.equals(followeeId)) {
-            throw new ServiceException("400", "자기 자신을 팔로우할 수 없습니다.", HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.FOLLOW_SELF_FOLLOW);
         }
 
         // 멤버 존재 여부 확인
         if (memberService.notExistsById(followerId)) {
-            throw new ServiceException("404", "팔로워를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+            throw new BusinessException(ErrorCode.FOLLOW_NOT_FOUND);
         }
         if (memberService.notExistsById(followeeId)) {
-            throw new ServiceException("404", "팔로이를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+            throw new BusinessException(ErrorCode.FOLLOWEE_NOT_FOUND);
         }
 
         // 이미 팔로우하고 있는지 확인
         if (followRepository.existsByFollowerMemberIdAndFolloweeMemberId(followerId, followeeId)) {
-            throw new ServiceException("400", "이미 팔로우하고 있습니다.", HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.FOLLOW_ALREADY_EXISTS);
         }
 
         // Member 엔티티 조회 (존재 여부 확인과 함께)
         Member follower = memberService.findByMemberId(followerId).orElseThrow(
-            () -> new ServiceException("404", "팔로워를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+            () -> new BusinessException(ErrorCode.FOLLOW_NOT_FOUND));
         Member followee = memberService.findByMemberId(followeeId).orElseThrow(
-            () -> new ServiceException("404", "팔로이를 찾을 수 없습니다.", HttpStatus.NOT_FOUND));
+            () -> new BusinessException(ErrorCode.FOLLOWEE_NOT_FOUND));
 
         Follow followEntity = Follow.builder()
             .follower(follower)
@@ -63,24 +63,24 @@ public class FollowService {
             .profileImage("")
             .build();
 
-        return new ApiResponse<>("200", "팔로우가 완료되었습니다.", responseDto);
+        return ApiResponse.ok("팔로우가 완료되었습니다.", responseDto);
     }
 
     public ApiResponse<Void> unfollow(Long followerId, Long followeeId) {
 
         if (!followRepository.existsByFollowerMemberIdAndFolloweeMemberId(followerId, followeeId)) {
-            throw new ServiceException("400", "팔로우 관계가 존재하지 않습니다.", HttpStatus.BAD_REQUEST);
+            throw new BusinessException(ErrorCode.FOLLOW_NOT_FOUND);
         }
 
         followRepository.deleteByFollowerMemberIdAndFolloweeMemberId(followerId, followeeId);
-        return new ApiResponse<>("200", "언팔로우가 완료되었습니다.", null);
+        return ApiResponse.ok("언팔로우가 완료되었습니다.");
     }
 
 
     @Transactional(readOnly = true)
     public ApiResponse<FollowListResponseDto> getFollowers(Long memberId) {
         if (memberService.notExistsById(memberId)) {
-            throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+            throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
         }
 
         // 팔로워 목록과 멤버 정보를 함께 조회 (Fetch Join)
@@ -103,14 +103,14 @@ public class FollowService {
             .totalCount(totalCount)
             .build();
 
-        return new ApiResponse<>("200", "팔로워 목록을 조회했습니다.", responseDto);
+        return ApiResponse.ok("팔로워 목록을 조회했습니다.", responseDto);
     }
 
     // 팔로잉 목록 조회
     @Transactional(readOnly = true)
     public ApiResponse<FollowListResponseDto> getFollowings(Long memberId) {
         if (memberService.notExistsById(memberId)) {
-            throw new ServiceException("404", "사용자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+            throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
         }
 
         // 팔로잉 목록과 멤버 정보를 함께 조회 (Fetch Join)
@@ -133,7 +133,7 @@ public class FollowService {
             .totalCount(totalCount)
             .build();
 
-        return new ApiResponse<>("200", "팔로잉 목록을 조회했습니다.", responseDto);
+        return ApiResponse.ok("팔로잉 목록을 조회했습니다.", responseDto);
     }
 
     // 팔로잉 여부 확인(추후에 게시글 조회 시 사용)

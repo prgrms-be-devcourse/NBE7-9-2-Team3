@@ -10,10 +10,10 @@ import org.example.backend.domain.member.dto.MemberLoginRequestDto;
 import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.dto.MemberResponseDto;
 import org.example.backend.domain.member.service.MemberService;
-import org.example.backend.global.exception.ServiceException;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.example.backend.global.requestcontext.RequestContext;
 import org.example.backend.global.response.ApiResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,15 +47,15 @@ public class MemberController {
             // 로그인한 사용자 정보로 토큰 생성
             String accessToken = memberService.generateAccessToken(
                 memberService.findByEmail(request.email()).orElseThrow(
-                    ()->new ServiceException("404","이메일로 찾을 수 없습니다. Email: " + request.email(), HttpStatus.CONFLICT)));
+                    ()->new BusinessException(ErrorCode.MEMBER_NOT_FOUND)));
             requestContext.setCookie("accessToken", accessToken);
         }
         return result;
     }
     @PostMapping("/logout")
-    public ApiResponse<MemberLoginResponseDto> logout() {
+    public ApiResponse<Void> logout() {
         requestContext.deleteCookie("accessToken");
-        return new ApiResponse<>("200", "로그아웃에 성공했습니다.", null);
+        return ApiResponse.ok("로그아웃에 성공했습니다.");
     }
 
     @PutMapping("/me")

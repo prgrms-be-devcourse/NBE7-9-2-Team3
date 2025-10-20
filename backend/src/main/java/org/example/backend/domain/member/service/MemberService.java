@@ -12,11 +12,11 @@ import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.dto.MemberResponseDto;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
-import org.example.backend.global.exception.ServiceException;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.example.backend.global.image.ImageService;
 import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -66,12 +66,12 @@ public class MemberService {
     public Member create(String email, String password, String nickname, String profileImage) {
         // 이메일 중복 체크
         if (memberRepository.findByEmail(email).isPresent()) {
-            throw new ServiceException("409", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT);
+            throw new BusinessException(ErrorCode.MEMBER_EMAIL_DUPLICATE);
         }
 
         // 닉네임 중복 체크
         if (memberRepository.findByNickname(nickname).isPresent()) {
-            throw new ServiceException("409", "이미 사용 중인 닉네임입니다.", HttpStatus.CONFLICT);
+            throw new BusinessException(ErrorCode.MEMBER_NICKNAME_DUPLICATE);
         }
 
         // 비밀번호 암호화
@@ -105,15 +105,15 @@ public class MemberService {
         );
 
         MemberJoinResponseDto response = MemberJoinResponseDto.from(savedMember);
-        return new ApiResponse<>("201", "회원가입이 완료되었습니다.", response);
+        return ApiResponse.ok("회원가입이 완료되었습니다.", response);
     }
 
     public ApiResponse<MemberLoginResponseDto> login(MemberLoginRequestDto request) {
         Member member = memberRepository.findByEmail(request.email())
-            .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (!passwordEncoder.matches(request.password(), member.getPassword())) {
-            throw new ServiceException("401", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.MEMBER_PASSWORD_MISMATCH);
         }
 
         MemberLoginResponseDto response = new MemberLoginResponseDto(
@@ -122,7 +122,7 @@ public class MemberService {
             member.getNickname(),
             member.getProfileImage()
         );
-        return new ApiResponse<>("200", "로그인에 성공했습니다.", response);
+        return ApiResponse.ok("로그인에 성공했습니다.", response);
     }
 
     // JWT 토큰을 별도로 생성하는 메서드
@@ -134,11 +134,11 @@ public class MemberService {
     public ApiResponse<MemberEditResponseDto> edit(MemberEditRequestDto request, MultipartFile profileImage){
         // 현재 로그인한 사용자 조회
         Member member = memberRepository.findByMemberId(getCurrentMemberId())
-            .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         //  현재 비밀번호 재확인
         if (!passwordEncoder.matches(request.currentPassword(), member.getPassword())) {
-            throw new ServiceException("401", "현재 비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.MEMBER_PASSWORD_MISMATCH);
         }
 
         // 이메일이나 닉네임이 변경되는지 확인
@@ -148,14 +148,14 @@ public class MemberService {
         // 이메일 중복 체크 (현재 사용자와 다른 이메일인 경우)
         if (emailChanged) {
             if (memberRepository.findByEmail(request.email()).isPresent()) {
-                throw new ServiceException("409", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT);
+                throw new BusinessException(ErrorCode.MEMBER_EMAIL_DUPLICATE);
             }
         }
 
         // 닉네임 중복 체크 (현재 사용자와 다른 닉네임인 경우)
         if (nicknameChanged) {
             if (memberRepository.findByNickname(request.nickname()).isPresent()) {
-                throw new ServiceException("409", "이미 사용 중인 닉네임입니다.", HttpStatus.CONFLICT);
+                throw new BusinessException(ErrorCode.MEMBER_NICKNAME_DUPLICATE);
             }
         }
 
@@ -188,15 +188,15 @@ public class MemberService {
 
         // 응답 DTO 생성
         MemberEditResponseDto response = MemberEditResponseDto.from(updatedMember, newAccessToken);
-        return new ApiResponse<>("200", "회원정보 수정에 성공했습니다.", response);
+        return ApiResponse.ok("회원정보 수정에 성공했습니다.", response);
     }
     @Transactional
     public ApiResponse<MemberResponseDto> myPage(){
         // 현재 로그인한 사용자 조회
         Member member = memberRepository.findByMemberId(getCurrentMemberId())
-            .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         MemberResponseDto response = new MemberResponseDto(member,followCountService.getFollowerCount(member.getMemberId()),followCountService.getFollowingCount(member.getMemberId()));
-        return new ApiResponse<>("200", "회원 정보 조회에 성공했습니다.", response);
+        return ApiResponse.ok("회원 정보 조회에 성공했습니다.", response);
     }
 
 
