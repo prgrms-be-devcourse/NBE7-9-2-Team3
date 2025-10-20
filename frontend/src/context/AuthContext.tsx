@@ -10,6 +10,8 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signup: (email: string, password: string, nickname: string, profileImage?: File) => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
   loading: boolean;
 }
 
@@ -144,12 +146,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...userData } : null);
+  };
+
+  const refreshUser = async () => {
+    try {
+      console.log('사용자 정보 새로고침 시작');
+      const data: ApiResponse<User> = await fetchApi('/api/members/me');
+      console.log('새로고침된 사용자 데이터:', data);
+      if (data.data) {
+        setUser(data.data);
+        console.log('사용자 정보 업데이트 완료');
+      }
+    } catch (error) {
+      console.error('사용자 정보 새로고침 실패:', error);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
     login,
     logout,
     signup,
+    updateUser,
+    refreshUser,
     loading,
   };
 

@@ -60,9 +60,8 @@ public class MemberController {
 
     @PutMapping("/me")
     public ApiResponse<MemberEditResponseDto> edit(
-        @Valid @ModelAttribute MemberEditRequestDto request,
-        @RequestPart(required = false) MultipartFile profileImage) {
-        ApiResponse<MemberEditResponseDto> result = memberService.edit(request, profileImage);
+        @Valid @ModelAttribute MemberEditRequestDto request) {
+        ApiResponse<MemberEditResponseDto> result = memberService.edit(request, null);
         
         // 새로운 토큰이 있는 경우 쿠키 업데이트
         if (result.getData() != null && result.getData().newAccessToken() != null) {
@@ -77,5 +76,17 @@ public class MemberController {
         return memberService.myPage();
     }
 
+    @PutMapping("/me/profile-image")
+    public ApiResponse<MemberEditResponseDto> updateProfileImage(
+        @RequestPart MultipartFile profileImage) {
+        ApiResponse<MemberEditResponseDto> result = memberService.updateProfileImage(profileImage);
+        
+        // 새로운 토큰이 있는 경우 쿠키 업데이트
+        if (result.getData() != null && result.getData().newAccessToken() != null) {
+            requestContext.setCookie("accessToken", result.getData().newAccessToken());
+        }
+        
+        return result;
+    }
 
 }

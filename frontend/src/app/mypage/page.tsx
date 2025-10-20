@@ -133,8 +133,14 @@ export default function MyPage() {
               </div>
             </div>
 
-            {/* 편집 버튼 */}
-            <div className="flex-shrink-0">
+            {/* 편집 버튼들 */}
+            <div className="flex-shrink-0 flex space-x-3">
+              <button
+                onClick={() => router.push('/mypage/profile-image')}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+              >
+                프로필 이미지
+              </button>
               <button
                 onClick={() => router.push('/mypage/edit')}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
