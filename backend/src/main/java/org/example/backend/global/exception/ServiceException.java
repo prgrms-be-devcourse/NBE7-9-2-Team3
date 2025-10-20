@@ -1,6 +1,6 @@
 package org.example.backend.global.exception;
 
-import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 
 public class ServiceException extends RuntimeException {
@@ -28,7 +28,7 @@ public class ServiceException extends RuntimeException {
         return httpStatus;
     }
 
-    public RsData getRsData() {
-        return new RsData(resultCode, msg);
+    public ApiResponse getRsData() {
+        return new ApiResponse(resultCode, msg);
     }
 }

@@ -1,4 +1,4 @@
-package org.example.backend.global.rsdata;
+package org.example.backend.global.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
@@ -6,13 +6,13 @@ import lombok.Getter;
 
 @AllArgsConstructor
 @Getter
-public class RsData<T> {
+public class ApiResponse<T> {
 
     private String resultCode;
     private String msg;
     private T data;
 
-    public RsData(String resultCode, String msg) {
+    public ApiResponse(String resultCode, String msg) {
         this.resultCode = resultCode;
         this.msg = msg;
         this.data = null;

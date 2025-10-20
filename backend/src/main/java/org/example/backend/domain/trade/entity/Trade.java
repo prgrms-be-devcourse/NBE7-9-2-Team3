@@ -81,4 +81,19 @@ public class Trade {
         this.category = category;
     }
 
+    public void addImage(String imageUrl) {
+        TradeImage tradeImage = TradeImage.of(this, imageUrl);
+        this.images.add(tradeImage);
+    }
+
+    public void clearImages() {
+        this.images.clear();
+    }
+
+    public List<String> getImageUrls() {
+        return images.stream()
+            .map(TradeImage::getImage)
+            .toList();
+    }
+
 }
