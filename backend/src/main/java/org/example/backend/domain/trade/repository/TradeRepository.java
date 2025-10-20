@@ -10,7 +10,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TradeRepository extends JpaRepository<Trade, Long> {
 
-    List<Trade> findByBoardType(BoardType boardType);
-
     Page<Trade> findByBoardType(BoardType boardType, Pageable pageable);
 }

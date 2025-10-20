@@ -14,6 +14,7 @@ import org.example.backend.domain.trade.dto.TradeSearchRequestDto;
 import org.example.backend.domain.trade.dto.TradeUpdateRequestDto;
 import org.example.backend.domain.trade.entity.Trade;
 import org.example.backend.domain.trade.enums.BoardType;
+import org.example.backend.domain.trade.enums.TradeStatus;
 import org.example.backend.domain.trade.repository.TradeRepository;
 import org.example.backend.global.exception.BusinessException;
 import org.example.backend.global.exception.ErrorCode;
@@ -53,7 +54,7 @@ public class TradeService {
             request.title(),
             request.description(),
             request.price(),
-            null,
+            TradeStatus.SELLING,
             request.category(),
             java.time.LocalDateTime.now()
         );
