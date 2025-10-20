@@ -60,7 +60,7 @@ public class MemberController {
 
     @PutMapping("/me")
     public ApiResponse<MemberEditResponseDto> edit(
-        @Valid @RequestBody MemberEditRequestDto request,
+        @Valid @ModelAttribute MemberEditRequestDto request,
         @RequestPart(required = false) MultipartFile profileImage) {
         ApiResponse<MemberEditResponseDto> result = memberService.edit(request, profileImage);
         

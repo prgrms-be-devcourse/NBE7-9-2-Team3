@@ -1,6 +1,7 @@
 spring:
   profiles:
-    active: test
+    active: test,init-data
+    # init-data 프로파일을 추가하려면: active: test,init-data
   jpa:
     hibernate:
       ddl-auto: update
