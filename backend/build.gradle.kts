@@ -42,6 +42,8 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("com.fasterxml.jackson.core:jackson-databind")
     implementation(platform("software.amazon.awssdk:bom:2.20.26"))
     implementation("software.amazon.awssdk:s3")
 }

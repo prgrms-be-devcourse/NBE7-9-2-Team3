@@ -15,4 +15,6 @@ public interface FishLogRepository extends JpaRepository<FishLog, Long> {
     
     // Fish 엔티티로 로그 조회
     List<FishLog> findByFish(Fish fish);
+
+    void deleteAllByFish(Fish fish);
 }
