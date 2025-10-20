@@ -15,6 +15,7 @@ import org.example.backend.global.requestcontext.RequestContext;
 import org.example.backend.global.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,7 +34,7 @@ public class MemberController {
 
     @PostMapping("/join")
     public ApiResponse<MemberJoinResponseDto> join(
-        @Valid @RequestBody MemberJoinRequestDto request,
+        @Valid @ModelAttribute MemberJoinRequestDto request,
         @RequestPart(required = false) MultipartFile profileImageFile) {
         return memberService.join(request, profileImageFile);
     }

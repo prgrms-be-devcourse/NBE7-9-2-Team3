@@ -65,13 +65,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        // [FIX] CORS preflight OPTIONS 요청은 인증 없이 통과
-        // OPTIONS는 실제 데이터 조작이 없고 브라우저가 CORS 정책 확인용으로만 사용
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
         String accessToken;
         String headerAuthorization = rq.getHeader("Authorization", "");
 
