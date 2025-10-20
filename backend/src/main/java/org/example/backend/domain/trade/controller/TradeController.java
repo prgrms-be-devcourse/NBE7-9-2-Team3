@@ -3,6 +3,7 @@ package org.example.backend.domain.trade.controller;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.trade.dto.PageResponseDto;
 import org.example.backend.domain.trade.dto.TradeRequestDto;
 import org.example.backend.domain.trade.dto.TradeResponseDto;
 import org.example.backend.domain.trade.enums.BoardType;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,11 +41,15 @@ public class TradeController {
     }
 
     @GetMapping
-    public ApiResponse<List<TradeResponseDto>> getAllTrades(
-        @PathVariable String boardType) {
+    public ApiResponse<PageResponseDto<TradeResponseDto>> getAllTrade(
+        @PathVariable String boardType,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "latest") String sort) {
+
         BoardType type = BoardType.from(boardType);
-        List<TradeResponseDto> trades = tradeService.getAllTrade(type);
-        return ApiResponse.ok("거래 게시글 목록 조회 성공", trades);
+        PageResponseDto<TradeResponseDto> trades = tradeService.getAllTrade(type, page, size, sort);
+        return ApiResponse.ok("거래 게시글 페이징 조회 성공", trades);
     }
 
     @GetMapping("/{tradeId}")

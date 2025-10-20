@@ -6,6 +6,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
+import org.example.backend.domain.trade.dto.PageResponseDto;
 import org.example.backend.domain.trade.dto.TradeRequestDto;
 import org.example.backend.domain.trade.dto.TradeResponseDto;
 import org.example.backend.domain.trade.entity.Trade;
@@ -14,6 +15,10 @@ import org.example.backend.domain.trade.repository.TradeRepository;
 import org.example.backend.global.exception.BusinessException;
 import org.example.backend.global.exception.ErrorCode;
 import org.example.backend.global.image.ImageService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,14 +52,23 @@ public class TradeService {
         return TradeResponseDto.from(saved);
     }
 
-    public List<TradeResponseDto> getAllTrade(BoardType boardType) {
+    public PageResponseDto<TradeResponseDto> getAllTrade(BoardType boardType, int page,
+        int size, String sortType) {
+
         if (boardType == null) {
             throw new BusinessException(ErrorCode.TRADE_BOARD_TYPE_INVALID);
         }
 
-        return tradeRepository.findByBoardType(boardType).stream()
-            .map(TradeResponseDto::from)
-            .toList();
+        Sort sort = switch (sortType) {
+            case "price-asc" -> Sort.by(Sort.Direction.ASC, "price");
+            case "price-desc" -> Sort.by(Sort.Direction.DESC, "price");
+            default -> Sort.by(Sort.Direction.DESC, "createDate");
+        };
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        Page<Trade> tradePage = tradeRepository.findByBoardType(boardType, pageable);
+        Page<TradeResponseDto> responsePage = tradePage.map(TradeResponseDto::from);
+        return PageResponseDto.from(responsePage);
     }
 
     public TradeResponseDto getTrade(BoardType boardType, Long id) {
