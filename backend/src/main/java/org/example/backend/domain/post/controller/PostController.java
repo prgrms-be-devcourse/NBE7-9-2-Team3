@@ -11,7 +11,7 @@ import org.example.backend.domain.post.entity.Post;
 import org.example.backend.domain.post.entity.Post.BoardType;
 import org.example.backend.domain.post.entity.PostImage;
 import org.example.backend.domain.post.service.PostService;
-import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +34,7 @@ public class PostController {
 
     @GetMapping("/my")
     @Transactional(readOnly = true)
-    public RsData<List<MyPostReadResponseDto>> getMyPosts(
+    public ApiResponse<List<MyPostReadResponseDto>> getMyPosts(
         @RequestParam BoardType boardType,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -54,7 +54,7 @@ public class PostController {
             ))
             .toList();
 
-        return new RsData<>(
+        return new ApiResponse<>(
             "200-1",
             "내가 쓴 게시글 다건 조회",
             response
@@ -62,7 +62,7 @@ public class PostController {
     }
 
     @GetMapping
-    public RsData<List<PostReadResponseDto>> getPosts(
+    public ApiResponse<List<PostReadResponseDto>> getPosts(
         @RequestParam BoardType boardType,
         @RequestParam(defaultValue = "all") String filterType, // "all" or "following"
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -89,14 +89,14 @@ public class PostController {
             ))
             .toList();
 
-        return new RsData<>("200-1",
+        return new ApiResponse<>("200-1",
             "게시판 게시글 다건 조회",
             response
         );
     }
 
     @GetMapping("/{id}")
-    public RsData<PostReadResponseDto> getPost(
+    public ApiResponse<PostReadResponseDto> getPost(
         @PathVariable Long id
     ) {
         Post post = postService.findById(id)
@@ -111,7 +111,7 @@ public class PostController {
                 .toList()
         );
 
-        return new RsData<>(
+        return new ApiResponse<>(
             "200-1",
             "%d번 id 게시글 단건 조회".formatted(id),
             response
@@ -121,7 +121,7 @@ public class PostController {
 
     @DeleteMapping("/{id}")
     @Transactional
-    public RsData<Void> deletePost(
+    public ApiResponse<Void> deletePost(
         @PathVariable Long id,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
@@ -135,7 +135,7 @@ public class PostController {
 
         postService.delete(post);
 
-        return new RsData<>(
+        return new ApiResponse<>(
             "200-1",
             "%d번 게시물이 삭제되었습니다.".formatted(id)
         );
@@ -144,14 +144,14 @@ public class PostController {
 
     @PostMapping
     @Transactional
-    public RsData<Void> createPost(
+    public ApiResponse<Void> createPost(
         @RequestBody PostWriteRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
         postService.write(reqBody, userDetails.getMember());
 
-        return new RsData<>(
+        return new ApiResponse<>(
             "200-1",
             "게시글이 생성되었습니다."
         );
@@ -159,7 +159,7 @@ public class PostController {
 
     @PatchMapping("/{id}")
     @Transactional
-    public RsData<Void> modifyPost(
+    public ApiResponse<Void> modifyPost(
         @PathVariable Long id,
         @RequestBody PostModifyRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -174,7 +174,7 @@ public class PostController {
         }
 
         postService.modify(post, reqBody);
-        return new RsData<>(
+        return new ApiResponse<>(
             "200-1",
             "게시글이 수정되었습니다."
         );

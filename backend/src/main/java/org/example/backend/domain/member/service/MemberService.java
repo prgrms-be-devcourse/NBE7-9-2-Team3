@@ -14,7 +14,7 @@ import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.global.exception.ServiceException;
 import org.example.backend.global.image.ImageService;
-import org.example.backend.global.rsdata.RsData;
+import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -89,7 +89,7 @@ public class MemberService {
     }
 
     @Transactional
-    public RsData<MemberJoinResponseDto> join(MemberJoinRequestDto request, MultipartFile profileImage) {
+    public ApiResponse<MemberJoinResponseDto> join(MemberJoinRequestDto request, MultipartFile profileImage) {
         String profileImageUrl = null;
         
         // 프로필 이미지가 있으면 S3에 업로드
@@ -105,10 +105,10 @@ public class MemberService {
         );
 
         MemberJoinResponseDto response = MemberJoinResponseDto.from(savedMember);
-        return new RsData<>("201", "회원가입이 완료되었습니다.", response);
+        return new ApiResponse<>("201", "회원가입이 완료되었습니다.", response);
     }
 
-    public RsData<MemberLoginResponseDto> login(MemberLoginRequestDto request) {
+    public ApiResponse<MemberLoginResponseDto> login(MemberLoginRequestDto request) {
         Member member = memberRepository.findByEmail(request.email())
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
 
@@ -122,7 +122,7 @@ public class MemberService {
             member.getNickname(),
             member.getProfileImage()
         );
-        return new RsData<>("200", "로그인에 성공했습니다.", response);
+        return new ApiResponse<>("200", "로그인에 성공했습니다.", response);
     }
 
     // JWT 토큰을 별도로 생성하는 메서드
@@ -131,7 +131,7 @@ public class MemberService {
     }
 
     @Transactional
-    public RsData<MemberEditResponseDto> edit(MemberEditRequestDto request, MultipartFile profileImage){
+    public ApiResponse<MemberEditResponseDto> edit(MemberEditRequestDto request, MultipartFile profileImage){
         // 현재 로그인한 사용자 조회
         Member member = memberRepository.findByMemberId(getCurrentMemberId())
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
@@ -188,15 +188,15 @@ public class MemberService {
 
         // 응답 DTO 생성
         MemberEditResponseDto response = MemberEditResponseDto.from(updatedMember, newAccessToken);
-        return new RsData<>("200", "회원정보 수정에 성공했습니다.", response);
+        return new ApiResponse<>("200", "회원정보 수정에 성공했습니다.", response);
     }
     @Transactional
-    public RsData<MemberResponseDto> myPage(){
+    public ApiResponse<MemberResponseDto> myPage(){
         // 현재 로그인한 사용자 조회
         Member member = memberRepository.findByMemberId(getCurrentMemberId())
             .orElseThrow(() -> new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND));
         MemberResponseDto response = new MemberResponseDto(member,followCountService.getFollowerCount(member.getMemberId()),followCountService.getFollowingCount(member.getMemberId()));
-        return new RsData<>("200", "회원 정보 조회에 성공했습니다.", response);
+        return new ApiResponse<>("200", "회원 정보 조회에 성공했습니다.", response);
     }
 
 
