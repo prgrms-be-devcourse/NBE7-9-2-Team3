@@ -49,7 +49,7 @@ public class AquariumController {
 
   // 어항 다건 조회
   @GetMapping
-  public ApiResponse<List<AquariumListResponseDto>> getAquariums(
+  public ApiResponse<List<AquariumResponseDto>> getAquariums(
       @AuthenticationPrincipal CustomUserDetails userDetails
   ) {
     Long memberId = userDetails.getId();
@@ -58,7 +58,7 @@ public class AquariumController {
         "200",
         "어항 목록이 조회되었습니다.",
         aquariumService.findAllByMemberId(memberId).reversed().stream()
-            .map(AquariumListResponseDto::new).toList()
+            .map(AquariumResponseDto::new).toList()
     );
   }
 
@@ -92,14 +92,14 @@ public class AquariumController {
 
   // 삭제할 어항의 물고기를 '내가 키운 물고기' 어항으로 이동
   @PutMapping("/{id}/delete")
-  public ApiResponse<Void> moveFishToOwnedAquarium(
+  public ApiResponse<String> moveFishToOwnedAquarium(
       @AuthenticationPrincipal CustomUserDetails userDetails,
       @PathVariable Long id
   ) {
     Long memberId = userDetails.getId();
     aquariumService.moveFishToOwnedAquarium(memberId, id);
 
-    return new ApiResponse<>("200", "물고기들이 '내가 키운 물고기' 어항으로 이동되었습니다.");
+    return new ApiResponse<>("200", "물고기들이 '내가 키운 물고기' 어항으로 이동되었습니다.", "물고기 이동 완료");
   }
 
   // 어항 삭제

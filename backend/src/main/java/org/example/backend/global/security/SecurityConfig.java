@@ -1,11 +1,15 @@
 package org.example.backend.global.security;
 
+import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity // 스프링 시큐리티 설정을 활성화
@@ -37,6 +41,9 @@ public class SecurityConfig {
 
         // 5. HTTP Basic 인증 비활성화
         http.httpBasic(AbstractHttpConfigurer::disable);
+
+        // 6. CORS 설정 활성화 (spring security는 기본적으로 cors 차단)
+        http.cors(cors -> {});
 
         return http.build();
     }
