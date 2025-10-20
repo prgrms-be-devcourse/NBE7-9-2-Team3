@@ -260,12 +260,14 @@ export default function FishCreatePage() {
             name="status"
             value={formData.status}
             onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled
+            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
           >
             <option value={TradeStatus.SELLING}>판매중</option>
             <option value={TradeStatus.COMPLETED}>판매완료</option>
             <option value={TradeStatus.CANCELLED}>판매취소</option>
           </select>
+          <p className="text-sm text-gray-500 mt-2">※ 게시글 작성 시 자동으로 판매중 상태로 등록됩니다.</p>
         </div>
 
         {/* 버튼 */}

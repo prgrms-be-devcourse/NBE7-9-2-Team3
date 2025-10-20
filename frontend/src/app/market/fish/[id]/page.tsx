@@ -274,18 +274,27 @@ export default function FishDetailPage() {
             <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{post.description}</p>
           </div>
 
-          {/* 결제하기 버튼 */}
-          {post.status === TradeStatus.SELLING && (
-            <button
-              onClick={() => alert('결제 기능은 준비 중입니다.')}
-              className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-bold text-lg transition shadow-lg"
-            >
-              결제하기
-            </button>
-          )}
-
-          {/* 수정/삭제 버튼 */}
+          {/* 버튼 영역 */}
           <div className="space-y-3">
+            {/* 결제하기 버튼 */}
+            {post.status === TradeStatus.SELLING && (
+              <button
+                onClick={() => alert('결제 기능은 준비 중입니다.')}
+                className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-bold text-lg transition shadow-lg"
+              >
+                결제하기
+              </button>
+            )}
+
+            {/* 채팅하기 버튼 */}
+            <button
+              onClick={() => alert('채팅 기능은 준비 중입니다.')}
+              className="w-full bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600 font-semibold transition"
+            >
+              채팅하기
+            </button>
+
+            {/* 수정/삭제 버튼 */}
             <div className="flex gap-3">
               <Link
                 href={`/market/fish/${tradeId}/edit`}

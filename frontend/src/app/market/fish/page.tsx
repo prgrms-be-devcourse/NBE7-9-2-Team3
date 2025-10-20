@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trade, ApiResponse, BoardType, TradeStatus } from '@/type/trade';
+import { Trade, ApiResponse, PageResponse, TradeStatus } from '@/type/trade';
 import { fetchApi } from '@/lib/client';
 import { useAuth } from '@/context/AuthContext';
 
@@ -11,14 +11,19 @@ export default function FishMarketPage() {
   const router = useRouter();
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<Trade[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState('전체'); // 전체, 제목, 본문, 태그
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
   const [statusFilter, setStatusFilter] = useState<TradeStatus | '전체'>('전체');
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+  const [sortType, setSortType] = useState('latest');
+  const [pageInput, setPageInput] = useState('');
+  const [pageGroupStart, setPageGroupStart] = useState(1);
   const postsPerPage = 8; // 4열 × 2줄
+  const maxButtons = 5; // 한 번에 보여줄 버튼 개수
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -30,24 +35,31 @@ export default function FishMarketPage() {
     if (isAuthenticated) {
       fetchPosts();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentPage, sortType]);
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      // TODO: 나중에 백엔드에 검색 파라미터 추가
-      // const params = new URLSearchParams();
+      const params = new URLSearchParams({
+        page: (currentPage - 1).toString(), // 0-based index
+        size: postsPerPage.toString(),
+        sort: sortType
+      });
+      // TODO: 나중에 검색/필터 파라미터 추가
       // if (searchTerm) params.append('search', searchTerm);
       // if (searchType !== '전체') params.append('searchType', searchType);
       // params.append('minPrice', priceRange[0].toString());
       // params.append('maxPrice', priceRange[1].toString());
-      // const url = `/api/market/fish?${params.toString()}`;
+      // if (statusFilter !== '전체') params.append('status', statusFilter);
 
-      const data: ApiResponse<Trade[]> = await fetchApi('/api/market/fish');
+      const data: ApiResponse<PageResponse<Trade>> = await fetchApi(
+        `/api/market/fish?${params.toString()}`
+      );
 
       if (data.resultCode.startsWith('200')) {
-        setPosts(data.data);
-        setFilteredPosts(data.data);
+        setPosts(data.data.content);
+        setTotalPages(data.data.totalPages);
+        setTotalElements(data.data.totalElements);
       }
     } catch (error) {
       // 인증 관련 에러는 조용히 처리 (로그인 페이지로 리다이렉트되므로)
@@ -62,93 +74,62 @@ export default function FishMarketPage() {
   };
 
   const handleSearch = () => {
-    // 클라이언트 측 필터링 (임시)
-    let filtered = [...posts];
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter((post) => {
-        switch (searchType) {
-          case '제목':
-            return post.title.toLowerCase().includes(term);
-          case '본문':
-            return post.description.toLowerCase().includes(term);
-          case '태그':
-            return post.category?.toLowerCase().includes(term);
-          case '전체':
-          default:
-            return (
-              post.title.toLowerCase().includes(term) ||
-              post.description.toLowerCase().includes(term) ||
-              post.category?.toLowerCase().includes(term)
-            );
-        }
-      });
-    }
-
-    filtered = filtered.filter(
-      (post) => post.price >= priceRange[0] && post.price <= priceRange[1]
-    );
-
-    // 상태 필터 적용
-    if (statusFilter !== '전체') {
-      filtered = filtered.filter((post) => post.status === statusFilter);
-    }
-
-    setFilteredPosts(filtered);
-    setCurrentPage(1);
-
-    // TODO: 나중에 백엔드 API 호출로 변경
-    // fetchPosts();
+    // TODO: 백엔드 API에 검색 기능 추가 후 구현
+    alert('검색 기능은 준비 중입니다.');
   };
 
   const handleStatusFilter = (status: TradeStatus | '전체') => {
-    setStatusFilter(status);
-    let filtered = [...posts];
-
-    // 검색어 필터
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter((post) => {
-        switch (searchType) {
-          case '제목':
-            return post.title.toLowerCase().includes(term);
-          case '본문':
-            return post.description.toLowerCase().includes(term);
-          case '태그':
-            return post.category?.toLowerCase().includes(term);
-          case '전체':
-          default:
-            return (
-              post.title.toLowerCase().includes(term) ||
-              post.description.toLowerCase().includes(term) ||
-              post.category?.toLowerCase().includes(term)
-            );
-        }
-      });
-    }
-
-    // 가격 필터
-    filtered = filtered.filter(
-      (post) => post.price >= priceRange[0] && post.price <= priceRange[1]
-    );
-
-    // 상태 필터
-    if (status !== '전체') {
-      filtered = filtered.filter((post) => post.status === status);
-    }
-
-    setFilteredPosts(filtered);
-    setCurrentPage(1);
+    // TODO: 백엔드 API에 필터 기능 추가 후 구현
+    alert('필터 기능은 준비 중입니다.');
   };
 
-  // 페이지네이션
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
-  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
-
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  const handlePageInputSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const page = parseInt(pageInput);
+    if (!isNaN(page) && page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      // 입력한 페이지에 맞게 그룹도 조정
+      const newGroupStart = Math.floor((page - 1) / maxButtons) * maxButtons + 1;
+      setPageGroupStart(newGroupStart);
+      setPageInput('');
+    } else {
+      alert(`1부터 ${totalPages}까지의 페이지 번호를 입력해주세요.`);
+    }
+  };
+
+  // 페이지 버튼 범위 계산 (최대 5개)
+  const getPageNumbers = () => {
+    const pages: number[] = [];
+    const endPage = Math.min(pageGroupStart + maxButtons - 1, totalPages);
+
+    for (let i = pageGroupStart; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages;
+  };
+
+  // 이전 버튼: 버튼 그룹을 이전으로 이동
+  const handlePrevGroup = () => {
+    const newStart = Math.max(1, pageGroupStart - maxButtons);
+    setPageGroupStart(newStart);
+  };
+
+  // 다음 버튼: 버튼 그룹을 다음으로 이동
+  const handleNextGroup = () => {
+    const newStart = Math.min(pageGroupStart + maxButtons, totalPages - maxButtons + 1);
+    if (newStart > pageGroupStart) {
+      setPageGroupStart(newStart);
+    }
+  };
+
+  // 이전 그룹이 있는지 확인
+  const hasPrevGroup = pageGroupStart > 1;
+
+  // 다음 그룹이 있는지 확인
+  const hasNextGroup = pageGroupStart + maxButtons <= totalPages;
 
   // 인증 확인 중이거나 로그인되지 않은 경우
   if (authLoading || !isAuthenticated) {
@@ -268,18 +249,25 @@ export default function FishMarketPage() {
         {/* 필터 결과 정보 */}
         <div className="mb-4 flex items-center justify-between">
           <p className="text-gray-600">
-            전체 <span className="font-semibold text-blue-600">{filteredPosts.length}</span>개
+            전체 <span className="font-semibold text-blue-600">{totalElements}</span>개
           </p>
-          <select className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option>최신순</option>
-            <option>낮은 가격순</option>
-            <option>높은 가격순</option>
+          <select
+            value={sortType}
+            onChange={(e) => {
+              setSortType(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="latest">최신순</option>
+            <option value="price-asc">낮은 가격순</option>
+            <option value="price-desc">높은 가격순</option>
           </select>
         </div>
 
         {/* 게시글 그리드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {currentPosts.map((post) => (
+            {posts.map((post) => (
               <Link
                 key={post.tradeId}
                 href={`/market/fish/${post.tradeId}`}
@@ -345,10 +333,10 @@ export default function FishMarketPage() {
         </div>
 
         {/* 게시글이 없을 때 */}
-        {filteredPosts.length === 0 && (
+        {posts.length === 0 && (
           <div className="text-center py-16 text-gray-500">
-            <p className="text-lg mb-2">검색 결과가 없습니다</p>
-            <p className="text-sm">다른 검색어를 입력하거나 필터를 조정해보세요</p>
+            <p className="text-lg mb-2">게시글이 없습니다</p>
+            <p className="text-sm">첫 게시글을 작성해보세요</p>
           </div>
         )}
 
@@ -358,14 +346,14 @@ export default function FishMarketPage() {
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 flex-1">
               <button
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handlePrevGroup}
+                disabled={!hasPrevGroup}
+                className="min-w-[60px] px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 이전
               </button>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+              {getPageNumbers().map((number) => (
                 <button
                   key={number}
                   onClick={() => paginate(number)}
@@ -380,9 +368,9 @@ export default function FishMarketPage() {
               ))}
 
               <button
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleNextGroup}
+                disabled={!hasNextGroup}
+                className="min-w-[60px] px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
                 다음
               </button>
@@ -397,6 +385,28 @@ export default function FishMarketPage() {
             </Link>
           </div>
         </div>
+
+        {/* 페이지 직접 입력 */}
+        {totalPages > 1 && (
+          <form onSubmit={handlePageInputSubmit} className="flex justify-center items-center gap-2 mt-4">
+            <span className="text-sm text-gray-600">페이지 이동:</span>
+            <input
+              type="number"
+              value={pageInput}
+              onChange={(e) => setPageInput(e.target.value)}
+              placeholder="번호"
+              min="1"
+              max={totalPages}
+              className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center"
+            />
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition"
+            >
+              이동
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
