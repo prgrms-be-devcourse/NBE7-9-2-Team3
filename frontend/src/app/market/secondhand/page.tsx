@@ -2,10 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Trade, ApiResponse, BoardType, TradeStatus } from '@/type/trade';
 import { fetchApi } from '@/lib/client';
+import { useAuth } from '@/context/AuthContext';
 
 export default function SecondhandMarketPage() {
+  const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<Trade[]>([]);
   const [filteredPosts, setFilteredPosts] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,8 +21,16 @@ export default function SecondhandMarketPage() {
   const postsPerPage = 8; // 4열 × 2줄
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchPosts();
+    }
+  }, [isAuthenticated]);
 
   const fetchPosts = async () => {
     try {
@@ -132,6 +144,11 @@ export default function SecondhandMarketPage() {
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+
+  // 인증 확인 중이거나 로그인되지 않은 경우
+  if (authLoading || !isAuthenticated) {
+    return <div className="p-8">Loading...</div>;
+  }
 
   if (loading) {
     return <div className="p-8">Loading...</div>;
