@@ -539,7 +539,8 @@ export default function AquariumDetailPage() {
 
         {/* 물고기 목록 */}
         <div className="space-y-4">
-          {fishes.map((fish) => (
+          {fishes && fishes.length > 0 ? (
+            fishes.map((fish) => (
             <div key={fish.fishId} className="bg-gray-50 p-4 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -683,7 +684,12 @@ export default function AquariumDetailPage() {
                 </div>
               )}
             </div>
-          ))}
+            ))
+          ) : (
+            <div className="text-sm text-gray-500 text-center py-8">
+              등록된 물고기가 없습니다.
+            </div>
+          )}
         </div>
       </div>
 
@@ -838,7 +844,7 @@ export default function AquariumDetailPage() {
             ))
           ) : (
             <div className="text-sm text-gray-500 text-center py-4">
-              등록된 환경 데이터가 없습니다.
+              등록된 데이터가 없습니다.
             </div>
           )}
         </div>
