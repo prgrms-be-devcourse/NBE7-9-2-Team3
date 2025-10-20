@@ -17,6 +17,7 @@ export default function AquariumsPage() {
   const [aquariums, setAquariums] = useState<Aquarium[]>([]);
   const [newAquariumName, setNewAquariumName] = useState('');
   const [isAdding, setIsAdding] = useState(false);  // "어항 추가" 버튼 클릭 여부 확인
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const router = useRouter();
 
@@ -49,7 +50,7 @@ export default function AquariumsPage() {
       .then(res => res.json())
       .then(json => setAquariums(sortAquariums(json.data)))
       .catch(err => console.error(err));
-  }, []);
+  }, [refreshTrigger]); // refreshTrigger가 변경될 때마다 다시 조회
 
   // 새 어항 추가
   const handleAddAquarium = () => {
@@ -79,7 +80,6 @@ export default function AquariumsPage() {
     })
       .then(res => res.json())
       .then(json => {
-        alert('어항이 추가되었습니다 🪸');
         setAquariums(prev => sortAquariums([json.data, ...prev]));
         setNewAquariumName('');
         setIsAdding(false);
@@ -106,7 +106,7 @@ export default function AquariumsPage() {
       // 물고기 이동에 동의하지 않는다면, 물고기 이동X, 어항 삭제X
       if (responseData.data === "물고기 존재") {
         const confirmMove = window.confirm(
-          '어항에 물고기가 존재합니다.\n물고기를 "🐟 🐡 내가 키운 물고기" 어항으로 이동 후, 어항을 삭제하시겠습니까?'
+          '어항에 물고기가 존재합니다.\n물고기를 "🐟 🐡 내가 키운 물고기" 어항으로 이동 후, 삭제하시겠습니까?'
         );
         
         if (!confirmMove) {
@@ -131,7 +131,14 @@ export default function AquariumsPage() {
           alert('어항이 삭제되었습니다 :)');
 
           // 해당 어항 제거
-          setAquariums(prev => sortAquariums(prev.filter(a => a.aquariumId !== id)));
+          setAquariums(prev => {
+            const filtered = prev.filter(a => a.aquariumId !== id);
+            console.log('Updated aquariums after fish move:', filtered);
+            return sortAquariums(filtered);
+          });
+          
+          // 강제 리렌더링 트리거
+          setRefreshTrigger(prev => prev + 1);
         }
 
       }
@@ -147,7 +154,14 @@ export default function AquariumsPage() {
         alert('어항이 삭제되었습니다 :)');
 
         // 해당 어항 제거
-        setAquariums(prev => sortAquariums(prev.filter(a => a.aquariumId !== id)));
+        setAquariums(prev => {
+          const filtered = prev.filter(a => a.aquariumId !== id);
+          console.log('Updated aquariums after direct delete:', filtered);
+          return sortAquariums(filtered);
+        });
+        
+        // 강제 리렌더링 트리거
+        setRefreshTrigger(prev => prev + 1);
       }
 
     } catch (err) {
@@ -244,7 +258,7 @@ export default function AquariumsPage() {
         )}
 
           {/* 어항 목록 */}
-          <div className="space-y-6">
+          <div className="space-y-6" key={refreshTrigger}>
           {aquariums.map((aquarium) => (
             <div key={aquarium.aquariumId} className="bg-white border border-gray-200 rounded-lg p-6">
 

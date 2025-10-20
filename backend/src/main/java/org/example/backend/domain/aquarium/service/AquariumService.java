@@ -7,18 +7,21 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.aquarium.dto.AquariumScheduleRequestDto;
 import org.example.backend.domain.aquarium.entity.Aquarium;
+import org.example.backend.domain.aquarium.repository.AquariumLogRepository;
 import org.example.backend.domain.aquarium.repository.AquariumRepository;
 import org.example.backend.domain.fish.entity.Fish;
 import org.example.backend.domain.fish.repository.FishRepository;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class AquariumService {
 
   private final AquariumRepository aquariumRepository;
+  private final AquariumLogRepository aquariumLogRepository;
   private final MemberRepository memberRepository;
   private final FishRepository fishRepository;
 
@@ -96,7 +99,12 @@ public class AquariumService {
     aquariumRepository.save(aquarium);
   }
 
+  @Transactional
   public void delete(Long id) {
+    Aquarium aquarium = aquariumRepository.findById(id)
+        .orElseThrow(() -> new RuntimeException("어항이 존재하지 않습니다."));
+
+    aquariumLogRepository.deleteAllByAquarium(aquarium);
     aquariumRepository.deleteById(id);
   }
 

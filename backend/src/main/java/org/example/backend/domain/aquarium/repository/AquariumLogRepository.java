@@ -15,4 +15,6 @@ public interface AquariumLogRepository extends JpaRepository<AquariumLog, Long> 
     
     // aquarium 엔티티로 로그 조회
     List<AquariumLog> findByAquarium(Aquarium aquarium);
+
+  void deleteAllByAquarium(Aquarium aquarium);
 }
