@@ -20,32 +20,32 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/market")
+@RequestMapping("/api/market/{boardType}/{tradeId}/comments")
 @RequiredArgsConstructor
 public class TradeCommentController {
 
     private final TradeCommentService tradeCommentService;
 
-    @PostMapping("/{boardType}/{tradeId}/comments")
+    @PostMapping
     public ApiResponse<TradeCommentResponseDto> createComment(
         @PathVariable String boardType,
         @PathVariable Long tradeId,
         @Valid @RequestBody TradeCommentRequestDto request) {
         BoardType type = BoardType.from(boardType);
         TradeCommentResponseDto comment = tradeCommentService.createComment(type, request);
-        return new ApiResponse<>("201-1", "댓글 등록 성공", comment);
+        return ApiResponse.ok("댓글 등록 성공", comment);
     }
 
-    @GetMapping("/{boardType}/{tradeId}/comments")
+    @GetMapping
     public ApiResponse<List<TradeCommentResponseDto>> getAllComments(
         @PathVariable String boardType,
         @PathVariable Long tradeId) {
         BoardType type = BoardType.from(boardType);
         List<TradeCommentResponseDto> comments = tradeCommentService.getAllComment(type, tradeId);
-        return new ApiResponse<>("200-1", "댓글 목록 조회 성공", comments);
+        return ApiResponse.ok("댓글 목록 조회 성공", comments);
     }
 
-    @PutMapping("/{boardType}/{tradeId}/comments/{commentId}")
+    @PutMapping("/{commentId}")
     public ApiResponse<TradeCommentResponseDto> updateComment(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable String boardType,
@@ -57,10 +57,10 @@ public class TradeCommentController {
         TradeCommentResponseDto comment = tradeCommentService.updateComment(type, tradeId,
             commentId,
             memberId, request);
-        return new ApiResponse<>("200-2", "댓글 수정 성공", comment);
+        return ApiResponse.ok("댓글 수정 성공", comment);
     }
 
-    @DeleteMapping("/{boardType}/{tradeId}/comments/{commentId}")
+    @DeleteMapping("/{commentId}")
     public ApiResponse<Void> deleteComment(
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @PathVariable String boardType,
@@ -69,7 +69,7 @@ public class TradeCommentController {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
         tradeCommentService.deleteComment(type, tradeId, commentId, memberId);
-        return new ApiResponse<>("204-1", "댓글 삭제 성공");
+        return ApiResponse.ok("댓글 삭제 성공");
     }
 
 }
