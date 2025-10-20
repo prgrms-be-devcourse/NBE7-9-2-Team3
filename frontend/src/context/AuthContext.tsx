@@ -46,10 +46,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       // 로그인하지 않은 상태에서는 조용히 처리
       if (error instanceof Error && (
-        error.message.includes('Failed to fetch') || 
+        error.message.includes('Failed to fetch') ||
         error.message.includes('HTTP 401') ||
         error.message.includes('HTTP 403') ||
-        error.message.includes('HTTP 404')
+        error.message.includes('HTTP 404') ||
+        error.message.includes('Access Token')
       )) {
         // 로그인하지 않은 상태이므로 조용히 처리
         console.log('사용자가 로그인하지 않았습니다.');
@@ -126,7 +127,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         method: 'POST',
       });
     } catch (error) {
-      console.error('Logout error:', error);
+      // 로그아웃 에러는 조용히 처리 (이미 토큰이 없거나 만료된 경우)
+      if (error instanceof Error && error.message.includes('Access Token')) {
+        console.log('이미 로그아웃 상태입니다.');
+      } else {
+        console.error('Logout error:', error);
+      }
     } finally {
       setUser(null);
       setLoading(false);

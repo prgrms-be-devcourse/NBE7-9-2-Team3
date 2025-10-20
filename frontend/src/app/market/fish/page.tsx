@@ -50,7 +50,12 @@ export default function FishMarketPage() {
         setFilteredPosts(data.data);
       }
     } catch (error) {
-      console.error('Failed to load fish market posts:', error);
+      // 인증 관련 에러는 조용히 처리 (로그인 페이지로 리다이렉트되므로)
+      if (error instanceof Error && error.message.includes('Access Token')) {
+        console.log('로그인이 필요합니다.');
+      } else {
+        console.error('Failed to load fish market posts:', error);
+      }
     } finally {
       setLoading(false);
     }
