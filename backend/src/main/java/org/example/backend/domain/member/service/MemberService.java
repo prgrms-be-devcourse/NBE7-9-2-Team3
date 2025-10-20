@@ -162,12 +162,8 @@ public class MemberService {
         // 새로운 비밀번호 암호화
         String encodedPassword = passwordEncoder.encode(request.newPassword());
 
-        // 프로필 이미지 처리
-        String profileImageUrl = request.profileImage();
-        if (profileImage != null && !profileImage.isEmpty()) {
-            // 새로운 이미지가 있으면 S3에 업로드
-            profileImageUrl = imageService.uploadFile(profileImage, "profile");
-        }
+        // 프로필 이미지는 별도 API로 처리하므로 기존 이미지 유지
+        String profileImageUrl = member.getProfileImage();
 
         // 회원 정보 업데이트
         member.updateMemberInfo(
@@ -199,5 +195,39 @@ public class MemberService {
         return ApiResponse.ok("회원 정보 조회에 성공했습니다.", response);
     }
 
+    @Transactional
+    public ApiResponse<MemberEditResponseDto> updateProfileImage(MultipartFile profileImage) {
+        // 현재 로그인한 사용자 조회
+        Member member = memberRepository.findByMemberId(getCurrentMemberId())
+            .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 기존 프로필 이미지가 있으면 S3에서 삭제
+        if (member.getProfileImage() != null && !member.getProfileImage().isEmpty()) {
+            try {
+                imageService.deleteFile(member.getProfileImage());
+            } catch (Exception e) {
+                // 이미지 삭제 실패는 로그만 남기고 계속 진행
+                System.out.println("기존 프로필 이미지 삭제 실패: " + e.getMessage());
+            }
+        }
+
+        // 새로운 이미지 업로드
+        String newProfileImageUrl = imageService.uploadFile(profileImage, "profile");
+
+        // 회원 정보 업데이트 (프로필 이미지만)
+        member.updateMemberInfo(
+            member.getEmail(),
+            member.getPassword(),
+            member.getNickname(),
+            newProfileImageUrl
+        );
+
+        // 데이터베이스에 저장
+        Member updatedMember = memberRepository.save(member);
+
+        // 응답 DTO 생성
+        MemberEditResponseDto response = MemberEditResponseDto.from(updatedMember, null);
+        return ApiResponse.ok("프로필 이미지가 성공적으로 업데이트되었습니다.", response);
+    }
 
 }

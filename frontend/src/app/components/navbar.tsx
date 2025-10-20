@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
   const [isMarketOpen, setIsMarketOpen] = useState(false);
 
@@ -99,7 +101,10 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <div className="flex items-center space-x-3">
+                <div 
+                  className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
+                  onClick={() => router.push('/mypage')}
+                >
                   {user.profileImage ? (
                     <img 
                       src={user.profileImage} 
