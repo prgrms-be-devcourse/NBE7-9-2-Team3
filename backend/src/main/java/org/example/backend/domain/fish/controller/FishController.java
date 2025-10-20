@@ -4,8 +4,7 @@ package org.example.backend.domain.fish.controller;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.fish.dto.FishRequestDto;
-import org.example.backend.domain.fish.dto.FishCreateResponseDto;
-import org.example.backend.domain.fish.dto.FishListResponseDto;
+import org.example.backend.domain.fish.dto.FishResponseDto;
 import org.example.backend.domain.fish.dto.FishUpdateResponseDto;
 import org.example.backend.domain.fish.entity.Fish;
 import org.example.backend.domain.fish.service.FishService;
@@ -28,25 +27,25 @@ public class FishController {
 
   // 물고기 생성
   @PostMapping("/{aquariumId}/fish")
-  public ApiResponse<FishCreateResponseDto> createFish(
+  public ApiResponse<FishResponseDto> createFish(
       @PathVariable Long aquariumId,
       @RequestBody FishRequestDto fishRequestDto
   ) {
     Fish fish = fishService.createFish(aquariumId, fishRequestDto);
-    FishCreateResponseDto fishCreateResponseDto = new FishCreateResponseDto(fish);
+    FishResponseDto responseDto = new FishResponseDto(fish);
 
-    return new ApiResponse<>("201", "물고기가 생성되었습니다.", fishCreateResponseDto);
+    return new ApiResponse<>("201", "물고기가 생성되었습니다.", responseDto);
   }
 
   // 물고기 다건 조회
   @GetMapping("/{aquariumId}/fish")
-  public ApiResponse<List<FishListResponseDto>> getFishes(@PathVariable Long aquariumId) {
+  public ApiResponse<List<FishResponseDto>> getFishes(@PathVariable Long aquariumId) {
 
     return new ApiResponse<>(
         "200",
         "물고기들이 조회되었습니다.",
         fishService.findAllByAquariumId(aquariumId).reversed().stream()
-            .map(FishListResponseDto::new).toList()
+            .map(FishResponseDto::new).toList()
     );
   }
 
