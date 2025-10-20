@@ -1,8 +1,8 @@
 package org.example.backend.global.response;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.example.backend.global.exception.ErrorCode;
 
 @AllArgsConstructor
 @Getter
@@ -18,10 +18,26 @@ public class ApiResponse<T> {
         this.data = null;
     }
 
-    @JsonIgnore
-    public int getStatusCode() {
-        String statusCode = resultCode.split("-")[0];
-        return Integer.parseInt(statusCode);
+    // 성공 응답 생성
+    public static <T> ApiResponse<T> ok(T data) {
+        return new ApiResponse<>("200", "성공", data);
+    }
+
+    public static <T> ApiResponse<T> success(String message, T data) {
+        return new ApiResponse<>("200", message, data);
+    }
+
+    public static ApiResponse<Void> success(String message) {
+        return new ApiResponse<>("200", message, null);
+    }
+
+    // 에러 응답 생성
+    public static ApiResponse<Void> error(ErrorCode errorCode) {
+        return new ApiResponse<>(errorCode.getCode(), errorCode.getMessage(), null);
+    }
+
+    public static <T> ApiResponse<T> error(ErrorCode errorCode, T data) {
+        return new ApiResponse<>(errorCode.getCode(), errorCode.getMessage(), data);
     }
 
 }

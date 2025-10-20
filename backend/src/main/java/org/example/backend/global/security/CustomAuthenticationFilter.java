@@ -40,15 +40,15 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         try {
             authenticate(request, response, filterChain);
         } catch (ServiceException e) {
-            ApiResponse<?> rsData = e.getRsData();
+            ApiResponse<?> apiResponse = e.getApiResponse();
             response.setContentType("application/json; charset=UTF-8");
-            response.setStatus(rsData.getStatusCode());
+            response.setStatus(Integer.parseInt(apiResponse.getResultCode()));
             response.getWriter().write("""
                     {
                         "resultCode": "%s",
                         "msg": "%s"
                     }
-                    """.formatted(rsData.getResultCode(), rsData.getMsg()));
+                    """.formatted(apiResponse.getResultCode(), apiResponse.getMsg()));
         } catch (Exception e) {
             throw e;
         }
