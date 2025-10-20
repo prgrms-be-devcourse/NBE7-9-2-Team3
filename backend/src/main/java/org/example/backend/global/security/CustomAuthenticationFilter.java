@@ -1,28 +1,26 @@
 package org.example.backend.global.security;
 
-import org.example.backend.domain.member.entity.Member;
-import org.example.backend.domain.member.repository.MemberRepository;
-import org.example.backend.domain.member.service.AuthTokenService;
-import org.example.backend.global.exception.ServiceException;
-import org.example.backend.global.requestcontext.RequestContext;
-import org.example.backend.global.response.ApiResponse;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.example.backend.domain.member.entity.Member;
+import org.example.backend.domain.member.repository.MemberRepository;
+import org.example.backend.domain.member.service.AuthTokenService;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
+import org.example.backend.global.requestcontext.RequestContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 
 @Component
@@ -39,16 +37,16 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             authenticate(request, response, filterChain);
-        } catch (ServiceException e) {
-            ApiResponse<?> apiResponse = e.getApiResponse();
+        } catch (BusinessException e) {
+            ErrorCode errorCode = e.getErrorCode();
             response.setContentType("application/json; charset=UTF-8");
-            response.setStatus(Integer.parseInt(apiResponse.getResultCode()));
+            response.setStatus(errorCode.getStatus().value());
             response.getWriter().write("""
                     {
                         "resultCode": "%s",
                         "msg": "%s"
                     }
-                    """.formatted(apiResponse.getResultCode(), apiResponse.getMsg()));
+                    """.formatted(errorCode.getCode(), errorCode.getMessage()));
         } catch (Exception e) {
             throw e;
         }
@@ -69,8 +67,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         String headerAuthorization = rq.getHeader("Authorization", "");
 
         if (!headerAuthorization.isBlank()) {
-            if (!headerAuthorization.startsWith("Bearer "))
-                throw new ServiceException("401", "Authorization 헤더가 Bearer 형식이 아닙니다.", HttpStatus.UNAUTHORIZED);
+        if (!headerAuthorization.startsWith("Bearer "))
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
 
             accessToken = headerAuthorization.substring(7);
         } else {
@@ -78,13 +76,13 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (accessToken == null || accessToken.isBlank()) {
-            throw new ServiceException("401", "Access Token이 없습니다.", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
         }
 
         Map<String, Object> payload = authTokenService.payloadOrNull(accessToken);
 
         if (payload == null) {
-            throw new ServiceException("401", "Access Token이 유효하지 않습니다.", HttpStatus.UNAUTHORIZED);
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
         }
 
         long id = (long) payload.get("id");
@@ -92,7 +90,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         // 데이터베이스에서 실제 Member 조회
         Optional<Member> optionalMember = memberRepository.findById(id);
         if (optionalMember.isEmpty()) {
-            throw new ServiceException("404", "존재하지 않는 회원입니다.", HttpStatus.NOT_FOUND);
+            throw new BusinessException(ErrorCode.MEMBER_NOT_FOUND);
         }
 
         Member member = optionalMember.get();
