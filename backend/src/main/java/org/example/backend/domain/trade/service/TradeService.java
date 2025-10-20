@@ -7,8 +7,11 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.domain.trade.dto.PageResponseDto;
+import org.example.backend.domain.trade.dto.TradeCreateRequestDto;
 import org.example.backend.domain.trade.dto.TradeRequestDto;
 import org.example.backend.domain.trade.dto.TradeResponseDto;
+import org.example.backend.domain.trade.dto.TradeSearchRequestDto;
+import org.example.backend.domain.trade.dto.TradeUpdateRequestDto;
 import org.example.backend.domain.trade.entity.Trade;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.repository.TradeRepository;
@@ -33,39 +36,48 @@ public class TradeService {
     private final ImageService imageService;
 
     @Transactional
-    public TradeResponseDto createTrade(TradeRequestDto request,
-        BoardType boardType, List<MultipartFile> images) {
+    public TradeResponseDto createTrade(TradeCreateRequestDto request) {
         Member member = memberRepository.findById(request.memberId())
             .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // 이미지 업로드 (S3) - DB 저장 전에 먼저 업로드
+        // 이미지 업로드 (S3)
         List<String> imageUrls = new ArrayList<>();
-        if (images != null && !images.isEmpty()) {
-            imageUrls = imageService.uploadFiles(images, "trade");
+        if (request.images() != null && !request.images().isEmpty()) {
+            imageUrls = imageService.uploadFiles(request.images(), "trade");
         }
 
-        // Trade 엔티티 생성 및 이미지 URL 연결
-        Trade trade = request.toEntity(member, boardType);
+        // Trade 엔티티 생성 및 이미지 연결
+        Trade trade = new Trade(
+            member,
+            request.boardType(),
+            request.title(),
+            request.description(),
+            request.price(),
+            null,
+            request.category(),
+            java.time.LocalDateTime.now()
+        );
+
         imageUrls.forEach(trade::addImage);
         Trade saved = tradeRepository.save(trade);
 
         return TradeResponseDto.from(saved);
     }
 
-    public PageResponseDto<TradeResponseDto> getAllTrade(BoardType boardType, int page,
-        int size, String sortType) {
+    public PageResponseDto<TradeResponseDto> getAllTrade(BoardType boardType,
+        TradeSearchRequestDto searchRequest) {
 
         if (boardType == null) {
             throw new BusinessException(ErrorCode.TRADE_BOARD_TYPE_INVALID);
         }
 
-        Sort sort = switch (sortType) {
+        Sort sort = switch (searchRequest.sort()) {
             case "price-asc" -> Sort.by(Sort.Direction.ASC, "price");
             case "price-desc" -> Sort.by(Sort.Direction.DESC, "price");
             default -> Sort.by(Sort.Direction.DESC, "createDate");
         };
 
-        Pageable pageable = PageRequest.of(page, size, sort);
+        Pageable pageable = PageRequest.of(searchRequest.page(), searchRequest.size(), sort);
         Page<Trade> tradePage = tradeRepository.findByBoardType(boardType, pageable);
         Page<TradeResponseDto> responsePage = tradePage.map(TradeResponseDto::from);
         return PageResponseDto.from(responsePage);
@@ -82,15 +94,15 @@ public class TradeService {
     }
 
     @Transactional
-    public TradeResponseDto updateTrade(BoardType boardType, Long tradeId, Long memberId,
-        TradeRequestDto request, List<MultipartFile> images) {
-        Trade trade = tradeRepository.findById(tradeId)
+    public TradeResponseDto updateTrade(TradeUpdateRequestDto updateRequest) {
+        Trade trade = tradeRepository.findById(updateRequest.tradeId())
             .orElseThrow(
                 () -> new BusinessException(ErrorCode.TRADE_NOT_FOUND));
 
-        validateBoardType(trade, boardType);
-        validateTradeOwner(trade, memberId);
+        validateBoardType(trade, updateRequest.boardType());
+        validateTradeOwner(trade, updateRequest.memberId());
 
+        TradeRequestDto request = updateRequest.tradeData();
         trade.update(
             request.title(),
             request.description(),
@@ -100,6 +112,7 @@ public class TradeService {
         );
 
         // 이미지 교체 로직 (새 이미지가 있는 경우만)
+        List<MultipartFile> images = updateRequest.images();
         if (images != null && !images.isEmpty()) {
             // 1. 먼저 새 이미지 업로드 (업로드 실패 시 기존 이미지 유지)
             List<String> newImageUrls = imageService.uploadFiles(images, "trade");

@@ -4,8 +4,11 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.trade.dto.PageResponseDto;
+import org.example.backend.domain.trade.dto.TradeCreateRequestDto;
 import org.example.backend.domain.trade.dto.TradeRequestDto;
 import org.example.backend.domain.trade.dto.TradeResponseDto;
+import org.example.backend.domain.trade.dto.TradeSearchRequestDto;
+import org.example.backend.domain.trade.dto.TradeUpdateRequestDto;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.service.TradeService;
 import org.example.backend.global.response.ApiResponse;
@@ -18,7 +21,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,19 +38,18 @@ public class TradeController {
         @Valid @ModelAttribute TradeRequestDto request,
         @RequestPart(required = false) List<MultipartFile> images) {
         BoardType type = BoardType.from(boardType);
-        TradeResponseDto trade = tradeService.createTrade(request, type, images);
+        TradeCreateRequestDto serviceRequest = TradeCreateRequestDto.from(request, type, images);
+        TradeResponseDto trade = tradeService.createTrade(serviceRequest);
         return ApiResponse.ok("거래 게시글 등록 성공", trade);
     }
 
     @GetMapping
     public ApiResponse<PageResponseDto<TradeResponseDto>> getAllTrade(
         @PathVariable String boardType,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "latest") String sort) {
+        @Valid @ModelAttribute TradeSearchRequestDto searchRequest) {
 
         BoardType type = BoardType.from(boardType);
-        PageResponseDto<TradeResponseDto> trades = tradeService.getAllTrade(type, page, size, sort);
+        PageResponseDto<TradeResponseDto> trades = tradeService.getAllTrade(type, searchRequest);
         return ApiResponse.ok("거래 게시글 페이징 조회 성공", trades);
     }
 
@@ -70,7 +71,8 @@ public class TradeController {
         @RequestPart(required = false) List<MultipartFile> images) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
-        TradeResponseDto trade = tradeService.updateTrade(type, tradeId, memberId, request, images);
+        TradeUpdateRequestDto updateRequest = TradeUpdateRequestDto.of(type, tradeId, memberId, request, images);
+        TradeResponseDto trade = tradeService.updateTrade(updateRequest);
         return ApiResponse.ok("거래 게시글 수정 성공", trade);
     }
 
