@@ -3,7 +3,9 @@ package org.example.backend.domain.post.controller;
 import java.util.List;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.like.repository.LikeRepository;
 import org.example.backend.domain.post.dto.MyPostReadResponseDto;
+import org.example.backend.domain.post.dto.PostListResponse;
 import org.example.backend.domain.post.dto.PostModifyRequestDto;
 import org.example.backend.domain.post.dto.PostReadResponseDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
@@ -13,14 +15,18 @@ import org.example.backend.domain.post.entity.PostImage;
 import org.example.backend.domain.post.service.PostService;
 import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -61,16 +67,19 @@ public class PostController {
         );
     }
 
+    private final LikeRepository likeRepository;
+
     @GetMapping
-    public ApiResponse<List<PostReadResponseDto>> getPosts(
+    public ApiResponse<PostListResponse> getPosts(
         @RequestParam BoardType boardType,
         @RequestParam(defaultValue = "all") String filterType, // "all" or "following"
-        @AuthenticationPrincipal CustomUserDetails userDetails
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
 
         // 1차로 게시판 타입에 따라 필터링, 공개글만
-        List<Post> posts = postService.findByBoardTypeAndDisplaying(boardType,
-            Post.Displaying.PUBLIC);
+        Page<Post> postPage = postService.findByBoardTypeAndDisplaying(boardType, Post.Displaying.PUBLIC, pageable);
+
 
         // 2차로 팔로잉인 경우에 한번 더 필터링
         // 팔로잉 구현 시 추가, 토큰으로 로그인 사용자를 읽어서 팔로잉 조인
@@ -78,16 +87,27 @@ public class PostController {
 
         }
 
-        List<PostReadResponseDto> response = posts.stream()
-            .map(post -> new PostReadResponseDto(
-                post.getTitle(),
-                post.getContent(),
-                post.getAuthor().getNickname(),
-                post.getImages().stream()
-                    .map(PostImage::getImageUrl)
-                    .toList()
-            ))
+        List<PostReadResponseDto> postDtos = postPage.getContent().stream()
+            .map(post -> {
+                boolean liked = likeRepository.existsByMemberAndPost(userDetails.getMember(), post);
+
+
+                return new PostReadResponseDto(
+                    post.getId(),
+                    post.getTitle(),
+                    post.getContent(),
+                    post.getAuthor().getNickname(),
+                    post.getCreateDate(),
+                    post.getImages().stream().map(PostImage::getImageUrl).toList(),
+                    post.getLikeCount(),
+                    liked
+                );
+            })
             .toList();
+
+        int totalCount = postService.countByBoardTypeAndDisplaying(boardType, Post.Displaying.PUBLIC);
+        PostListResponse response = new PostListResponse(postDtos, totalCount);
+
 
         return new ApiResponse<>("200-1",
             "게시판 게시글 다건 조회",
@@ -97,18 +117,25 @@ public class PostController {
 
     @GetMapping("/{id}")
     public ApiResponse<PostReadResponseDto> getPost(
-        @PathVariable Long id
-    ) {
+        @PathVariable Long id,
+        @AuthenticationPrincipal CustomUserDetails userDetails
+        ) {
         Post post = postService.findById(id)
             .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
 
+        boolean liked = likeRepository.existsByMemberAndPost(userDetails.getMember(), post);
+
         PostReadResponseDto response = new PostReadResponseDto(
+            post.getId(),
             post.getTitle(),
             post.getContent(),
             post.getAuthor().getNickname(),
+            post.getCreateDate(),
             post.getImages().stream()
                 .map(PostImage::getImageUrl)
-                .toList()
+                .toList(),
+            post.getLikeCount(),
+            liked
         );
 
         return new ApiResponse<>(
@@ -145,7 +172,7 @@ public class PostController {
     @PostMapping
     @Transactional
     public ApiResponse<Void> createPost(
-        @RequestBody PostWriteRequestDto reqBody,
+        @ModelAttribute PostWriteRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
@@ -161,7 +188,7 @@ public class PostController {
     @Transactional
     public ApiResponse<Void> modifyPost(
         @PathVariable Long id,
-        @RequestBody PostModifyRequestDto reqBody,
+        @ModelAttribute PostModifyRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 

@@ -3,9 +3,11 @@
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const router = useRouter();
   const [isCommunityOpen, setIsCommunityOpen] = useState(false);
   const [isMarketOpen, setIsMarketOpen] = useState(false);
 
@@ -59,10 +61,10 @@ export default function Navbar() {
               
               {isCommunityOpen && (
                 <div className="absolute left-0 top-full w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
-                  <Link href="/community/boast" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  <Link href="/posts/showoff" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     자랑게시판
                   </Link>
-                  <Link href="/community/question" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  <Link href="/posts/question" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     질문 게시판
                   </Link>
                 </div>
@@ -99,7 +101,10 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             {user ? (
               <>
-                <div className="flex items-center space-x-3">
+                <div 
+                  className="flex items-center space-x-3 cursor-pointer hover:bg-gray-100 px-3 py-2 rounded-md transition-colors"
+                  onClick={() => router.push('/mypage')}
+                >
                   {user.profileImage ? (
                     <img 
                       src={user.profileImage} 
