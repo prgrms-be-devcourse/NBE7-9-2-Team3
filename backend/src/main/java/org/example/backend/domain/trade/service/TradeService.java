@@ -48,16 +48,7 @@ public class TradeService {
         }
 
         // Trade 엔티티 생성 및 이미지 연결
-        Trade trade = new Trade(
-            member,
-            request.boardType(),
-            request.title(),
-            request.description(),
-            request.price(),
-            TradeStatus.SELLING,
-            request.category(),
-            java.time.LocalDateTime.now()
-        );
+        Trade trade = request.toEntity(member);
 
         imageUrls.forEach(trade::addImage);
         Trade saved = tradeRepository.save(trade);
@@ -149,6 +140,21 @@ public class TradeService {
 
         // Trade 엔티티 삭제 (cascade로 TradeImage도 함께 삭제됨)
         tradeRepository.deleteById(tradeId);
+    }
+
+    public PageResponseDto<TradeResponseDto> getMyTrades(Long memberId, BoardType boardType,
+        int page, int size) {
+
+        Sort sort = Sort.by(Sort.Direction.DESC, "createDate");
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Trade> tradePage = tradeRepository.findMyTrades(memberId, boardType, pageable);
+
+        Page<TradeResponseDto> responsePage = tradePage.map(TradeResponseDto::from);
+        return PageResponseDto.from(responsePage);
+
+
     }
 
     private void validateBoardType(Trade trade, BoardType boardType) {
