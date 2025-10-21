@@ -31,6 +31,8 @@ public class FishLog {
     
     @PrePersist
     protected void onCreate() {
+      if (logDate == null) {
         logDate = LocalDateTime.now();
+      }
     }
 }
