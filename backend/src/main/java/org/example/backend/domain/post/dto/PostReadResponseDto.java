@@ -12,7 +12,9 @@ public record PostReadResponseDto(
     LocalDateTime createDate,
     List<String> images,
     int likeCount,
-    boolean liked
+    boolean liked,
+    boolean following,
+    Long authorId
 
 ) {
 
