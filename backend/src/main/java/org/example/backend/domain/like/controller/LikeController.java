@@ -5,6 +5,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.like.dto.PostLikeResponseDto;
 import org.example.backend.domain.like.service.LikeService;
+import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,9 +30,10 @@ public class LikeController {
     }
 
     @GetMapping("/likes/my")
-    public List<PostLikeResponseDto> getLikedPosts(
+    public ApiResponse<List<PostLikeResponseDto>> getLikedPosts(
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return likeService.getLikedPosts(userDetails.getId());
+        List<PostLikeResponseDto> likedPosts = likeService.getLikedPosts(userDetails.getId());
+        return ApiResponse.ok("좋아요한 글 조회 성공", likedPosts);
     }
 }
