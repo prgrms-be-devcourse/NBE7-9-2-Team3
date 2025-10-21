@@ -29,20 +29,38 @@ export default function QuestionBoardPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  const [keyword, setKeyword] = useState("");        // 🔍 검색어
+  const [searchType, setSearchType] = useState("title"); // 🔽 검색 타입 (제목, 내용, 작성자)
+  const [category, setCategory] = useState("all");   // 🏷 카테고리
+
   const PAGE_SIZE = 10;
 
-  const loadPosts = async (pageToLoad: number) => {
+  // 🔹 게시글 로드
+  const loadPosts = async (pageToLoad: number, searchKeyword = keyword, searchCategory = category) => {
     setLoading(true);
     try {
-      const rsData: ApiResponse<PostListResponse> = await fetchApi(
-        `/api/posts?boardType=QUESTION&page=${pageToLoad - 1}&size=${PAGE_SIZE}`
-      );
+      const query = new URLSearchParams({
+        boardType: "QUESTION",
+        page: String(pageToLoad - 1),
+        size: String(PAGE_SIZE),
+      });
 
-      // data 안에서 posts 꺼내기
+      // 검색어, 타입 추가
+      if (searchKeyword.trim() !== "") {
+        query.append("keyword", searchKeyword);
+        query.append("searchType", searchType);
+      }
+
+      // 카테고리 추가
+      if (searchCategory !== "all") {
+        query.append("category", searchCategory);
+      }
+
+      const rsData: ApiResponse<PostListResponse> = await fetchApi(`/api/posts?${query.toString()}`);
+
       const data = rsData.data?.posts ?? [];
       setPosts(data);
 
-      // totalCount 계산
       const totalCount = rsData.data?.totalCount ?? 0;
       setTotalPages(Math.ceil(totalCount / PAGE_SIZE));
 
@@ -58,6 +76,7 @@ export default function QuestionBoardPage() {
     loadPosts(1);
   }, []);
 
+  // 🔹 페이지 버튼
   const renderPageButtons = () => {
     const buttons = [];
     for (let i = 1; i <= totalPages; i++) {
@@ -65,14 +84,19 @@ export default function QuestionBoardPage() {
         <button
           key={i}
           onClick={() => loadPosts(i)}
-          className={`px-3 py-1 border rounded ${i === page ? "bg-gray-800 text-white" : "bg-white"
-            }`}
+          className={`px-3 py-1 border rounded ${i === page ? "bg-gray-800 text-white" : "bg-white"}`}
         >
           {i}
         </button>
       );
     }
     return buttons;
+  };
+
+  // 🔹 검색 제출
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    loadPosts(1, keyword, category);
   };
 
   return (
@@ -87,24 +111,62 @@ export default function QuestionBoardPage() {
           새 글 작성
         </Link>
       </div>
-      <div className="border-t border-b divide-y">
-  {posts.map(post => (
-    <Link
-      key={post.id}
-      href={`/posts/question/${post.id}`}
-      className="block py-3 px-2 hover:bg-gray-50"
-    >
-      {/* 제목 */}
-      <p className="font-medium">{post.title}</p>
 
-      {/* 작성자와 작성일 */}
-      <div className="flex justify-between text-sm text-gray-500 mt-1">
-        <span>작성자: {post.nickname}</span>
-        <span>{new Date(post.createDate).toLocaleDateString()}</span>
+      {/* 🔍 검색 영역 */}
+      <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+        {/* 카테고리 선택 */}
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="all">전체 카테고리</option>
+          <option value="fish">물고기</option>
+          <option value="aquarium">수조</option>
+          {/* 필요 시 다른 카테고리 추가 */}
+        </select>
+
+        {/* 검색 타입 */}
+        <select
+          value={searchType}
+          onChange={(e) => setSearchType(e.target.value)}
+          className="border rounded px-2 py-1 text-sm"
+        >
+          <option value="title">제목</option>
+          <option value="content">내용</option>
+          <option value="nickname">작성자</option>
+        </select>
+
+        {/* 검색어 입력 */}
+        <input
+          type="text"
+          placeholder="검색어를 입력하세요"
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          className="border rounded px-2 py-1 flex-grow text-sm"
+        />
+
+        <button type="submit" className="px-3 py-1 bg-gray-800 text-white rounded text-sm">
+          검색
+        </button>
+      </form>
+
+      {/* 게시글 리스트 */}
+      <div className="border-t border-b divide-y">
+        {posts.map((post) => (
+          <Link
+            key={post.id}
+            href={`/posts/question/${post.id}`}
+            className="block py-3 px-2 hover:bg-gray-50"
+          >
+            <p className="font-medium">{post.title}</p>
+            <div className="flex justify-between text-sm text-gray-500 mt-1">
+              <span>작성자: {post.nickname}</span>
+              <span>{new Date(post.createDate).toLocaleDateString()}</span>
+            </div>
+          </Link>
+        ))}
       </div>
-    </Link>
-  ))}
-</div>
 
       {loading && <p className="text-center py-4">로딩 중...</p>}
 

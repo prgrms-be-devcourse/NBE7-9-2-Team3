@@ -14,7 +14,7 @@ interface PostDto {
 export default function PostEditPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [existingImages, setExistingImages] = useState<string[]>([]); // 서버에 저장된 기존 이미지
@@ -59,11 +59,16 @@ export default function PostEditPage() {
       return;
     }
 
+    if (existingImages.length + newImages.length === 0) {
+      alert('최소 1개의 이미지를 등록해주세요.');
+      return;
+    }
+
     const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);
     formData.append('boardType', 'SHOWOFF');
-    
+
     // 기존 이미지는 서버가 남겨두도록 ID 또는 URL 전달
     existingImages.forEach((url) => formData.append('existingImages', url));
 

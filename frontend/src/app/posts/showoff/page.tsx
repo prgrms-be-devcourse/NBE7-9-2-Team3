@@ -15,6 +15,7 @@ interface PostDto {
   liked?: boolean; // 로그인 사용자 좋아요 여부
   following: boolean;
   authorId: number;
+  isMine?: boolean;
 }
 
 interface PostListResponse {
@@ -139,9 +140,15 @@ function PostItem({
 
         <button
           onClick={handleToggleFollow}
-          className={`px-2 py-1 rounded ${post.following ? "bg-gray-400 text-white" : "bg-blue-500 text-white"}`}
+          className={`px-2 py-1 rounded ${post.isMine
+              ? "bg-green-500 text-white"         // 🔹 내 글이면 초록
+              : post.following
+                ? "bg-gray-400 text-white"         // 팔로잉
+                : "bg-blue-500 text-white"         // 팔로우
+            }`}
+          disabled={post.isMine} // 내 글이면 클릭 불가
         >
-          {post.following ? "팔로잉" : "팔로우"}
+          {post.isMine ? "내 글" : post.following ? "팔로잉" : "팔로우"}
         </button>
       </div>
     </div>
@@ -229,9 +236,8 @@ export default function PostListPage() {
           {["all", "following"].map((tab) => (
             <button
               key={tab}
-              className={`px-4 py-2 rounded ${
-                activeTab === tab ? "bg-gray-800 text-white" : "bg-gray-100"
-              }`}
+              className={`px-4 py-2 rounded ${activeTab === tab ? "bg-gray-800 text-white" : "bg-gray-100"
+                }`}
               onClick={() => setActiveTab(tab as "all" | "following")}
             >
               {tab === "all" ? "전체" : "팔로잉"}
@@ -253,7 +259,7 @@ export default function PostListPage() {
           post={post}
           onLike={(liked, likeCount) => handleLikeUpdate(post.id, liked, likeCount)}
           onFollowChange={(following) => handleFollowUpdate(post.authorId, following)}
-          />
+        />
       ))}
 
       {loadingRef.current && <p className="text-center py-4">Loading...</p>}

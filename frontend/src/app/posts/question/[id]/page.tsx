@@ -11,6 +11,7 @@ interface PostReadResponseDto {
   nickname: string;
   createDate: string;
   images: string[];
+  isMine: boolean;
 }
 
 interface ApiResponse<T> {
@@ -23,6 +24,8 @@ interface CommentDto {
   id: number;
   author: string;
   content: string;
+  isMine: boolean;
+
 }
 
 export default function PostDetailPage() {
@@ -39,6 +42,7 @@ export default function PostDetailPage() {
     id: number;
     content: string;
     nickname: string;
+    isMine: boolean;
   }
 
   const loadPostAndComments = async () => {
@@ -52,13 +56,14 @@ export default function PostDetailPage() {
       const commentsRs: ApiResponse<PostCommentReadResponseDto[]> =
         await fetchApi(`/api/comments?postId=${postId}`);
 
-        setComments(
-          (commentsRs.data ?? []).map((c) => ({
-            id: c.id,          // ✅ 실제 DB ID
-            author: c.nickname,
-            content: c.content,
-          }))
-        );
+      setComments(
+        (commentsRs.data ?? []).map((c) => ({
+          id: c.id,
+          author: c.nickname,
+          content: c.content,
+          isMine: c.isMine // 🔹 여기 추가
+        }))
+      );
     } catch (err) {
       console.error(err);
     }
@@ -80,26 +85,27 @@ export default function PostDetailPage() {
 
   const handleAddComment = async () => {
     if (!newComment.trim() || !postId) return;
-  
+
     try {
       // 1. 댓글 생성 API 호출
       await fetchApi('/api/comments', {
         method: 'POST',
         body: JSON.stringify({ postId: Number(postId), content: newComment })
       });
-  
+
       // 2. 댓글 리스트 새로 조회
       const commentsRs: ApiResponse<PostCommentReadResponseDto[]> =
         await fetchApi(`/api/comments?postId=${postId}`);
-  
+
       setComments(
         (commentsRs.data ?? []).map((c) => ({
-          id: c.id,          // ✅ 실제 DB ID
+          id: c.id,
           author: c.nickname,
           content: c.content,
+          isMine: c.isMine // 🔹 여기 추가
         }))
       );
-  
+
       // 3. 입력 필드 초기화
       setNewComment('');
     } catch (err) {
@@ -109,7 +115,12 @@ export default function PostDetailPage() {
   };
 
   const handleDeletePost = async () => {
+    if (!post?.isMine) {
+      alert("본인 글만 삭제할 수 있습니다.");
+      return;
+    }
     if (!confirm("정말 삭제하시겠습니까?")) return;
+
     try {
       await fetchApi(`/api/posts/${post.id}`, { method: "DELETE" });
       router.push("/posts/question"); // 삭제 후 목록 페이지로 이동
@@ -119,7 +130,7 @@ export default function PostDetailPage() {
     }
   };
 
- 
+
 
   return (
     <div className="max-w-3xl mx-auto p-6">
@@ -127,22 +138,28 @@ export default function PostDetailPage() {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">{post.title}</h1>
 
-         
-          <div className="flex gap-2">
-            <button
-              onClick={() => router.push(`/posts/question/${post.id}/edit`)}
-              className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              수정
-            </button>
-            <button
-              onClick={handleDeletePost}
-              className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              삭제
-            </button>
-          </div>
-        
+
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              if (!post.isMine) {
+                alert("본인 글만 수정할 수 있습니다.");
+                return;
+              }
+              router.push(`/posts/question/${post.id}/edit`);
+            }}
+            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            수정
+          </button>
+          <button
+            onClick={handleDeletePost}
+            className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            삭제
+          </button>
+        </div>
+
       </div>
 
       {/* 작성자 + 작성일 */}
@@ -182,60 +199,65 @@ export default function PostDetailPage() {
       <p className="text-gray-700 mb-6 whitespace-pre-wrap">{post.content}</p>
 
       {/* 댓글 영역 */}
-<div className="border-t border-gray-300 pt-4">
-  {comments.map((comment) => (
-    <div key={comment.id} className="mb-2 flex justify-between items-center">
-      <div>
-        <span className="font-semibold">{comment.author}:</span>{" "}
-        <span>{comment.content}</span>
+      <div className="border-t border-gray-300 pt-4">
+        {comments.map((comment) => (
+          <div key={comment.id} className="mb-2 flex justify-between items-center">
+            <div>
+              <span className="font-semibold">{comment.author}:</span>{" "}
+              <span>{comment.content}</span>
+            </div>
+            <button
+              onClick={async () => {
+                if (!comment.isMine) {
+                  alert("본인 댓글만 삭제할 수 있습니다.");
+                  return;
+                }
+                if (!confirm("댓글을 삭제하시겠습니까?")) return;
+
+                try {
+                  await fetchApi(`/api/comments/${comment.id}`, { method: "DELETE" });
+
+                  // 삭제 후 댓글 리스트 새로 조회
+                  const commentsRs: ApiResponse<PostCommentReadResponseDto[]> =
+                    await fetchApi(`/api/comments?postId=${postId}`);
+
+                  setComments(
+                    (commentsRs.data ?? []).map((c) => ({
+                      id: c.id, // ✅ DB에서 온 실제 ID 사용
+                      author: c.nickname,
+                      content: c.content,
+                      isMine: c.isMine
+                    }))
+                  );
+                } catch (err) {
+                  console.error(err);
+                  alert("댓글 삭제 실패");
+                }
+              }}
+              className="ml-2 text-red-500 hover:underline text-sm"
+            >
+              삭제
+            </button>
+          </div>
+        ))}
+
+        {/* 댓글 입력 */}
+        <div className="flex mt-4 gap-2">
+          <input
+            type="text"
+            placeholder="댓글쓰기"
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            className="flex-1 border border-gray-300 rounded px-3 py-1"
+          />
+          <button
+            onClick={handleAddComment}
+            className="bg-gray-300 hover:bg-gray-400 px-4 py-1 rounded"
+          >
+            등록
+          </button>
+        </div>
       </div>
-      <button
-        onClick={async () => {
-          if (!confirm("댓글을 삭제하시겠습니까?")) return;
-
-          try {
-            await fetchApi(`/api/comments/${comment.id}`, { method: "DELETE" });
-
-            // 삭제 후 댓글 리스트 새로 조회
-            const commentsRs: ApiResponse<PostCommentReadResponseDto[]> =
-              await fetchApi(`/api/comments?postId=${postId}`);
-
-              setComments(
-                (commentsRs.data ?? []).map((c) => ({
-                  id: c.id, // ✅ DB에서 온 실제 ID 사용
-                  author: c.nickname,
-                  content: c.content,
-                }))
-              );
-          } catch (err) {
-            console.error(err);
-            alert("댓글 삭제 실패");
-          }
-        }}
-        className="ml-2 text-red-500 hover:underline text-sm"
-      >
-        삭제
-      </button>
-    </div>
-  ))}
-
-  {/* 댓글 입력 */}
-  <div className="flex mt-4 gap-2">
-    <input
-      type="text"
-      placeholder="댓글쓰기"
-      value={newComment}
-      onChange={(e) => setNewComment(e.target.value)}
-      className="flex-1 border border-gray-300 rounded px-3 py-1"
-    />
-    <button
-      onClick={handleAddComment}
-      className="bg-gray-300 hover:bg-gray-400 px-4 py-1 rounded"
-    >
-      등록
-    </button>
-  </div>
-</div>
     </div>
   );
 }

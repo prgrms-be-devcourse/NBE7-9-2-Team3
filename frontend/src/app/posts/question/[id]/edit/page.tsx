@@ -14,7 +14,7 @@ interface PostDto {
 export default function PostEditPage() {
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
-  
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [existingImages, setExistingImages] = useState<string[]>([]); // 서버에 저장된 기존 이미지
@@ -29,9 +29,14 @@ export default function PostEditPage() {
         setTitle(post.title);
         setContent(post.content);
         setExistingImages(post.images || []);
-      } catch (err: any) {
-        console.error(err);
-        alert('게시글을 불러오는 중 오류가 발생했습니다.');
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          console.error(err.message);
+          alert('게시글을 불러오는 중 오류가 발생했습니다.');
+        } else {
+          console.error(err);
+          alert('게시글을 불러오는 중 알 수 없는 오류가 발생했습니다.');
+        }
         router.push('/posts/question');
       }
     };
@@ -63,7 +68,7 @@ export default function PostEditPage() {
     formData.append('title', title);
     formData.append('content', content);
     formData.append('boardType', 'QUESTION');
-    
+
     // 기존 이미지는 서버가 남겨두도록 ID 또는 URL 전달
     existingImages.forEach((url) => formData.append('existingImages', url));
 

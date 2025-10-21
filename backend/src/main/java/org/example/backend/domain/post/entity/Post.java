@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.backend.domain.like.entity.Like;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
 import org.example.backend.domain.postcomment.entity.PostComment;
@@ -63,6 +64,10 @@ public class Post extends BaseEntity {
         if (this.likeCount > 0) this.likeCount--;
     }
 
+    private String category;
+
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>();
 
     public Post(PostWriteRequestDto reqBody, Member member) {
         this.title = reqBody.title();
@@ -71,6 +76,7 @@ public class Post extends BaseEntity {
         this.boardType = BoardType.valueOf(reqBody.boardType());
         this.displaying = Post.Displaying.PUBLIC;
         this.images = new ArrayList<>();
+        this.category = reqBody.category();
     }
 
     public void addImage(PostImage image) {
