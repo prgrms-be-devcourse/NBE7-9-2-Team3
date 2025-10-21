@@ -78,7 +78,7 @@ public class SwaggerConfig {
     public GroupedOpenApi tradeApi() {
         return GroupedOpenApi.builder()
             .group("05. Trade API")
-            .pathsToMatch("/api/trades/**")
+            .pathsToMatch("/api/market/**")
             .build();
     }
 
@@ -102,7 +102,7 @@ public class SwaggerConfig {
     public GroupedOpenApi tradeChatApi() {
         return GroupedOpenApi.builder()
             .group("08. Trade Chat API")
-            .pathsToMatch("/api/trade-chats/**")
+            .pathsToMatch("/api/chat/**")
             .build();
     }
 

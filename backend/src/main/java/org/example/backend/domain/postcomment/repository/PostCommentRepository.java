@@ -9,5 +9,7 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
 
     List<PostComment> findByPost_Id(Long postId);
 
+    List<PostComment> findByAuthor_MemberId(Long memberId);
+
     List<PostComment> findByAuthor_MemberIdAndPost_BoardType(Long memberId, BoardType boardType);
 }

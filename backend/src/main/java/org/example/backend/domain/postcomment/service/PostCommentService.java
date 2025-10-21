@@ -49,7 +49,13 @@ public class PostCommentService {
 
 
     public List<PostComment> findMyComments(Member member, BoardType boardType) {
-        return postCommentRepository.findByAuthor_MemberIdAndPost_BoardType(member.getMemberId(), boardType);
+        if (boardType == null) {
+            // boardType이 null이면 모든 댓글 조회
+            return postCommentRepository.findByAuthor_MemberId(member.getMemberId());
+        } else {
+            // boardType이 지정되면 해당 게시판의 댓글만 조회
+            return postCommentRepository.findByAuthor_MemberIdAndPost_BoardType(member.getMemberId(), boardType);
+        }
     }
 
     public List<PostComment> findByPostId(Long postId) {

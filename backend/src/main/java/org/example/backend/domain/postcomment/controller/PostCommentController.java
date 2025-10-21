@@ -68,6 +68,7 @@ public class PostCommentController {
             .sorted(Comparator.comparing(PostComment::getCreateDate).reversed())
             .map(c -> new MyPostCommentReadResponseDto(
                 c.getId(),
+                c.getPost().getId(),
                 c.getPost().getTitle(),
                 c.getContent()
             ))
