@@ -371,7 +371,10 @@ export default function AquariumDetailPage() {
     })
       .then(res => res.json())
       .then(json => {
-        setEnvironmentData(prev => [json, ...prev]);
+        setEnvironmentData(prev => {
+          const updated = [json, ...prev];
+          return updated.sort((a, b) => new Date(b.logDate).getTime() - new Date(a.logDate).getTime());
+        });
         setNewTemperature('');
         setNewPh('');
         setNewEnvironmentDate('');
