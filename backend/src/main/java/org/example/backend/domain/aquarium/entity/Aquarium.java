@@ -52,4 +52,8 @@ public class Aquarium extends BaseEntity {
     this.lastDate = lastDate;
     this.nextDate = nextDate;
   }
+
+  public void changeName(String name) {
+    this.name = name;
+  }
 }
