@@ -191,6 +191,10 @@ public class AquariumService {
         .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
     String newName = requestDto.aquariumName();
 
+    if (newName.equals("내가 키운 물고기")) {
+      throw new BusinessException(ErrorCode.AQUARIUM_OWNED_ALREADY_HAVE);
+    }
+
     aquarium.changeName(newName);
     aquariumRepository.save(aquarium);
 
