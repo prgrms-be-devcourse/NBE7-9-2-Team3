@@ -39,6 +39,10 @@ public class AquariumService {
     Long memberId = userDetails.getId(); // JWT 토큰을 이용해 로그인한 member의 id를 가져옴
     String aquariumName = requestDto.aquariumName();
 
+    if (aquariumName.equals("내가 키운 물고기")) {
+      throw new BusinessException(ErrorCode.AQUARIUM_OWNED_ALREADY_HAVE);
+    }
+
     Member member = memberRepository.findById(memberId)
         .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
