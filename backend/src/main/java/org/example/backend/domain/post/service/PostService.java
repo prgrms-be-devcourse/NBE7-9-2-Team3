@@ -102,4 +102,8 @@ public class PostService {
     public int countByBoardTypeAndDisplaying(BoardType boardType, Displaying displaying) {
         return (int) postRepository.countByBoardTypeAndDisplaying(boardType, displaying);
     }
+
+    public Page<Post> findByBoardTypeAndDisplayingAndAuthorIdIn(BoardType boardType, Displaying displaying, List<Long> followeeIds, Pageable pageable) {
+        return postRepository.findByBoardTypeAndDisplayingAndAuthor_MemberIdIn(boardType, displaying, followeeIds, pageable);
+    }
 }

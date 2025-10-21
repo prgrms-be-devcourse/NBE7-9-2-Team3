@@ -3,6 +3,7 @@ package org.example.backend.domain.post.controller;
 import java.util.List;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.follow.repository.FollowRepository;
 import org.example.backend.domain.like.repository.LikeRepository;
 import org.example.backend.domain.post.dto.MyPostReadResponseDto;
 import org.example.backend.domain.post.dto.PostListResponse;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
 
     private final PostService postService;
+    private final FollowRepository followRepository;
 
     @GetMapping("/my")
     @Transactional(readOnly = true)
@@ -77,20 +79,34 @@ public class PostController {
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
 
-        // 1차로 게시판 타입에 따라 필터링, 공개글만
-        Page<Post> postPage = postService.findByBoardTypeAndDisplaying(boardType, Post.Displaying.PUBLIC, pageable);
+        Page<Post> postPage;
 
-
-        // 2차로 팔로잉인 경우에 한번 더 필터링
-        // 팔로잉 구현 시 추가, 토큰으로 로그인 사용자를 읽어서 팔로잉 조인
         if (filterType.equals("following")) {
 
+
+            List<Long> followeeIds = followRepository.findFolloweeIdsByFollower(userDetails.getMember());
+
+            postPage = postService.findByBoardTypeAndDisplayingAndAuthorIdIn(
+                boardType,
+                Post.Displaying.PUBLIC,
+                followeeIds,
+                pageable
+            );
+
+        }else{
+            postPage = postService.findByBoardTypeAndDisplaying(boardType, Post.Displaying.PUBLIC, pageable);
+
         }
+
+
 
         List<PostReadResponseDto> postDtos = postPage.getContent().stream()
             .map(post -> {
                 boolean liked = likeRepository.existsByMemberAndPost(userDetails.getMember(), post);
-
+                boolean following = followRepository.existsByFollowerAndFollowee(
+                    userDetails.getMember(),   // 로그인 사용자
+                    post.getAuthor()           // 게시글 작성자
+                );
 
                 return new PostReadResponseDto(
                     post.getId(),
@@ -100,7 +116,9 @@ public class PostController {
                     post.getCreateDate(),
                     post.getImages().stream().map(PostImage::getImageUrl).toList(),
                     post.getLikeCount(),
-                    liked
+                    liked,
+                    following,
+                    post.getAuthor().getMemberId()
                 );
             })
             .toList();
@@ -124,6 +142,10 @@ public class PostController {
             .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
 
         boolean liked = likeRepository.existsByMemberAndPost(userDetails.getMember(), post);
+        boolean following = followRepository.existsByFollowerAndFollowee(
+            userDetails.getMember(),   // 로그인 사용자
+            post.getAuthor()          // 게시글 작성자
+        );
 
         PostReadResponseDto response = new PostReadResponseDto(
             post.getId(),
@@ -135,7 +157,9 @@ public class PostController {
                 .map(PostImage::getImageUrl)
                 .toList(),
             post.getLikeCount(),
-            liked
+            liked,
+            following,
+            post.getAuthor().getMemberId()
         );
 
         return new ApiResponse<>(

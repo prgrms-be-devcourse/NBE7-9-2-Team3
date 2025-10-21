@@ -12,7 +12,9 @@ interface PostReadResponseDto {
   createDate: string;
   images: string[];
   likeCount: number;   // 카멜케이스 통일
-  liked?: boolean;     // 로그인 사용자 좋아요 여부
+  liked?: boolean;
+  following: boolean;     // 로그인 사용자 좋아요 여부
+  authorId: number;
 }
 
 interface ApiResponse<T> {
@@ -36,6 +38,7 @@ export default function PostDetailPage() {
   const [comments, setComments] = useState<CommentDto[]>([]);
   const [currentImage, setCurrentImage] = useState(0);
   const [newComment, setNewComment] = useState("");
+  const [following, setFollowing] = useState<boolean>(false);
 
   interface PostCommentReadResponseDto {
     id: number;
@@ -48,7 +51,9 @@ export default function PostDetailPage() {
     try {
       // 게시글 불러오기
       const rsData: ApiResponse<PostReadResponseDto> = await fetchApi(`/api/posts/${postId}`);
-      setPost(rsData.data ?? null);
+      const postData = rsData.data ?? null;
+      setPost(postData);
+      if (postData) setFollowing(postData.following);
 
       // 댓글 불러오기
       const commentsRs: ApiResponse<PostCommentReadResponseDto[]> =
@@ -110,6 +115,25 @@ export default function PostDetailPage() {
     }
   };
 
+  const handleToggleFollow = async () => {
+    if (!post) return;
+    const newFollowing = !following;
+    setFollowing(newFollowing); // UI 즉시 반영
+
+    try {
+      if (newFollowing) {
+        await fetchApi(`/api/follows/${post.authorId}`, { method: "POST" });
+      } else {
+        await fetchApi(`/api/follows/${post.authorId}`, { method: "DELETE" });
+      }
+      setPost({ ...post, following: newFollowing }); // post 상태에도 반영
+    } catch (err) {
+      console.error(err);
+      setFollowing(!newFollowing); // 실패 시 롤백
+      alert("팔로우 상태 변경 실패");
+    }
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim() || !postId) return;
 
@@ -140,20 +164,26 @@ export default function PostDetailPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
-      {/* 제목 + 좋아요 + 수정/삭제 */}
+      {/* 제목 + 좋아요 + 팔로우 + 수정/삭제 */}
       <div className="flex justify-between items-start mb-4">
         <div>
           <h1 className="text-2xl font-bold">{post.title}</h1>
 
-          {/* 좋아요 버튼 */}
-          <button
-            onClick={handleToggleLike}
-            className={`mt-2 px-3 py-1 rounded ${
-              post.liked ? "bg-red-500 text-white" : "bg-gray-200"
-            }`}
-          >
-            ❤️ {post.likeCount}
-          </button>
+          <div className="flex gap-2 mt-2">
+            <button
+              onClick={handleToggleLike}
+              className={`px-3 py-1 rounded ${post.liked ? "bg-red-500 text-white" : "bg-gray-200"}`}
+            >
+              ❤️ {post.likeCount}
+            </button>
+
+            <button
+              onClick={handleToggleFollow}
+              className={`px-3 py-1 rounded ${following ? "bg-gray-400 text-white" : "bg-blue-500 text-white"}`}
+            >
+              {following ? "팔로잉" : "팔로우"}
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-2">
