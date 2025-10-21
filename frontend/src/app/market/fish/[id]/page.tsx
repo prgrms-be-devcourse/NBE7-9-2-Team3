@@ -13,6 +13,10 @@ export default function FishDetailPage() {
   const tradeId = params.id as string;
   const { user, isAuthenticated } = useAuth();
 
+  // URL에서 페이지 번호 가져오기
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const returnPage = searchParams.get('page') || '1';
+
   const [post, setPost] = useState<Trade | null>(null);
   const [comments, setComments] = useState<TradeComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -168,7 +172,7 @@ export default function FishDetailPage() {
   return (
     <div className="max-w-6xl mx-auto p-8">
       <div className="mb-6">
-        <Link href="/market/fish" className="text-blue-500 hover:underline">
+        <Link href={`/market/fish?returnToPage=${returnPage}`} className="text-blue-500 hover:underline">
           ← 목록으로
         </Link>
       </div>
@@ -294,21 +298,23 @@ export default function FishDetailPage() {
               채팅하기
             </button>
 
-            {/* 수정/삭제 버튼 */}
-            <div className="flex gap-3">
-              <Link
-                href={`/market/fish/${tradeId}/edit`}
-                className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-center transition"
-              >
-                수정
-              </Link>
-              <button
-                onClick={handleDelete}
-                className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 font-semibold transition"
-              >
-                삭제
-              </button>
-            </div>
+            {/* 수정/삭제 버튼 - 작성자만 표시 */}
+            {user && user.memberId === post.memberId && (
+              <div className="flex gap-3">
+                <Link
+                  href={`/market/fish/${tradeId}/edit`}
+                  className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-center transition"
+                >
+                  수정
+                </Link>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 font-semibold transition"
+                >
+                  삭제
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -396,6 +402,13 @@ export default function FishDetailPage() {
               </div>
             ))
           )}
+        </div>
+
+        {/* 목록으로 돌아가기 버튼 */}
+        <div className="mt-8 pt-6 border-t">
+          <Link href={`/market/fish?returnToPage=${returnPage}`} className="text-blue-500 hover:underline inline-flex items-center">
+            ← 목록으로
+          </Link>
         </div>
       </div>
     </div>
