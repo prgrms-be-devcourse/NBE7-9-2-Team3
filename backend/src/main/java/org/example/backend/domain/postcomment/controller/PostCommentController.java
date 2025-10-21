@@ -1,5 +1,6 @@
 package org.example.backend.domain.postcomment.controller;
 
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.post.entity.Post.BoardType;
@@ -40,7 +41,9 @@ public class PostCommentController {
         List<PostComment> comments = postCommentService.findByPostId(postId);
 
         List<PostCommentReadResponseDto> response = comments.stream()
+            .sorted(Comparator.comparing(PostComment::getCreateDate).reversed())
             .map(c -> new PostCommentReadResponseDto(
+                c.getId(),
                 c.getContent(),
                 c.getAuthor().getNickname()
             ))
@@ -62,7 +65,9 @@ public class PostCommentController {
         List<PostComment> postComments = postCommentService.findMyComments(userDetails.getMember(), boardType);
 
         List<MyPostCommentReadResponseDto> response = postComments.stream()
+            .sorted(Comparator.comparing(PostComment::getCreateDate).reversed())
             .map(c -> new MyPostCommentReadResponseDto(
+                c.getId(),
                 c.getPost().getTitle(),
                 c.getContent()
             ))
