@@ -122,13 +122,13 @@ export default function LikedPostsPage() {
               <p className="mt-1 text-sm text-gray-500">마음에 드는 게시글에 좋아요를 눌러보세요.</p>
               <div className="mt-4">
                 <button
-                  onClick={() => router.push('/community/boast')}
+                  onClick={() => router.push('/posts/showoff')}
                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors mr-2"
                 >
                   자랑게시판 보기
                 </button>
                 <button
-                  onClick={() => router.push('/community/question')}
+                  onClick={() => router.push('/posts/question')}
                   className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                 >
                   질문게시판 보기

@@ -1,5 +1,6 @@
 package org.example.backend.domain.tradecomment.service;
 
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.entity.Member;
@@ -7,6 +8,7 @@ import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.domain.trade.entity.Trade;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.repository.TradeRepository;
+import org.example.backend.domain.tradecomment.dto.MyTradeCommentReadResponseDto;
 import org.example.backend.domain.tradecomment.dto.TradeCommentDeleteRequestDto;
 import org.example.backend.domain.tradecomment.dto.TradeCommentRequestDto;
 import org.example.backend.domain.tradecomment.dto.TradeCommentResponseDto;
@@ -97,5 +99,21 @@ public class TradeCommentService {
         if (!comment.getMember().getMemberId().equals(memberId)) {
             throw new BusinessException(ErrorCode.TRADE_COMMENT_OWNER_MISMATCH);
         }
+    }
+
+    public List<MyTradeCommentReadResponseDto> getMyTradeComments(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        return tradeCommentRepository.findByMember(member).stream()
+            .sorted(Comparator.comparing(TradeComment::getCreateDate).reversed())
+            .map(comment -> new MyTradeCommentReadResponseDto(
+                comment.getCommentId(),
+                comment.getTrade().getTradeId(),
+                comment.getTrade().getTitle(),
+                comment.getContent(),
+                comment.getTrade().getBoardType().toString()
+            ))
+            .toList();
     }
 }
