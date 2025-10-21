@@ -18,6 +18,8 @@ export default function AquariumsPage() {
   const [newAquariumName, setNewAquariumName] = useState('');
   const [isAdding, setIsAdding] = useState(false);  // "어항 추가" 버튼 클릭 여부 확인
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [myFishesAquariumId, setMyFishesAquariumId] = useState<number | null>(null);
+  const [hasMyFishes, setHasMyFishes] = useState(false);
 
   const router = useRouter();
 
@@ -48,9 +50,37 @@ export default function AquariumsPage() {
       credentials: 'include',
     })
       .then(res => res.json())
-      .then(json => setAquariums(sortAquariums(json.data)))
+      .then(json => {
+        const sortedAquariums = sortAquariums(json.data);
+        setAquariums(sortedAquariums);
+        
+        // "내가 키운 물고기" 어항 찾기
+        const myFishesAquarium = sortedAquariums.find(a => a.aquariumName === "내가 키운 물고기");
+        if (myFishesAquarium) {
+          setMyFishesAquariumId(myFishesAquarium.aquariumId);
+          // 해당 어항에 물고기가 있는지 확인
+          checkMyFishesCount(myFishesAquarium.aquariumId);
+        } else {
+          setMyFishesAquariumId(null);
+          setHasMyFishes(false);
+        }
+      })
       .catch(err => console.error(err));
   }, [refreshTrigger]); // refreshTrigger가 변경될 때마다 다시 조회
+
+  // "내가 키운 물고기" 어항의 물고기 개수 확인
+  const checkMyFishesCount = async (aquariumId: number) => {
+    try {
+      const response = await fetch(`${baseUrl}/api/aquarium/${aquariumId}/fish`, {
+        credentials: 'include',
+      });
+      const json = await response.json();
+      setHasMyFishes(json.data && json.data.length > 0);
+    } catch (err) {
+      console.error('물고기 개수 확인 중 오류:', err);
+      setHasMyFishes(false);
+    }
+  };
 
   // 새 어항 추가
   const handleAddAquarium = () => {
@@ -259,7 +289,13 @@ export default function AquariumsPage() {
 
           {/* 어항 목록 */}
           <div className="space-y-6" key={refreshTrigger}>
-          {aquariums.map((aquarium) => (
+          {aquariums.map((aquarium) => {
+            // "내가 키운 물고기" 어항이지만 물고기가 없으면 렌더링하지 않음
+            if (aquarium.aquariumName === "내가 키운 물고기" && !hasMyFishes) {
+              return null;
+            }
+            
+            return (
             <div key={aquarium.aquariumId} className="bg-white border border-gray-200 rounded-lg p-6">
 
               {/* "내가 키운 물고기" 어항 */}
@@ -314,7 +350,8 @@ export default function AquariumsPage() {
                 </>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </main>
     </div>
