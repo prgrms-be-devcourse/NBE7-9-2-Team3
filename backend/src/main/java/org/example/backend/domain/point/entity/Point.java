@@ -36,11 +36,33 @@ public class Point {
     @Column(nullable = false)
     private LocalDateTime createDate;
 
-    // 내역 생성
+    // 내역 생성 - 충전
     public static Point create(Member member, long amount, long afterPoint) {
         Point point = new Point();
         point.member = member;
         point.type = TransactionType.CHARGE;
+        point.points = amount;
+        point.afterPoint = afterPoint;
+        point.createDate = LocalDateTime.now();
+        return point;
+    }
+
+    // 내역 생성 - 구매
+    public static Point createPurchase(Member member, long amount, long afterPoint) {
+        Point point = new Point();
+        point.member = member;
+        point.type = TransactionType.PURCHASE;
+        point.points = amount;
+        point.afterPoint = afterPoint;
+        point.createDate = LocalDateTime.now();
+        return point;
+    }
+
+    // 내역 생성 - 판매
+    public static Point createSale(Member member, long amount, long afterPoint) {
+        Point point = new Point();
+        point.member = member;
+        point.type = TransactionType.SALE;
         point.points = amount;
         point.afterPoint = afterPoint;
         point.createDate = LocalDateTime.now();

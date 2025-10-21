@@ -29,15 +29,6 @@ public class FollowService {
         if (followerId.equals(followeeId)) {
             throw new BusinessException(ErrorCode.FOLLOW_SELF_FOLLOW);
         }
-
-        // 멤버 존재 여부 확인
-        if (memberService.notExistsById(followerId)) {
-            throw new BusinessException(ErrorCode.FOLLOW_NOT_FOUND);
-        }
-        if (memberService.notExistsById(followeeId)) {
-            throw new BusinessException(ErrorCode.FOLLOWEE_NOT_FOUND);
-        }
-
         // 이미 팔로우하고 있는지 확인
         if (followRepository.existsByFollowerMemberIdAndFolloweeMemberId(followerId, followeeId)) {
             throw new BusinessException(ErrorCode.FOLLOW_ALREADY_EXISTS);

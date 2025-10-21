@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { fetchApi } from '@/lib/client';
 
 interface MyPost {
+  id: number;
   title: string;
   displaying: 'PUBLIC' | 'PRIVATE';
 }
@@ -17,6 +18,7 @@ interface Trade {
   price: number;
   status: 'SELLING' | 'COMPLETED' | 'CANCELLED';
   boardType: 'FISH' | 'SECONDHAND';
+  createdDate: string;
 }
 
 interface ApiResponse<T> {
@@ -70,10 +72,31 @@ export default function MyPostsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response: ApiResponse<Trade[]> = await fetchApi('/api/trades/my');
-      if (response.data) {
-        setTrades(response.data);
+
+      // 중고물품과 물고기 거래글을 모두 가져오기
+      const [secondhandResponse, fishResponse] = await Promise.all([
+        fetchApi('/api/market/secondhand/my?page=0&size=100'),
+        fetchApi('/api/market/fish/my?page=0&size=100')
+      ]);
+
+      const allTrades: Trade[] = [];
+
+      // 중고물품 거래글 추가
+      if (secondhandResponse.data?.content) {
+        allTrades.push(...secondhandResponse.data.content);
       }
+
+      // 물고기 거래글 추가
+      if (fishResponse.data?.content) {
+        allTrades.push(...fishResponse.data.content);
+      }
+
+      // 최신순으로 정렬 (createdDate 기준 내림차순)
+      allTrades.sort((a, b) => {
+        return new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
+      });
+
+      setTrades(allTrades);
     } catch (error) {
       console.error('내가 작성한 거래글 조회 실패:', error);
       setError('내가 작성한 거래글을 불러올 수 없습니다.');
@@ -241,8 +264,8 @@ export default function MyPostsPage() {
                     <div className="flex-shrink-0 flex items-center space-x-2">
                       <button
                         onClick={() => {
-                          // TODO: 게시글 상세보기 페이지로 이동
-                          console.log('게시글 상세보기:', post.title);
+                          const boardPath = selectedBoardType === 'SHOWOFF' ? 'showoff' : 'question';
+                          router.push(`/posts/${boardPath}/${post.id}`);
                         }}
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
                       >
@@ -250,17 +273,27 @@ export default function MyPostsPage() {
                       </button>
                       <button
                         onClick={() => {
-                          // TODO: 게시글 수정 페이지로 이동
-                          console.log('게시글 수정:', post.title);
+                          const boardPath = selectedBoardType === 'SHOWOFF' ? 'showoff' : 'question';
+                          router.push(`/posts/${boardPath}/${post.id}/edit`);
                         }}
                         className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
                       >
                         수정
                       </button>
                       <button
-                        onClick={() => {
-                          // TODO: 게시글 삭제 확인
-                          console.log('게시글 삭제:', post.title);
+                        onClick={async () => {
+                          if (!confirm('정말 삭제하시겠습니까?')) return;
+
+                          try {
+                            await fetchApi(`/api/posts/${post.id}`, {
+                              method: 'DELETE'
+                            });
+                            alert('게시글이 삭제되었습니다.');
+                            fetchMyPosts(); // 목록 새로고침
+                          } catch (error) {
+                            console.error('게시글 삭제 실패:', error);
+                            alert('게시글 삭제에 실패했습니다.');
+                          }
                         }}
                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
                       >
@@ -330,8 +363,8 @@ export default function MyPostsPage() {
                       <div className="flex-shrink-0 flex items-center space-x-2">
                         <button
                           onClick={() => {
-                            // TODO: 거래글 상세보기 페이지로 이동
-                            console.log('거래글 상세보기:', trade.title);
+                            const boardPath = trade.boardType === 'FISH' ? 'fish' : 'secondhand';
+                            router.push(`/market/${boardPath}/${trade.tradeId}`);
                           }}
                           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
                         >
@@ -339,17 +372,28 @@ export default function MyPostsPage() {
                         </button>
                         <button
                           onClick={() => {
-                            // TODO: 거래글 수정 페이지로 이동
-                            console.log('거래글 수정:', trade.title);
+                            const boardPath = trade.boardType === 'FISH' ? 'fish' : 'secondhand';
+                            router.push(`/market/${boardPath}/${trade.tradeId}/edit`);
                           }}
                           className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
                         >
                           수정
                         </button>
                         <button
-                          onClick={() => {
-                            // TODO: 거래글 삭제 확인
-                            console.log('거래글 삭제:', trade.title);
+                          onClick={async () => {
+                            if (!confirm('정말 삭제하시겠습니까?')) return;
+
+                            try {
+                              const boardPath = trade.boardType === 'FISH' ? 'fish' : 'secondhand';
+                              await fetchApi(`/api/market/${boardPath}/${trade.tradeId}`, {
+                                method: 'DELETE'
+                              });
+                              alert('거래글이 삭제되었습니다.');
+                              fetchMyTrades(); // 목록 새로고침
+                            } catch (error) {
+                              console.error('거래글 삭제 실패:', error);
+                              alert('거래글 삭제에 실패했습니다.');
+                            }
                           }}
                           className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
                         >

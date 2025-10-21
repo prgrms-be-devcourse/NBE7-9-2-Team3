@@ -13,6 +13,30 @@ export default function SecondhandDetailPage() {
   const tradeId = params.id as string;
   const { user, isAuthenticated } = useAuth();
 
+  // URL에서 모든 파라미터 가져오기 (페이지, 검색 조건 등)
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const returnPage = searchParams.get('page') || '1';
+
+  // 목록으로 돌아갈 때 사용할 파라미터 구성
+  const buildReturnUrl = () => {
+    const params = new URLSearchParams();
+    params.append('returnToPage', returnPage);
+
+    const searchTerm = searchParams.get('searchTerm');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const status = searchParams.get('status');
+    const sort = searchParams.get('sort');
+
+    if (searchTerm) params.append('searchTerm', searchTerm);
+    if (minPrice) params.append('minPrice', minPrice);
+    if (maxPrice) params.append('maxPrice', maxPrice);
+    if (status) params.append('status', status);
+    if (sort) params.append('sort', sort);
+
+    return `/market/secondhand?${params.toString()}`;
+  };
+
   const [post, setPost] = useState<Trade | null>(null);
   const [comments, setComments] = useState<TradeComment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -157,6 +181,39 @@ export default function SecondhandDetailPage() {
     setEditingCommentText('');
   };
 
+  const handlePurchase = async () => {
+    if (!isAuthenticated || !user) {
+      alert('로그인이 필요합니다.');
+      router.push('/login');
+      return;
+    }
+
+    if (user.memberId === post?.memberId) {
+      alert('본인의 상품은 구매할 수 없습니다.');
+      return;
+    }
+
+    if (!confirm(`${post?.price.toLocaleString()}원에 구매하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      await fetchApi('/api/points/members/purchase', {
+        method: 'POST',
+        body: JSON.stringify({
+          sellerId: post?.memberId,
+          amount: post?.price
+        })
+      });
+
+      alert('구매가 완료되었습니다!');
+      fetchPost(); // 게시글 상태 업데이트
+    } catch (error) {
+      console.error('구매 실패:', error);
+      alert('구매에 실패했습니다. 포인트가 부족하거나 오류가 발생했습니다.');
+    }
+  };
+
   if (loading) {
     return <div className="p-8">Loading...</div>;
   }
@@ -168,7 +225,7 @@ export default function SecondhandDetailPage() {
   return (
     <div className="max-w-6xl mx-auto p-8">
       <div className="mb-6">
-        <Link href="/market/secondhand" className="text-blue-500 hover:underline">
+        <Link href={buildReturnUrl()} className="text-blue-500 hover:underline">
           ← 목록으로
         </Link>
       </div>
@@ -274,32 +331,43 @@ export default function SecondhandDetailPage() {
             <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">{post.description}</p>
           </div>
 
-          {/* 결제하기 버튼 */}
-          {post.status === TradeStatus.SELLING && (
-            <button
-              onClick={() => alert('결제 기능은 준비 중입니다.')}
-              className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-bold text-lg transition shadow-lg"
-            >
-              결제하기
-            </button>
-          )}
-
-          {/* 수정/삭제 버튼 */}
+          {/* 버튼 영역 */}
           <div className="space-y-3">
-            <div className="flex gap-3">
-              <Link
-                href={`/market/secondhand/${tradeId}/edit`}
-                className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-center transition"
-              >
-                수정
-              </Link>
+            {/* 결제하기 버튼 */}
+            {post.status === TradeStatus.SELLING && user && user.memberId !== post.memberId && (
               <button
-                onClick={handleDelete}
-                className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 font-semibold transition"
+                onClick={handlePurchase}
+                className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-bold text-lg transition shadow-lg"
               >
-                삭제
+                결제하기
               </button>
-            </div>
+            )}
+
+            {/* 채팅하기 버튼 */}
+            <button
+              onClick={() => alert('채팅 기능은 준비 중입니다.')}
+              className="w-full bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600 font-semibold transition"
+            >
+              채팅하기
+            </button>
+
+            {/* 수정/삭제 버튼 - 작성자만 표시 */}
+            {user && user.memberId === post.memberId && (
+              <div className="flex gap-3">
+                <Link
+                  href={`/market/secondhand/${tradeId}/edit`}
+                  className="flex-1 bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 font-semibold text-center transition"
+                >
+                  수정
+                </Link>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 font-semibold transition"
+                >
+                  삭제
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -387,6 +455,13 @@ export default function SecondhandDetailPage() {
               </div>
             ))
           )}
+        </div>
+
+        {/* 목록으로 돌아가기 버튼 */}
+        <div className="mt-8 pt-6 border-t">
+          <Link href={buildReturnUrl()} className="text-blue-500 hover:underline inline-flex items-center">
+            ← 목록으로
+          </Link>
         </div>
       </div>
     </div>

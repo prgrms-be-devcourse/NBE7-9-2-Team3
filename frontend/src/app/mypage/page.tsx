@@ -114,6 +114,24 @@ export default function MyPage() {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{memberData.nickname}</h1>
               <p className="text-gray-600 mb-4">{memberData.email}</p>
               
+              {/* 포인트 버튼들 */}
+              <div className="mb-4">
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => router.push('/mypage/points/charge')}
+                    className="px-4 py-2 bg-yellow-500 text-white text-sm rounded-lg hover:bg-yellow-600 transition-colors"
+                  >
+                    포인트 충전
+                  </button>
+                  <button
+                    onClick={() => router.push('/mypage/points/history')}
+                    className="px-4 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    포인트 내역
+                  </button>
+                </div>
+              </div>
+              
               {/* 팔로워/팔로잉 수 */}
               <div className="flex space-x-6">
                 <button
@@ -185,7 +203,10 @@ export default function MyPage() {
             </div>
           </button>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <button
+            onClick={() => router.push('/mypage/liked-posts')}
+            className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow text-left"
+          >
             <div className="flex items-center">
               <div className="p-3 bg-purple-100 rounded-lg">
                 <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,10 +214,10 @@ export default function MyPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">좋아요</p>
+                <p className="text-sm font-medium text-gray-500">좋아요한 글</p>
               </div>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* 최근 활동 */}

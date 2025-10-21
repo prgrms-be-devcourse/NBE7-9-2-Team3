@@ -1,14 +1,14 @@
 package org.example.backend.domain.post.dto;
 
 import java.util.List;
-import org.example.backend.domain.post.entity.PostImage;
+import org.springframework.web.multipart.MultipartFile;
 
 public record PostWriteRequestDto(
 
     String title,
     String content,
-    String BoardType,
-    List<PostImage> images
+    String boardType,
+    List<MultipartFile> images
 
 ) {
 

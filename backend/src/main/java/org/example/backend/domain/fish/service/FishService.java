@@ -5,9 +5,13 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.repository.AquariumRepository;
 import org.example.backend.domain.fish.dto.FishRequestDto;
+import org.example.backend.domain.fish.dto.FishResponseDto;
+import org.example.backend.domain.fish.dto.FishUpdateResponseDto;
 import org.example.backend.domain.fish.entity.Fish;
 import org.example.backend.domain.fish.repository.FishLogRepository;
 import org.example.backend.domain.fish.repository.FishRepository;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,26 +27,30 @@ public class FishService {
     return fishRepository.count();
   }
 
-  public Fish createFish(Long aquariumId, FishRequestDto fishRequestDto) {
+  public FishResponseDto createFish(Long aquariumId, FishRequestDto fishRequestDto) {
     String species = fishRequestDto.species();
     String name = fishRequestDto.name();
 
     Aquarium aquarium = aquariumRepository.findById(aquariumId)
-        .orElseThrow(() -> new RuntimeException("어항이 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
     Fish fish = new Fish(aquarium, species, name);
 
     fishRepository.save(fish);
+    FishResponseDto responseDto = new FishResponseDto(fish);
 
-    return fish;
+    return responseDto;
   }
 
-  public List<Fish> findAllByAquariumId(Long aquariumId) {
-    return fishRepository.findAllByAquarium_Id(aquariumId);
+  public List<FishResponseDto> findAllByAquariumId(Long aquariumId) {
+    List<FishResponseDto> responseDto = fishRepository.findAllByAquarium_Id(aquariumId)
+        .reversed().stream().map(FishResponseDto::new).toList();
+
+    return responseDto;
   }
 
-  public Fish updateFish(Long aquariumId, Long fishId, FishRequestDto fishRequestDto) {
+  public FishUpdateResponseDto updateFish(Long aquariumId, Long fishId, FishRequestDto fishRequestDto) {
     Fish fish = fishRepository.findByAquarium_IdAndId(aquariumId, fishId)
-        .orElseThrow(() -> new RuntimeException("물고기가 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.FISH_NOT_FOUND));
 
     String species = fishRequestDto.species();
     String name = fishRequestDto.name();
@@ -50,13 +58,15 @@ public class FishService {
     fish.changeDetails(species, name);
     fishRepository.save(fish);
 
-    return fish;
+    FishUpdateResponseDto responseDto = new FishUpdateResponseDto(fish);
+
+    return responseDto;
   }
 
   @Transactional
   public void deleteFish(Long aquariumId, Long fishId) {
     Fish fish = fishRepository.findByAquarium_IdAndId(aquariumId, fishId)
-        .orElseThrow(() -> new RuntimeException("물고기가 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.FISH_NOT_FOUND));
 
     fishLogRepository.deleteAllByFish(fish);
     fishRepository.delete(fish);

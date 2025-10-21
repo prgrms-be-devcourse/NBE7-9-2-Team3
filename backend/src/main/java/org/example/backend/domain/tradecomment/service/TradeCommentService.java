@@ -7,8 +7,10 @@ import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.domain.trade.entity.Trade;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.repository.TradeRepository;
+import org.example.backend.domain.tradecomment.dto.TradeCommentDeleteRequestDto;
 import org.example.backend.domain.tradecomment.dto.TradeCommentRequestDto;
 import org.example.backend.domain.tradecomment.dto.TradeCommentResponseDto;
+import org.example.backend.domain.tradecomment.dto.TradeCommentUpdateRequestDto;
 import org.example.backend.domain.tradecomment.entity.TradeComment;
 import org.example.backend.domain.tradecomment.repository.TradeCommentRepository;
 import org.example.backend.global.exception.BusinessException;
@@ -26,7 +28,8 @@ public class TradeCommentService {
     private final TradeRepository tradeRepository;
 
     @Transactional
-    public TradeCommentResponseDto createComment(BoardType boardType, TradeCommentRequestDto request) {
+    public TradeCommentResponseDto createComment(BoardType boardType,
+        TradeCommentRequestDto request) {
         Member member = memberRepository.findById(request.memberId())
             .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -54,29 +57,28 @@ public class TradeCommentService {
     }
 
     @Transactional
-    public TradeCommentResponseDto updateComment(BoardType boardType, Long tradeId, Long commentId,
-        Long memberId, TradeCommentRequestDto request) {
-        TradeComment comment = tradeCommentRepository.findById(commentId)
+    public TradeCommentResponseDto updateComment(TradeCommentUpdateRequestDto updateRequest) {
+        TradeComment comment = tradeCommentRepository.findById(updateRequest.commentId())
             .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_COMMENT_NOT_FOUND));
 
-        validateTrade(comment, tradeId);
-        validateBoardType(comment.getTrade(), boardType);
-        validateCommentOwner(comment, memberId);
+        validateTrade(comment, updateRequest.tradeId());
+        validateBoardType(comment.getTrade(), updateRequest.boardType());
+        validateCommentOwner(comment, updateRequest.memberId());
 
-        comment.update(request.content());
+        comment.update(updateRequest.commentData().content());
         return TradeCommentResponseDto.from(comment);
     }
 
     @Transactional
-    public void deleteComment(BoardType boardType, Long tradeId, Long commentId, Long memberId) {
-        TradeComment comment = tradeCommentRepository.findById(commentId)
+    public void deleteComment(TradeCommentDeleteRequestDto deleteRequest) {
+        TradeComment comment = tradeCommentRepository.findById(deleteRequest.commentId())
             .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_COMMENT_NOT_FOUND));
 
-        validateTrade(comment, tradeId);
-        validateBoardType(comment.getTrade(), boardType);
-        validateCommentOwner(comment, memberId);
+        validateTrade(comment, deleteRequest.tradeId());
+        validateBoardType(comment.getTrade(), deleteRequest.boardType());
+        validateCommentOwner(comment, deleteRequest.memberId());
 
-        tradeCommentRepository.deleteById(commentId);
+        tradeCommentRepository.deleteById(deleteRequest.commentId());
     }
 
     private void validateTrade(TradeComment comment, Long tradeId) {

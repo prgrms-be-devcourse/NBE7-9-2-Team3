@@ -5,6 +5,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.aquarium.dto.AquariumCreateRequestDto;
+import org.example.backend.domain.aquarium.dto.AquariumListResponseDto;
+import org.example.backend.domain.aquarium.dto.AquariumResponseDto;
 import org.example.backend.domain.aquarium.dto.AquariumScheduleRequestDto;
 import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.repository.AquariumLogRepository;
@@ -13,6 +16,9 @@ import org.example.backend.domain.fish.entity.Fish;
 import org.example.backend.domain.fish.repository.FishRepository;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
+import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,22 +35,38 @@ public class AquariumService {
     return aquariumRepository.count();
   }
 
-  public Aquarium create(Long memberId, String aquariumName) {
+  public AquariumListResponseDto create(CustomUserDetails userDetails, AquariumCreateRequestDto requestDto) {
+    Long memberId = userDetails.getId(); // JWT 토큰을 이용해 로그인한 member의 id를 가져옴
+    String aquariumName = requestDto.aquariumName();
+
+    if (aquariumName.equals("내가 키운 물고기")) {
+      throw new BusinessException(ErrorCode.AQUARIUM_OWNED_ALREADY_HAVE);
+    }
+
     Member member = memberRepository.findById(memberId)
-        .orElseThrow(() -> new RuntimeException("member가 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
     Aquarium aquarium = new Aquarium(member, aquariumName);
     aquariumRepository.save(aquarium);
 
-    return aquarium;
+    AquariumListResponseDto responseDto = new AquariumListResponseDto(aquarium);
+
+    return responseDto;
   }
 
-  public List<Aquarium> findAllByMemberId(Long memberId) {
-    return aquariumRepository.findAllByMember_MemberId(memberId);
+  public List<AquariumResponseDto> findAllByMemberId(CustomUserDetails userDetails) {
+    Long memberId = userDetails.getId();
+
+    return aquariumRepository.findAllByMember_MemberId(memberId)
+        .reversed().stream().map(AquariumResponseDto::new).toList();
   }
 
-  public Optional<Aquarium> findById(Long id) {
-    return aquariumRepository.findById(id);
+  public AquariumResponseDto findById(Long id) {
+    Aquarium aquarium = aquariumRepository.findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
+
+    AquariumResponseDto responseDto = new AquariumResponseDto(aquarium);
+    return responseDto;
   }
 
   public boolean hasFish(Long id) {
@@ -57,7 +79,9 @@ public class AquariumService {
     }
   }
 
-  public void moveFishToOwnedAquarium(Long memberId, Long aquariumId) {
+  public void moveFishToOwnedAquarium(CustomUserDetails userDetails, Long aquariumId) {
+    Long memberId = userDetails.getId();
+
     // 해당 member가 "내가 키운 물고기" 어항을 가지고 있는 지 확인
     if (checkMemberHaveOwnedAquarium(memberId)) {
       // true라면, 물고기 이동 실행
@@ -76,7 +100,7 @@ public class AquariumService {
     // '내가 키운 물고기' 어항 찾기
     Aquarium myOwnedAquarium = aquariumRepository.findByMember_MemberIdAndOwnedAquariumTrue(
             memberId)
-        .orElseThrow(() -> new RuntimeException("'내가 키운 물고기' 어항이 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_OWNED_NOT_FOUND));
 
     // 물고기들을 '내가 키운 물고기' 어항으로 이동
     for (Fish fish : fishList) {
@@ -93,7 +117,7 @@ public class AquariumService {
   // "내가 키운 물고기" 어항 생성
   public void createOwnedAquarium(Long memberId) {
     Member member = memberRepository.findById(memberId)
-        .orElseThrow(() -> new RuntimeException("member가 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
     Aquarium aquarium = new Aquarium(member, "내가 키운 물고기", true);
 
     aquariumRepository.save(aquarium);
@@ -102,7 +126,7 @@ public class AquariumService {
   @Transactional
   public void delete(Long id) {
     Aquarium aquarium = aquariumRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("어항이 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
 
     aquariumLogRepository.deleteAllByAquarium(aquarium);
     aquariumRepository.deleteById(id);
@@ -126,9 +150,9 @@ public class AquariumService {
     - 기존의 cycleDate가 0이 아니라면,
       - nextDate를 사용자로부터 입력 받은 cycleDate 기준으로 재 설정
   */
-  public Aquarium scheduleSetting(Long aquariumId, AquariumScheduleRequestDto requestDto) {
+  public AquariumResponseDto scheduleSetting(Long aquariumId, AquariumScheduleRequestDto requestDto) {
     Aquarium aquarium = aquariumRepository.findById(aquariumId)
-        .orElseThrow(() -> new RuntimeException("어항이 존재하지 않습니다."));
+        .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
     int preCycleDate = aquarium.getCycleDate();  // 기존의 cycleDate
     int cycleDate = requestDto.cycleDate();  // 입력받은 cycleDate
 
@@ -137,7 +161,8 @@ public class AquariumService {
       aquarium.changeSchedule(cycleDate, null, null);
       aquariumRepository.save(aquarium);
 
-      return aquarium;
+      AquariumResponseDto responseDto = new AquariumResponseDto(aquarium);
+      return responseDto;
     }
 
     LocalDateTime lastDate = aquarium.getLastDate();
@@ -158,6 +183,8 @@ public class AquariumService {
     }
 
     aquariumRepository.save(aquarium);
-    return aquarium;
+
+    AquariumResponseDto responseDto = new AquariumResponseDto(aquarium);
+    return responseDto;
   }
 }

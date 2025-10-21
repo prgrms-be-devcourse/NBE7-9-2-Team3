@@ -2,7 +2,7 @@ package org.example.backend.domain.member.service;
 
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.domain.follow.service.FollowCountService;
+import org.example.backend.domain.follow.repository.FollowRepository;
 import org.example.backend.domain.member.dto.MemberEditRequestDto;
 import org.example.backend.domain.member.dto.MemberEditResponseDto;
 import org.example.backend.domain.member.dto.MemberJoinRequestDto;
@@ -31,7 +31,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthTokenService authTokenService;
-    private final FollowCountService followCountService;
+    private final FollowRepository followRepository;
     private final ImageService imageService;
 
     public Optional<Member> findById(Long id) {
@@ -191,7 +191,9 @@ public class MemberService {
         // 현재 로그인한 사용자 조회
         Member member = memberRepository.findByMemberId(getCurrentMemberId())
             .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-        MemberResponseDto response = new MemberResponseDto(member,followCountService.getFollowerCount(member.getMemberId()),followCountService.getFollowingCount(member.getMemberId()));
+        long followerCount = followRepository.countByFolloweeMemberId(member.getMemberId());
+        long followingCount = followRepository.countByFollowerMemberId(member.getMemberId());
+        MemberResponseDto response = new MemberResponseDto(member, followerCount, followingCount);
         return ApiResponse.ok("회원 정보 조회에 성공했습니다.", response);
     }
 

@@ -53,19 +53,24 @@ public class Post extends BaseEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostImage> images = new ArrayList<>();
 
+    private int likeCount = 0;
+
+    public void increaseLikeCount() {
+        this.likeCount++;
+    }
+
+    public void decreaseLikeCount() {
+        if (this.likeCount > 0) this.likeCount--;
+    }
+
+
     public Post(PostWriteRequestDto reqBody, Member member) {
         this.title = reqBody.title();
         this.content = reqBody.content();
         this.author = member;
-        this.boardType = BoardType.valueOf(reqBody.BoardType());
+        this.boardType = BoardType.valueOf(reqBody.boardType());
         this.displaying = Post.Displaying.PUBLIC;
-
-        if (reqBody.images() != null) {
-            for (PostImage image : reqBody.images()) {
-                // image가 이미 생성되어 있으면 post 필드를 세팅해야 함
-                image.setPostForConstructor(this); // setter 대신 편의 메서드
-            }
-        }
+        this.images = new ArrayList<>();
     }
 
     public void addImage(PostImage image) {
@@ -80,10 +85,8 @@ public class Post extends BaseEntity {
         this.content = content;
     }
 
-    public void updateImages(List<PostImage> newImages) {
+    public void deleteImageUrls() {
         this.images.clear();
-        for (PostImage image : newImages) {
-            this.addImage(image);
-        }
+
     }
 }

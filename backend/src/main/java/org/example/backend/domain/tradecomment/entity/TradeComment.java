@@ -28,7 +28,7 @@ public class TradeComment {
     private Member member;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "trade_id")
+    @JoinColumn(name = "trade_id", nullable = false)
     private Trade trade;
 
     @Column(nullable = false)
