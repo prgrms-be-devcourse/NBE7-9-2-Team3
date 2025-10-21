@@ -1,5 +1,8 @@
 package org.example.backend.domain.trade.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,14 +31,19 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/market/{boardType}")
 @RequiredArgsConstructor
+@Tag(name = "Trade", description = "거래 게시글 관리 API")
 public class TradeController {
 
     private final TradeService tradeService;
 
+    @Operation(summary = "거래 게시글 등록", description = "새로운 거래 게시글을 등록합니다.")
     @PostMapping
     public ApiResponse<TradeResponseDto> createTrade(
+        @Parameter(description = "게시판 타입 (FISH: 물고기, SECONDHAND: 중고물품)", required = true)
         @PathVariable String boardType,
+        @Parameter(description = "거래 게시글 정보", required = true)
         @Valid @ModelAttribute TradeRequestDto request,
+        @Parameter(description = "이미지 파일들 (선택사항)")
         @RequestPart(required = false) List<MultipartFile> images) {
         BoardType type = BoardType.from(boardType);
         TradeCreateRequestDto serviceRequest = TradeCreateRequestDto.from(request, type, images);
@@ -43,31 +51,40 @@ public class TradeController {
         return ApiResponse.ok("거래 게시글 등록 성공", trade);
     }
 
+    @Operation(summary = "거래 게시글 목록 조회", description = "특정 게시판의 모든 거래 게시글을 조회합니다.")
     @GetMapping
     public ApiResponse<PageResponseDto<TradeResponseDto>> getAllTrade(
+        @Parameter(description = "게시판 타입 (FISH: 물고기, SECONDHAND: 중고물품)", required = true)
         @PathVariable String boardType,
         @Valid @ModelAttribute TradeSearchRequestDto searchRequest) {
-
         BoardType type = BoardType.from(boardType);
         PageResponseDto<TradeResponseDto> trades = tradeService.getAllTrade(type, searchRequest);
         return ApiResponse.ok("거래 게시글 페이징 조회 성공", trades);
     }
 
+    @Operation(summary = "거래 게시글 조회", description = "특정 거래 게시글의 상세 정보를 조회합니다.")
     @GetMapping("/{tradeId}")
     public ApiResponse<TradeResponseDto> getTrade(
+        @Parameter(description = "게시판 타입 (FISH: 물고기, SECONDHAND: 중고물품)", required = true)
         @PathVariable String boardType,
+        @Parameter(description = "거래 게시글 ID", required = true)
         @PathVariable Long tradeId) {
         BoardType type = BoardType.from(boardType);
         TradeResponseDto trade = tradeService.getTrade(type, tradeId);
         return ApiResponse.ok("거래 게시글 조회 성공", trade);
     }
 
+    @Operation(summary = "거래 게시글 수정", description = "기존 거래 게시글을 수정합니다.")
     @PutMapping("/{tradeId}")
     public ApiResponse<TradeResponseDto> updateTrade(
         @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Parameter(description = "게시판 타입 (FISH: 물고기, SECONDHAND: 중고물품)", required = true)
         @PathVariable String boardType,
+        @Parameter(description = "거래 게시글 ID", required = true)
         @PathVariable Long tradeId,
+        @Parameter(description = "거래 게시글 수정 정보", required = true)
         @Valid @ModelAttribute TradeRequestDto request,
+        @Parameter(description = "이미지 파일들 (선택사항)")
         @RequestPart(required = false) List<MultipartFile> images) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
@@ -76,10 +93,13 @@ public class TradeController {
         return ApiResponse.ok("거래 게시글 수정 성공", trade);
     }
 
+    @Operation(summary = "거래 게시글 삭제", description = "기존 거래 게시글을 삭제합니다.")
     @DeleteMapping("/{tradeId}")
     public ApiResponse<Void> deleteTrade(
         @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Parameter(description = "게시판 타입 (FISH: 물고기, SECONDHAND: 중고물품)", required = true)
         @PathVariable String boardType,
+        @Parameter(description = "거래 게시글 ID", required = true)
         @PathVariable Long tradeId) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
