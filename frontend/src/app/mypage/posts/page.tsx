@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { fetchApi } from '@/lib/client';
 
 interface MyPost {
+  id: number;
   title: string;
   displaying: 'PUBLIC' | 'PRIVATE';
 }
@@ -263,8 +264,8 @@ export default function MyPostsPage() {
                     <div className="flex-shrink-0 flex items-center space-x-2">
                       <button
                         onClick={() => {
-                          // TODO: 게시글 상세보기 페이지로 이동
-                          console.log('게시글 상세보기:', post.title);
+                          const boardPath = selectedBoardType === 'SHOWOFF' ? 'showoff' : 'question';
+                          router.push(`/posts/${boardPath}/${post.id}`);
                         }}
                         className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
                       >
@@ -272,17 +273,27 @@ export default function MyPostsPage() {
                       </button>
                       <button
                         onClick={() => {
-                          // TODO: 게시글 수정 페이지로 이동
-                          console.log('게시글 수정:', post.title);
+                          const boardPath = selectedBoardType === 'SHOWOFF' ? 'showoff' : 'question';
+                          router.push(`/posts/${boardPath}/${post.id}/edit`);
                         }}
                         className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"
                       >
                         수정
                       </button>
                       <button
-                        onClick={() => {
-                          // TODO: 게시글 삭제 확인
-                          console.log('게시글 삭제:', post.title);
+                        onClick={async () => {
+                          if (!confirm('정말 삭제하시겠습니까?')) return;
+
+                          try {
+                            await fetchApi(`/api/posts/${post.id}`, {
+                              method: 'DELETE'
+                            });
+                            alert('게시글이 삭제되었습니다.');
+                            fetchMyPosts(); // 목록 새로고침
+                          } catch (error) {
+                            console.error('게시글 삭제 실패:', error);
+                            alert('게시글 삭제에 실패했습니다.');
+                          }
                         }}
                         className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm"
                       >

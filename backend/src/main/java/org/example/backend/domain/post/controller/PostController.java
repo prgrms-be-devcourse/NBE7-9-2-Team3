@@ -57,6 +57,7 @@ public class PostController {
 
         List<MyPostReadResponseDto> response = myPosts.stream()
             .map(post -> new MyPostReadResponseDto(
+                post.getId(),
                 post.getTitle(),
                 post.getDisplaying()
             ))

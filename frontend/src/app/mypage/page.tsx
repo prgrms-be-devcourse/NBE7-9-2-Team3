@@ -185,7 +185,10 @@ export default function MyPage() {
             </div>
           </button>
 
-          <div className="bg-white rounded-lg shadow-sm p-6">
+          <button
+            onClick={() => router.push('/mypage/liked-posts')}
+            className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow text-left"
+          >
             <div className="flex items-center">
               <div className="p-3 bg-purple-100 rounded-lg">
                 <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,10 +196,10 @@ export default function MyPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">좋아요</p>
+                <p className="text-sm font-medium text-gray-500">좋아요한 글</p>
               </div>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* 최근 활동 */}
