@@ -40,7 +40,7 @@ public class AquariumService {
     String aquariumName = requestDto.aquariumName();
 
     Member member = memberRepository.findById(memberId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_MEMBER_NOT_FOUND));
+        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
     Aquarium aquarium = new Aquarium(member, aquariumName);
     aquariumRepository.save(aquarium);
@@ -113,7 +113,7 @@ public class AquariumService {
   // "내가 키운 물고기" 어항 생성
   public void createOwnedAquarium(Long memberId) {
     Member member = memberRepository.findById(memberId)
-        .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_MEMBER_NOT_FOUND));
+        .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
     Aquarium aquarium = new Aquarium(member, "내가 키운 물고기", true);
 
     aquariumRepository.save(aquarium);

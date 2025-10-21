@@ -44,7 +44,6 @@ public enum ErrorCode {
     // ========== Aquarium 도메인 에러 ==========
     AQUARIUM_NOT_FOUND("A001", HttpStatus.NOT_FOUND, "어항이 존재하지 않습니다."),
     AQUARIUM_OWNED_NOT_FOUND("A002", HttpStatus.NOT_FOUND, "'내가 키운 물고기' 어항이 존재하지 않습니다."),
-    AQUARIUM_MEMBER_NOT_FOUND("A003", HttpStatus.NOT_FOUND, "member가 존재하지 않습니다."),
 
     // ========== Fish 도메인 에러 ==========
     FISH_NOT_FOUND("F001", HttpStatus.NOT_FOUND, "물고기가 존재하지 않습니다."),
