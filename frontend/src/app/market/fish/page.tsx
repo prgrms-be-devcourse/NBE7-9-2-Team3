@@ -25,6 +25,25 @@ export default function FishMarketPage() {
   const postsPerPage = 8; // 4열 × 2줄
   const maxButtons = 5; // 한 번에 보여줄 버튼 개수
 
+  // URL에서 returnToPage 파라미터 확인하여 페이지 복원
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const returnToPage = searchParams.get('returnToPage');
+      if (returnToPage) {
+        const pageNum = parseInt(returnToPage);
+        if (!isNaN(pageNum) && pageNum > 0) {
+          setCurrentPage(pageNum);
+          // 페이지 그룹도 조정
+          const newGroupStart = Math.floor((pageNum - 1) / maxButtons) * maxButtons + 1;
+          setPageGroupStart(newGroupStart);
+          // URL에서 파라미터 제거
+          window.history.replaceState({}, '', '/market/fish');
+        }
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/login');
@@ -270,7 +289,7 @@ export default function FishMarketPage() {
             {posts.map((post) => (
               <Link
                 key={post.tradeId}
-                href={`/market/fish/${post.tradeId}`}
+                href={`/market/fish/${post.tradeId}?page=${currentPage}`}
                 className="border rounded-lg overflow-hidden hover:shadow-xl transition-shadow bg-white"
               >
                 <div className="h-48 bg-gray-200 relative">

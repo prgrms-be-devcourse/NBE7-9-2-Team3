@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,14 +40,17 @@ public class TradeController {
     @Operation(summary = "거래 게시글 등록", description = "새로운 거래 게시글을 등록합니다.")
     @PostMapping
     public ApiResponse<TradeResponseDto> createTrade(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
         @Parameter(description = "게시판 타입 (FISH: 물고기, SECONDHAND: 중고물품)", required = true)
         @PathVariable String boardType,
         @Parameter(description = "거래 게시글 정보", required = true)
         @Valid @ModelAttribute TradeRequestDto request,
         @Parameter(description = "이미지 파일들 (선택사항)")
         @RequestPart(required = false) List<MultipartFile> images) {
+        Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
-        TradeCreateRequestDto serviceRequest = TradeCreateRequestDto.from(request, type, images);
+        TradeCreateRequestDto serviceRequest = TradeCreateRequestDto.from(request, type, memberId,
+            images);
         TradeResponseDto trade = tradeService.createTrade(serviceRequest);
         return ApiResponse.ok("거래 게시글 등록 성공", trade);
     }
@@ -88,7 +92,8 @@ public class TradeController {
         @RequestPart(required = false) List<MultipartFile> images) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
-        TradeUpdateRequestDto updateRequest = TradeUpdateRequestDto.of(type, tradeId, memberId, request, images);
+        TradeUpdateRequestDto updateRequest = TradeUpdateRequestDto.of(type, tradeId, memberId,
+            request, images);
         TradeResponseDto trade = tradeService.updateTrade(updateRequest);
         return ApiResponse.ok("거래 게시글 수정 성공", trade);
     }
@@ -105,5 +110,19 @@ public class TradeController {
         BoardType type = BoardType.from(boardType);
         tradeService.deleteTrade(type, tradeId, memberId);
         return ApiResponse.ok("거래 게시글 삭제 성공");
+    }
+
+    @GetMapping("/my")
+    public ApiResponse<PageResponseDto<TradeResponseDto>> getMyTrades(
+        @AuthenticationPrincipal CustomUserDetails userDetails,
+        @PathVariable String boardType,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size) {
+
+        Long memberId = userDetails.getId();
+        BoardType type = BoardType.from(boardType);
+        PageResponseDto<TradeResponseDto> trades = tradeService.getMyTrades(memberId, type, page,
+            size);
+        return ApiResponse.ok("내 거래 게시글 조회 성공", trades);
     }
 }
