@@ -55,7 +55,10 @@ public class SwaggerConfig {
     public GroupedOpenApi fishApi() {
         return GroupedOpenApi.builder()
             .group("03. Fish API")
-            .pathsToMatch("/api/fishes/**")
+            .pathsToMatch(
+                "/api/aquarium/*/fish/**",
+                "/api/fish/*/fishLog/**"
+                )
             .build();
     }
 
@@ -63,7 +66,11 @@ public class SwaggerConfig {
     public GroupedOpenApi aquariumApi() {
         return GroupedOpenApi.builder()
             .group("04. Aquarium API")
-            .pathsToMatch("/api/aquariums/**")
+            .pathsToMatch(
+                "/api/aquarium/**",
+                "/api/aquarium/*/aquariumLog/**"
+                )
+            .pathsToExclude("/api/aquarium/*/fish/**")
             .build();
     }
 
