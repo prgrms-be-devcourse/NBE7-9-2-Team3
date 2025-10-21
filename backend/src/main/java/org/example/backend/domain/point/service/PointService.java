@@ -68,7 +68,7 @@ public class PointService {
         buyer.updatePoints(buyerNewPoints);
         seller.updatePoints(sellerNewPoints);
 
-        pointRepository.save(Point.create(buyer, request.amount(), buyerNewPoints));
-        pointRepository.save(Point.create(seller, request.amount(), sellerNewPoints));
+        pointRepository.save(Point.createPurchase(buyer, request.amount(), buyerNewPoints));
+        pointRepository.save(Point.createSale(seller, request.amount(), sellerNewPoints));
     }
 }
