@@ -12,9 +12,16 @@ export default function SecondhandMarketPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<Trade[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // 검색 입력 상태 (실제 적용 전)
   const [searchTerm, setSearchTerm] = useState('');
   const [searchType, setSearchType] = useState('전체'); // 전체, 제목, 본문, 태그
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100000]);
+
+  // 실제 적용된 검색 조건 (API 호출용)
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState('');
+  const [appliedPriceRange, setAppliedPriceRange] = useState<[number, number]>([0, 100000]);
+
   const [statusFilter, setStatusFilter] = useState<TradeStatus | '전체'>('전체');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -22,14 +29,23 @@ export default function SecondhandMarketPage() {
   const [sortType, setSortType] = useState('latest');
   const [pageInput, setPageInput] = useState('');
   const [pageGroupStart, setPageGroupStart] = useState(1);
+  const [isInitialized, setIsInitialized] = useState(false);
   const postsPerPage = 8; // 4열 × 2줄
   const maxButtons = 5; // 한 번에 보여줄 버튼 개수
 
-  // URL에서 returnToPage 파라미터 확인하여 페이지 복원
+  // URL에서 returnToPage 파라미터 확인하여 페이지 및 검색 조건 복원
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       const returnToPage = searchParams.get('returnToPage');
+      const returnSearchTerm = searchParams.get('searchTerm');
+      const returnMinPrice = searchParams.get('minPrice');
+      const returnMaxPrice = searchParams.get('maxPrice');
+      const returnStatus = searchParams.get('status');
+      const returnSort = searchParams.get('sort');
+
+      let hasRestoredState = false;
+
       if (returnToPage) {
         const pageNum = parseInt(returnToPage);
         if (!isNaN(pageNum) && pageNum > 0) {
@@ -37,10 +53,44 @@ export default function SecondhandMarketPage() {
           // 페이지 그룹도 조정
           const newGroupStart = Math.floor((pageNum - 1) / maxButtons) * maxButtons + 1;
           setPageGroupStart(newGroupStart);
-          // URL에서 파라미터 제거
-          window.history.replaceState({}, '', '/market/secondhand');
+          hasRestoredState = true;
         }
       }
+
+      // 검색 조건 복원
+      if (returnSearchTerm) {
+        setSearchTerm(returnSearchTerm);
+        setAppliedSearchTerm(returnSearchTerm);
+        hasRestoredState = true;
+      }
+
+      // 가격 범위 복원
+      if (returnMinPrice || returnMaxPrice) {
+        const minPrice = returnMinPrice ? parseInt(returnMinPrice) : 0;
+        const maxPrice = returnMaxPrice ? parseInt(returnMaxPrice) : 100000;
+        setPriceRange([minPrice, maxPrice]);
+        setAppliedPriceRange([minPrice, maxPrice]);
+        hasRestoredState = true;
+      }
+
+      // 상태 필터 복원
+      if (returnStatus) {
+        setStatusFilter(returnStatus as TradeStatus);
+        hasRestoredState = true;
+      }
+
+      // 정렬 복원
+      if (returnSort) {
+        setSortType(returnSort);
+        hasRestoredState = true;
+      }
+
+      // URL에서 파라미터 제거
+      if (hasRestoredState) {
+        window.history.replaceState({}, '', '/market/secondhand');
+      }
+
+      setIsInitialized(true);
     }
   }, []);
 
@@ -51,10 +101,10 @@ export default function SecondhandMarketPage() {
   }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && isInitialized) {
       fetchPosts();
     }
-  }, [isAuthenticated, currentPage, sortType]);
+  }, [isAuthenticated, isInitialized, currentPage, sortType, appliedSearchTerm, appliedPriceRange, statusFilter]);
 
   const fetchPosts = async () => {
     try {
@@ -64,12 +114,24 @@ export default function SecondhandMarketPage() {
         size: postsPerPage.toString(),
         sort: sortType
       });
-      // TODO: 나중에 검색/필터 파라미터 추가
-      // if (searchTerm) params.append('search', searchTerm);
-      // if (searchType !== '전체') params.append('searchType', searchType);
-      // params.append('minPrice', priceRange[0].toString());
-      // params.append('maxPrice', priceRange[1].toString());
-      // if (statusFilter !== '전체') params.append('status', statusFilter);
+
+      // 검색어 추가
+      if (appliedSearchTerm && appliedSearchTerm.trim()) {
+        params.append('searchTerm', appliedSearchTerm.trim());
+      }
+
+      // 가격 범위 추가
+      if (appliedPriceRange[0] > 0) {
+        params.append('minPrice', appliedPriceRange[0].toString());
+      }
+      if (appliedPriceRange[1] < 100000) {
+        params.append('maxPrice', appliedPriceRange[1].toString());
+      }
+
+      // 상태 필터 추가
+      if (statusFilter !== '전체') {
+        params.append('status', statusFilter);
+      }
 
       const data: ApiResponse<PageResponse<Trade>> = await fetchApi(
         `/api/market/secondhand?${params.toString()}`
@@ -93,13 +155,19 @@ export default function SecondhandMarketPage() {
   };
 
   const handleSearch = () => {
-    // TODO: 백엔드 API에 검색 기능 추가 후 구현
-    alert('검색 기능은 준비 중입니다.');
+    // 입력 상태를 적용 상태로 복사
+    setAppliedSearchTerm(searchTerm);
+    setAppliedPriceRange(priceRange);
+    // 검색 시 첫 페이지로 이동
+    setCurrentPage(1);
+    setPageGroupStart(1);
   };
 
   const handleStatusFilter = (status: TradeStatus | '전체') => {
-    // TODO: 백엔드 API에 필터 기능 추가 후 구현
-    alert('필터 기능은 준비 중입니다.');
+    setStatusFilter(status);
+    // 필터 변경 시 첫 페이지로 이동
+    setCurrentPage(1);
+    setPageGroupStart(1);
   };
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
@@ -286,10 +354,19 @@ export default function SecondhandMarketPage() {
 
         {/* 게시글 그리드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {posts.map((post) => (
+            {posts.map((post) => {
+              // 현재 검색 조건을 URL에 포함
+              const detailParams = new URLSearchParams({ page: currentPage.toString() });
+              if (appliedSearchTerm) detailParams.append('searchTerm', appliedSearchTerm);
+              if (appliedPriceRange[0] > 0) detailParams.append('minPrice', appliedPriceRange[0].toString());
+              if (appliedPriceRange[1] < 100000) detailParams.append('maxPrice', appliedPriceRange[1].toString());
+              if (statusFilter !== '전체') detailParams.append('status', statusFilter);
+              if (sortType !== 'latest') detailParams.append('sort', sortType);
+
+              return (
               <Link
                 key={post.tradeId}
-                href={`/market/secondhand/${post.tradeId}?page=${currentPage}`}
+                href={`/market/secondhand/${post.tradeId}?${detailParams.toString()}`}
                 className="border rounded-lg overflow-hidden hover:shadow-xl transition-shadow bg-white"
               >
                 <div className="h-48 bg-gray-200 relative">
@@ -348,7 +425,8 @@ export default function SecondhandMarketPage() {
                   )}
                 </div>
               </Link>
-            ))}
+              );
+            })}
         </div>
 
         {/* 게시글이 없을 때 */}

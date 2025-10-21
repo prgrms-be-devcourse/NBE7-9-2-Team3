@@ -112,11 +112,15 @@ public class TradeController {
         return ApiResponse.ok("거래 게시글 삭제 성공");
     }
 
+    @Operation(summary = "내 거래 게시글 조회", description = "사용자가 작성한 거래 게시글 목록을 조회합니다. (최신순 정렬)")
     @GetMapping("/my")
     public ApiResponse<PageResponseDto<TradeResponseDto>> getMyTrades(
         @AuthenticationPrincipal CustomUserDetails userDetails,
+        @Parameter(description = "게시판 타입 (FISH: 물고기, SECONDHAND: 중고물품)", required = true)
         @PathVariable String boardType,
+        @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
         @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "페이지 크기", example = "10")
         @RequestParam(defaultValue = "10") int size) {
 
         Long memberId = userDetails.getId();

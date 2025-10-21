@@ -9,9 +9,11 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -21,10 +23,17 @@ import java.time.LocalDateTime;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.enums.TradeStatus;
+import org.example.backend.domain.tradecomment.entity.TradeComment;
 
 @NoArgsConstructor
 @Getter
 @Entity
+@Table(name = "trade", indexes = {
+    @Index(name = "idx_board_type_create_date", columnList = "board_type, create_date"),
+    @Index(name = "idx_board_type_status", columnList = "board_type, status"),
+    @Index(name = "idx_board_type_price", columnList = "board_type, price"),
+    @Index(name = "idx_member_board_type", columnList = "member_id, board_type")
+})
 public class Trade {
 
     @Id
@@ -59,6 +68,9 @@ public class Trade {
 
     @OneToMany(mappedBy = "trade", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TradeImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trade", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TradeComment> comments = new ArrayList<>();
 
     public Trade(Member member, BoardType boardType, String title, String description,
         Long price, TradeStatus status, String category, LocalDateTime createDate) {

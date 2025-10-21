@@ -70,7 +70,22 @@ public class TradeService {
         };
 
         Pageable pageable = PageRequest.of(searchRequest.page(), searchRequest.size(), sort);
-        Page<Trade> tradePage = tradeRepository.findByBoardType(boardType, pageable);
+
+        Page<Trade> tradePage;
+        if (searchRequest.hasSearchTerm() || searchRequest.hasPriceFilter()
+            || searchRequest.hasStatusFilter()) {
+            tradePage = tradeRepository.searchTrades(
+                boardType,
+                searchRequest.searchTerm(),
+                searchRequest.minPrice() != null ? searchRequest.minPrice().longValue() : null,
+                searchRequest.maxPrice() != null ? searchRequest.maxPrice().longValue() : null,
+                searchRequest.status(),
+                pageable
+            );
+        } else {
+            tradePage = tradeRepository.findByBoardType(boardType, pageable);
+        }
+
         Page<TradeResponseDto> responsePage = tradePage.map(TradeResponseDto::from);
         return PageResponseDto.from(responsePage);
     }

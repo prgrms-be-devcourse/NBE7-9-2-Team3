@@ -13,9 +13,29 @@ export default function SecondhandDetailPage() {
   const tradeId = params.id as string;
   const { user, isAuthenticated } = useAuth();
 
-  // URL에서 페이지 번호 가져오기
+  // URL에서 모든 파라미터 가져오기 (페이지, 검색 조건 등)
   const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const returnPage = searchParams.get('page') || '1';
+
+  // 목록으로 돌아갈 때 사용할 파라미터 구성
+  const buildReturnUrl = () => {
+    const params = new URLSearchParams();
+    params.append('returnToPage', returnPage);
+
+    const searchTerm = searchParams.get('searchTerm');
+    const minPrice = searchParams.get('minPrice');
+    const maxPrice = searchParams.get('maxPrice');
+    const status = searchParams.get('status');
+    const sort = searchParams.get('sort');
+
+    if (searchTerm) params.append('searchTerm', searchTerm);
+    if (minPrice) params.append('minPrice', minPrice);
+    if (maxPrice) params.append('maxPrice', maxPrice);
+    if (status) params.append('status', status);
+    if (sort) params.append('sort', sort);
+
+    return `/market/secondhand?${params.toString()}`;
+  };
 
   const [post, setPost] = useState<Trade | null>(null);
   const [comments, setComments] = useState<TradeComment[]>([]);
@@ -205,7 +225,7 @@ export default function SecondhandDetailPage() {
   return (
     <div className="max-w-6xl mx-auto p-8">
       <div className="mb-6">
-        <Link href={`/market/secondhand?returnToPage=${returnPage}`} className="text-blue-500 hover:underline">
+        <Link href={buildReturnUrl()} className="text-blue-500 hover:underline">
           ← 목록으로
         </Link>
       </div>
@@ -439,7 +459,7 @@ export default function SecondhandDetailPage() {
 
         {/* 목록으로 돌아가기 버튼 */}
         <div className="mt-8 pt-6 border-t">
-          <Link href={`/market/secondhand?returnToPage=${returnPage}`} className="text-blue-500 hover:underline inline-flex items-center">
+          <Link href={buildReturnUrl()} className="text-blue-500 hover:underline inline-flex items-center">
             ← 목록으로
           </Link>
         </div>
