@@ -20,6 +20,8 @@ export default function AquariumsPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [myFishesAquariumId, setMyFishesAquariumId] = useState<number | null>(null);
   const [hasMyFishes, setHasMyFishes] = useState(false);
+  const [editingAquariumId, setEditingAquariumId] = useState<number | null>(null);
+  const [editingAquariumName, setEditingAquariumName] = useState('');
 
   const router = useRouter();
 
@@ -32,6 +34,48 @@ export default function AquariumsPage() {
       if (b.aquariumName === "내가 키운 물고기") return 1;
       return 0;
     });
+  };
+
+  // 어항 이름 수정 시작
+  const startEditAquarium = (aquariumId: number, currentName: string) => {
+    setEditingAquariumId(aquariumId);
+    setEditingAquariumName(currentName);
+  };
+
+  const cancelEditAquarium = () => {
+    setEditingAquariumId(null);
+    setEditingAquariumName('');
+  };
+
+  const confirmEditAquarium = async (aquariumId: number) => {
+    const trimmed = editingAquariumName.trim();
+    if (trimmed.length === 0) {
+      alert('어항 이름을 입력해주세요 :)');
+      return;
+    }
+    if (trimmed === '내가 키운 물고기') {
+      alert('\"내가 키운 물고기\"는 어항 이름으로 사용할 수 없습니다.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${baseUrl}/api/aquarium/${aquariumId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aquariumName: trimmed })
+      });
+      const json = await res.json();
+      // 상태 갱신 및 정렬 유지
+      setAquariums(prev => sortAquariums(prev.map(a => (
+        a.aquariumId === aquariumId ? { ...a, aquariumName: trimmed } : a
+      ))));
+      setEditingAquariumId(null);
+      setEditingAquariumName('');
+    } catch (err) {
+      console.error('어항 수정 중 오류:', err);
+      alert('어항 수정 중 오류가 발생했습니다.');
+    }
   };
 
   // 어항 단건 조회 페이지로 이동
@@ -311,9 +355,32 @@ export default function AquariumsPage() {
                 </div>
               ) : (
                 <>
-                  {/* 어항이름 및 자세히, 삭제 버튼 */}
+                  {/* 어항이름 및 자세히, 수정, 삭제 버튼 */}
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">{aquarium.aquariumName}</h3>
+                    {editingAquariumId === aquarium.aquariumId ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          value={editingAquariumName}
+                          onChange={(e) => setEditingAquariumName(e.target.value)}
+                          className="border border-gray-300 rounded px-3 py-2 text-sm"
+                        />
+                        <button
+                          onClick={() => confirmEditAquarium(aquarium.aquariumId)}
+                          className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 py-2 rounded-lg text-sm transition-colors"
+                        >
+                          확인
+                        </button>
+                        <button
+                          onClick={cancelEditAquarium}
+                          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-lg text-sm transition-colors"
+                        >
+                          취소
+                        </button>
+                      </div>
+                    ) : (
+                      <h3 className="text-lg font-medium text-gray-900">{aquarium.aquariumName}</h3>
+                    )}
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleDetails(aquarium.aquariumId)}
@@ -321,6 +388,14 @@ export default function AquariumsPage() {
                       >
                         자세히
                       </button>
+                      {editingAquariumId !== aquarium.aquariumId && (
+                        <button
+                          onClick={() => startEditAquarium(aquarium.aquariumId, aquarium.aquariumName)}
+                          className="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg text-sm transition-colors"
+                        >
+                          수정
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDelete(aquarium.aquariumId)}
                         className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded-lg text-sm transition-colors"
