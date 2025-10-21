@@ -36,7 +36,7 @@ export default function AquariumsPage() {
     });
   };
 
-  // 어항 이름 수정 시작
+  // 어항 이름 수정
   const startEditAquarium = (aquariumId: number, currentName: string) => {
     setEditingAquariumId(aquariumId);
     setEditingAquariumName(currentName);
@@ -54,7 +54,7 @@ export default function AquariumsPage() {
       return;
     }
     if (trimmed === '내가 키운 물고기') {
-      alert('\"내가 키운 물고기\"는 어항 이름으로 사용할 수 없습니다.');
+      alert('"내가 키운 물고기"는 어항 이름으로 사용할 수 없습니다.');
       return;
     }
 
