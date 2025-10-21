@@ -114,6 +114,24 @@ export default function MyPage() {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">{memberData.nickname}</h1>
               <p className="text-gray-600 mb-4">{memberData.email}</p>
               
+              {/* 포인트 버튼들 */}
+              <div className="mb-4">
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => router.push('/mypage/points/charge')}
+                    className="px-4 py-2 bg-yellow-500 text-white text-sm rounded-lg hover:bg-yellow-600 transition-colors"
+                  >
+                    포인트 충전
+                  </button>
+                  <button
+                    onClick={() => router.push('/mypage/points/history')}
+                    className="px-4 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    포인트 내역
+                  </button>
+                </div>
+              </div>
+              
               {/* 팔로워/팔로잉 수 */}
               <div className="flex space-x-6">
                 <button
