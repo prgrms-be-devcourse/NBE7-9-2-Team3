@@ -29,7 +29,7 @@ async function uploadToS3(presignedUrl: string, file: File): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new Error('S3 업로드 싪패');
+    throw new Error('S3 업로드 실패');
   }
 }
 
@@ -49,10 +49,10 @@ export async function uploadImage(
 }
 
 /** 여러 이미지 한번에 업로드 */
-export async function uploadImage(
+export async function uploadImages(
     files: File[],
     directory: string
 ): Promise<string[]> {
   const uploadPromises = files.map(file => uploadImage(file, directory));
-  return Promise.all(uploadPromises)
+  return Promise.all(uploadPromises);
 }
