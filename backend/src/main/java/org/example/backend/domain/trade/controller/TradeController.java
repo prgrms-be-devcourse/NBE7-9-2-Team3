@@ -6,8 +6,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.trade.dto.PageResponseDto;
+import org.example.backend.domain.trade.dto.TradeCreateRequestDto;
 import org.example.backend.domain.trade.dto.TradeRequestDto;
 import org.example.backend.domain.trade.dto.TradeResponseDto;
+import org.example.backend.domain.trade.dto.TradeSearchRequestDto;
+import org.example.backend.domain.trade.dto.TradeUpdateRequestDto;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.service.TradeService;
 import org.example.backend.global.response.ApiResponse;
@@ -42,18 +46,20 @@ public class TradeController {
         @Parameter(description = "이미지 파일들 (선택사항)")
         @RequestPart(required = false) List<MultipartFile> images) {
         BoardType type = BoardType.from(boardType);
-        TradeResponseDto trade = tradeService.createTrade(request, type, images);
+        TradeCreateRequestDto serviceRequest = TradeCreateRequestDto.from(request, type, images);
+        TradeResponseDto trade = tradeService.createTrade(serviceRequest);
         return ApiResponse.ok("거래 게시글 등록 성공", trade);
     }
 
     @Operation(summary = "거래 게시글 목록 조회", description = "특정 게시판의 모든 거래 게시글을 조회합니다.")
     @GetMapping
-    public ApiResponse<List<TradeResponseDto>> getAllTrades(
+    public ApiResponse<PageResponseDto<TradeResponseDto>> getAllTrade(
         @Parameter(description = "게시판 타입 (FISH: 물고기, SECONDHAND: 중고물품)", required = true)
-        @PathVariable String boardType) {
+        @PathVariable String boardType,
+        @Valid @ModelAttribute TradeSearchRequestDto searchRequest) {
         BoardType type = BoardType.from(boardType);
-        List<TradeResponseDto> trades = tradeService.getAllTrade(type);
-        return ApiResponse.ok("거래 게시글 목록 조회 성공", trades);
+        PageResponseDto<TradeResponseDto> trades = tradeService.getAllTrade(type, searchRequest);
+        return ApiResponse.ok("거래 게시글 페이징 조회 성공", trades);
     }
 
     @Operation(summary = "거래 게시글 조회", description = "특정 거래 게시글의 상세 정보를 조회합니다.")
@@ -82,7 +88,8 @@ public class TradeController {
         @RequestPart(required = false) List<MultipartFile> images) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
-        TradeResponseDto trade = tradeService.updateTrade(type, tradeId, memberId, request, images);
+        TradeUpdateRequestDto updateRequest = TradeUpdateRequestDto.of(type, tradeId, memberId, request, images);
+        TradeResponseDto trade = tradeService.updateTrade(updateRequest);
         return ApiResponse.ok("거래 게시글 수정 성공", trade);
     }
 

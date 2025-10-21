@@ -52,3 +52,15 @@ export interface ApiResponse<T> {
   msg: string;
   data: T;
 }
+
+export interface PageResponse<T> {
+  content: T[];
+  currentPage: number;
+  pageSize: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}

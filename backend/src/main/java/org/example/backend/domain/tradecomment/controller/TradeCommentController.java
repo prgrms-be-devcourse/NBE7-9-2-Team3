@@ -7,8 +7,10 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.trade.enums.BoardType;
+import org.example.backend.domain.tradecomment.dto.TradeCommentDeleteRequestDto;
 import org.example.backend.domain.tradecomment.dto.TradeCommentRequestDto;
 import org.example.backend.domain.tradecomment.dto.TradeCommentResponseDto;
+import org.example.backend.domain.tradecomment.dto.TradeCommentUpdateRequestDto;
 import org.example.backend.domain.tradecomment.service.TradeCommentService;
 import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
@@ -70,9 +72,10 @@ public class TradeCommentController {
         @Valid @RequestBody TradeCommentRequestDto request) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
-        TradeCommentResponseDto comment = tradeCommentService.updateComment(type, tradeId,
-            commentId,
-            memberId, request);
+        TradeCommentUpdateRequestDto updateRequest = TradeCommentUpdateRequestDto.of(
+            type, tradeId, commentId, memberId, request
+        );
+        TradeCommentResponseDto comment = tradeCommentService.updateComment(updateRequest);
         return ApiResponse.ok("댓글 수정 성공", comment);
     }
 
@@ -88,7 +91,10 @@ public class TradeCommentController {
         @PathVariable Long commentId) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
-        tradeCommentService.deleteComment(type, tradeId, commentId, memberId);
+        TradeCommentDeleteRequestDto deleteRequest = TradeCommentDeleteRequestDto.of(
+            type, tradeId, commentId, memberId
+        );
+        tradeCommentService.deleteComment(deleteRequest);
         return ApiResponse.ok("댓글 삭제 성공");
     }
 
