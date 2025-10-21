@@ -161,6 +161,39 @@ export default function SecondhandDetailPage() {
     setEditingCommentText('');
   };
 
+  const handlePurchase = async () => {
+    if (!isAuthenticated || !user) {
+      alert('로그인이 필요합니다.');
+      router.push('/login');
+      return;
+    }
+
+    if (user.memberId === post?.memberId) {
+      alert('본인의 상품은 구매할 수 없습니다.');
+      return;
+    }
+
+    if (!confirm(`${post?.price.toLocaleString()}원에 구매하시겠습니까?`)) {
+      return;
+    }
+
+    try {
+      await fetchApi('/api/points/members/purchase', {
+        method: 'POST',
+        body: JSON.stringify({
+          sellerId: post?.memberId,
+          amount: post?.price
+        })
+      });
+
+      alert('구매가 완료되었습니다!');
+      fetchPost(); // 게시글 상태 업데이트
+    } catch (error) {
+      console.error('구매 실패:', error);
+      alert('구매에 실패했습니다. 포인트가 부족하거나 오류가 발생했습니다.');
+    }
+  };
+
   if (loading) {
     return <div className="p-8">Loading...</div>;
   }
@@ -281,9 +314,9 @@ export default function SecondhandDetailPage() {
           {/* 버튼 영역 */}
           <div className="space-y-3">
             {/* 결제하기 버튼 */}
-            {post.status === TradeStatus.SELLING && (
+            {post.status === TradeStatus.SELLING && user && user.memberId !== post.memberId && (
               <button
-                onClick={() => alert('결제 기능은 준비 중입니다.')}
+                onClick={handlePurchase}
                 className="w-full bg-green-500 text-white py-3 rounded-lg hover:bg-green-600 font-bold text-lg transition shadow-lg"
               >
                 결제하기
