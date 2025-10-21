@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.enums.TradeStatus;
+import org.example.backend.domain.tradecomment.entity.TradeComment;
 
 @NoArgsConstructor
 @Getter
@@ -67,6 +68,9 @@ public class Trade {
 
     @OneToMany(mappedBy = "trade", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TradeImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trade", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TradeComment> comments = new ArrayList<>();
 
     public Trade(Member member, BoardType boardType, String title, String description,
         Long price, TradeStatus status, String category, LocalDateTime createDate) {
