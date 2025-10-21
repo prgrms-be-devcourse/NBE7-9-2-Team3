@@ -6,7 +6,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.aquarium.dto.AquariumListResponseDto;
-import org.example.backend.domain.aquarium.dto.AquariumCreateRequestDto;
+import org.example.backend.domain.aquarium.dto.AquariumRequestDto;
 import org.example.backend.domain.aquarium.dto.AquariumResponseDto;
 import org.example.backend.domain.aquarium.dto.AquariumScheduleRequestDto;
 import org.example.backend.domain.aquarium.service.AquariumService;
@@ -35,7 +35,7 @@ public class AquariumController {
   @PostMapping
   public ApiResponse<AquariumListResponseDto> createAquarium(
       @AuthenticationPrincipal CustomUserDetails userDetails,
-      @RequestBody AquariumCreateRequestDto requestDto
+      @RequestBody AquariumRequestDto requestDto
   ) {
     AquariumListResponseDto responseDto = aquariumService.create(userDetails, requestDto);
 
@@ -60,6 +60,18 @@ public class AquariumController {
     AquariumResponseDto responseDto = aquariumService.findById(id);
 
     return ApiResponse.ok("어항이 조회되었습니다.", responseDto);
+  }
+
+  // 어항 수정
+  @Operation(summary = "어항 수정", description = "특정 어항의 이름을 수정합니다.")
+  @PutMapping("/{id}")
+  public ApiResponse<AquariumResponseDto> updateAquariumName(
+      @PathVariable Long id,
+      @RequestBody AquariumRequestDto requestDto
+  ) {
+    AquariumResponseDto responseDto = aquariumService.updateAquariumName(id, requestDto);
+
+    return ApiResponse.ok("어항이 수정되었습니다.", responseDto);
   }
 
   // 삭제 전, 어항 속 물고기 존재 여부 확인

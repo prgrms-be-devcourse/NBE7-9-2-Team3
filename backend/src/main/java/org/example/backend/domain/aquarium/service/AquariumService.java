@@ -1,11 +1,9 @@
 package org.example.backend.domain.aquarium.service;
 
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.domain.aquarium.dto.AquariumCreateRequestDto;
+import org.example.backend.domain.aquarium.dto.AquariumRequestDto;
 import org.example.backend.domain.aquarium.dto.AquariumListResponseDto;
 import org.example.backend.domain.aquarium.dto.AquariumResponseDto;
 import org.example.backend.domain.aquarium.dto.AquariumScheduleRequestDto;
@@ -35,7 +33,7 @@ public class AquariumService {
     return aquariumRepository.count();
   }
 
-  public AquariumListResponseDto create(CustomUserDetails userDetails, AquariumCreateRequestDto requestDto) {
+  public AquariumListResponseDto create(CustomUserDetails userDetails, AquariumRequestDto requestDto) {
     Long memberId = userDetails.getId(); // JWT 토큰을 이용해 로그인한 member의 id를 가져옴
     String aquariumName = requestDto.aquariumName();
 
@@ -182,6 +180,18 @@ public class AquariumService {
       aquarium.changeSchedule(cycleDate, lastDate, nextDate);
     }
 
+    aquariumRepository.save(aquarium);
+
+    AquariumResponseDto responseDto = new AquariumResponseDto(aquarium);
+    return responseDto;
+  }
+
+  public AquariumResponseDto updateAquariumName(Long id, AquariumRequestDto requestDto) {
+    Aquarium aquarium = aquariumRepository.findById(id)
+        .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
+    String newName = requestDto.aquariumName();
+
+    aquarium.changeName(newName);
     aquariumRepository.save(aquarium);
 
     AquariumResponseDto responseDto = new AquariumResponseDto(aquarium);
