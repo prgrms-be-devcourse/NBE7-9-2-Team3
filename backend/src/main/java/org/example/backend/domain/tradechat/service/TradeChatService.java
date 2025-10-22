@@ -13,6 +13,8 @@ import org.example.backend.domain.tradechat.entity.TradeChatMessage;
 import org.example.backend.domain.tradechat.entity.TradeChatRoom;
 import org.example.backend.domain.tradechat.repository.TradeChatMessageRepository;
 import org.example.backend.domain.tradechat.repository.TradeChatRoomRepository;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -33,22 +35,23 @@ public class TradeChatService {
     @Transactional
     public void sendMessage(Long roomId, TradeChatMessageDto request) {
         TradeChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException(("채팅방이 존재하지 않습니다.")));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_ROOM_NOT_FOUND));
         Member sender = memberRepository.findById(request.senderId())
-                .orElseThrow(() -> new RuntimeException(("보낸 사용자가 존재하지 않습니다.")));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_SENDER_NOT_FOUND));
 
         // 메세지 채팅 생성
         TradeChatMessage message = TradeChatMessage.create(room, sender, request.content());
-        chatMessageRepository.save(message);
+        TradeChatMessage savedMessage = chatMessageRepository.save(message);
 
-        // 실시간 메세지 브로드캐스트
-        messagingTemplate.convertAndSend("/receive/" + roomId, request);
+        // DB에 저장된 메시지를 DTO로 변환하여 브로드캐스트
+        TradeChatMessageDto messageDto = TradeChatMessageDto.from(savedMessage);
+        messagingTemplate.convertAndSend("/receive/" + roomId, messageDto);
     }
 
     public List<TradeChatRoomDto> getMyChatRooms(Long id) {
 
         // 현재 ONGOING 상태의 채팅방만 조회
-        List<TradeChatRoom> rooms = chatRoomRepository.findByStatusAndSellerId_MemberIdOrStatusAndBuyerId_MemberId(ChatStatus.ONGOING, id, ChatStatus.ONGOING, id);
+        List<TradeChatRoom> rooms = chatRoomRepository.findAllWithMemberAndTrade(ChatStatus.ONGOING, id);
 
         return rooms.stream()
                 .map(TradeChatRoomDto::from)
@@ -57,10 +60,10 @@ public class TradeChatService {
 
     public Long createChatRoom(Long tradeId, Long memberId) {
         Trade trade = tradeRepository.findById(tradeId)
-                .orElseThrow(() -> new RuntimeException("거래글이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_TRADE_NOT_FOUND));
         Member seller = trade.getMember();
         Member buyer = memberRepository.findById(memberId)
-                .orElseThrow(() -> new RuntimeException("구매자가 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_BUYER_NOT_FOUND));
 
         // 중복 체크 후 없으면 새로 생성
         return chatRoomRepository.findByTradeAndSellerIdAndBuyerId(trade, seller, buyer)
@@ -80,13 +83,13 @@ public class TradeChatService {
 
     public List<TradeChatMessageDto> getMessages(Long roomId, Long memberId) {
         TradeChatRoom room = chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("채팅방이 존재하지 않습니다."));
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_ROOM_NOT_FOUND));
         Long sellerId = room.getSellerId().getMemberId();
         Long buyerId = room.getBuyerId().getMemberId();
 
         // 현재 채팅방의 구매자, 판매자 아이디 모두 아닐 경우 접근 제한 (참여자 검증)
         if (!sellerId.equals(memberId) && !buyerId.equals(memberId)) {
-            throw new RuntimeException("이 채팅방에 접근할 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
         // 최신순이 위로가도록 정렬
