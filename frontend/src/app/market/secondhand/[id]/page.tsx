@@ -202,7 +202,8 @@ export default function SecondhandDetailPage() {
         method: 'POST',
         body: JSON.stringify({
           sellerId: post?.memberId,
-          amount: post?.price
+          amount: post?.price,
+          tradeId: Number(tradeId)
         })
       });
 

@@ -108,4 +108,8 @@ public class Trade {
             .toList();
     }
 
+    public void completeTransaction() {
+        this.status = TradeStatus.COMPLETED;
+    }
+
 }
