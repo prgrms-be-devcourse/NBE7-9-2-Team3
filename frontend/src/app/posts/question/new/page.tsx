@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { fetchApi } from "@/lib/client";
 import { useRouter } from 'next/navigation';
+import { uploadImages } from '@/lib/uploadImage';
 
 export default function PostForm() {
   const [title, setTitle] = useState('');
@@ -27,23 +28,30 @@ export default function PostForm() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('content', content);
-    formData.append('boardType', 'QUESTION');
-    formData.append('category', category); // 🏷 category 추가
-    images.forEach((img) => formData.append('images', img));
-
     try {
+      // 1. S3에 이미지 업로드
+      let imageUrls: string[] = [];
+      if (images.length > 0) {
+        imageUrls = await uploadImages(images, 'post');
+      }
+
+      // 2. JSON으로 데이터 전송
       await fetchApi('/api/posts', {
         method: 'POST',
-        body: formData,
+        body: JSON.stringify({
+          title,
+          content,
+          boardType: 'QUESTION',
+          category,
+          imageUrls
+        })
       });
+
       alert('게시글이 생성되었습니다.');
       setTitle('');
       setContent('');
       setImages([]);
-      setCategory('fish'); // 초기화
+      setCategory('fish');
 
       router.push('/posts/question');
     } catch (err) {

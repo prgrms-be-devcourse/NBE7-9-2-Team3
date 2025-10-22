@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { fetchApi } from "@/lib/client";
 import { useRouter } from 'next/navigation';
+import { uploadImages } from '@/lib/uploadImage';
 
 
 
@@ -33,18 +34,21 @@ export default function PostForm() {
       return;
     }
 
-    // DTO 기준 FormData
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('content', content);
-    formData.append('boardType', 'SHOWOFF');
-    images.forEach((img) => formData.append('images', img)); // 필드 이름 그대로
-
     try {
+      // 1. S3에 이미지 업로드
+      const imageUrls = await uploadImages(images, 'post');
+
+      // 2. JSON으로 데이터 전송
       await fetchApi('/api/posts', {
         method: 'POST',
-        body: formData,
+        body: JSON.stringify({
+          title,
+          content,
+          boardType: 'SHOWOFF',
+          imageUrls
+        })
       });
+
       alert('게시글이 생성되었습니다.');
       setTitle('');
       setContent('');

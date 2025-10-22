@@ -24,10 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/members")
@@ -42,10 +39,8 @@ public class MemberController {
     @PostMapping("/join")
     public ApiResponse<MemberJoinResponseDto> join(
         @Parameter(description = "회원가입 정보", required = true)
-        @Valid @ModelAttribute MemberJoinRequestDto request,
-        @Parameter(description = "프로필 이미지 파일 (선택사항)")
-        @RequestPart(required = false) MultipartFile profileImageFile) {
-        return memberService.join(request, profileImageFile);
+        @Valid @RequestBody MemberJoinRequestDto request) {
+        return memberService.join(request, request.profileImageUrl());
     }
 
     @Operation(summary = "로그인", description = "이메일과 비밀번호로 로그인합니다.")
@@ -75,14 +70,14 @@ public class MemberController {
     @PutMapping("/me")
     public ApiResponse<MemberEditResponseDto> edit(
         @Parameter(description = "회원정보 수정 데이터", required = true)
-        @Valid @ModelAttribute MemberEditRequestDto request) {
-        ApiResponse<MemberEditResponseDto> result = memberService.edit(request, null);
-        
+        @Valid @RequestBody MemberEditRequestDto request) {
+        ApiResponse<MemberEditResponseDto> result = memberService.edit(request, request.profileImageUrl());
+
         // 새로운 토큰이 있는 경우 쿠키 업데이트
         if (result.getData() != null && result.getData().newAccessToken() != null) {
             requestContext.setCookie("accessToken", result.getData().newAccessToken());
         }
-        
+
         return result;
     }
 
@@ -95,15 +90,15 @@ public class MemberController {
     @Operation(summary = "프로필 이미지 수정", description = "현재 로그인된 사용자의 프로필 이미지를 수정합니다.")
     @PutMapping("/me/profile-image")
     public ApiResponse<MemberEditResponseDto> updateProfileImage(
-        @Parameter(description = "프로필 이미지 파일", required = true)
-        @RequestPart MultipartFile profileImage) {
-        ApiResponse<MemberEditResponseDto> result = memberService.updateProfileImage(profileImage);
-        
+        @Parameter(description = "프로필 이미지 URL", required = true)
+        @RequestBody java.util.Map<String, String> request) {
+        ApiResponse<MemberEditResponseDto> result = memberService.updateProfileImage(request.get("profileImageUrl"));
+
         // 새로운 토큰이 있는 경우 쿠키 업데이트
         if (result.getData() != null && result.getData().newAccessToken() != null) {
             requestContext.setCookie("accessToken", result.getData().newAccessToken());
         }
-        
+
         return result;
     }
 

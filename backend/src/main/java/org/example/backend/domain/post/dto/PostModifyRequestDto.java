@@ -6,8 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 public record PostModifyRequestDto(
     String title,
     String content,
-    List<MultipartFile> images,
-    List<String> existingImages
+    List<String> imageUrls
 ) {
 
 }

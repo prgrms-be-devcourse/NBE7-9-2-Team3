@@ -110,16 +110,21 @@ public class TradeService {
             request.category()
         );
 
-        // 이미지 교체 로직 (새 이미지 URL이 있는 경우만)
         List<String> newImageUrls = updateRequest.imageUrls();
-        if (newImageUrls != null && !newImageUrls.isEmpty()) {
-            // 1. 기존 S3 이미지 삭제
+        if (newImageUrls != null) {
             List<String> oldImageUrls = trade.getImageUrls();
-            if (!oldImageUrls.isEmpty()) {
-                imageService.deleteFiles(oldImageUrls);
+
+            // 삭제할 이미지: 기존에는 있었는데 새 목록에는 없는 것
+            List<String> toDelete = oldImageUrls.stream()
+                .filter(url -> !newImageUrls.contains(url))
+                .toList();
+
+            // S3에서 삭제
+            if (!toDelete.isEmpty()) {
+                imageService.deleteFiles(toDelete);
             }
 
-            // 2. DB에서 기존 이미지 제거 후 새 이미지 URL 연결
+            // DB 이미지 목록 갱신
             trade.clearImages();
             newImageUrls.forEach(trade::addImage);
         }

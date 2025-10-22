@@ -20,5 +20,5 @@ public record MemberEditRequestDto(
     @NotBlank
     String nickname,
 
-    String profileImage
+    String profileImageUrl
 ) {}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { fetchApi } from '@/lib/client';
+import { uploadImage } from '@/lib/uploadImage';
 
 interface MemberData {
   memberId: number;
@@ -83,12 +84,13 @@ export default function ProfileImagePage() {
       setError(null);
       setSuccess(null);
 
-      const formDataToSend = new FormData();
-      formDataToSend.append('profileImage', selectedImage);
+      // 1. S3에 이미지 업로드
+      const profileImageUrl = await uploadImage(selectedImage, 'profile');
 
+      // 2. JSON으로 데이터 전송
       const result = await fetchApi('/api/members/me/profile-image', {
         method: 'PUT',
-        body: formDataToSend,
+        body: JSON.stringify({ profileImageUrl }),
       });
 
       console.log('프로필 이미지 API 응답:', result);
@@ -97,7 +99,7 @@ export default function ProfileImagePage() {
         setSuccess('프로필 이미지가 성공적으로 업데이트되었습니다.');
         // AuthContext의 사용자 정보도 새로고침 (navbar 업데이트용)
         await refreshUser();
-        
+
         // 2초 후 마이페이지로 리다이렉트
         setTimeout(() => {
           router.push('/mypage');
@@ -123,13 +125,10 @@ export default function ProfileImagePage() {
       setError(null);
       setSuccess(null);
 
-      // 빈 파일을 전송하여 이미지 삭제 (백엔드에서 처리)
-      const formDataToSend = new FormData();
-      formDataToSend.append('profileImage', new File([], 'empty'));
-
+      // null 또는 빈 문자열을 전송하여 이미지 삭제
       const result = await fetchApi('/api/members/me/profile-image', {
         method: 'PUT',
-        body: formDataToSend,
+        body: JSON.stringify({ profileImageUrl: '' }),
       });
 
       if (result.resultCode === 'SUCCESS' || result.resultCode === '200') {
@@ -137,7 +136,7 @@ export default function ProfileImagePage() {
         setPreviewImage(null);
         setSelectedImage(null);
         await refreshUser();
-        
+
         setTimeout(() => {
           router.push('/mypage');
         }, 2000);

@@ -101,15 +101,15 @@ export default function EditPage() {
       setError(null);
       setSuccess(null);
 
-      const formDataToSend = new FormData();
-      formDataToSend.append('email', formData.email);
-      formDataToSend.append('currentPassword', formData.currentPassword);
-      formDataToSend.append('newPassword', formData.newPassword);
-      formDataToSend.append('nickname', formData.nickname);
-
       const result = await fetchApi('/api/members/me', {
         method: 'PUT',
-        body: formDataToSend,
+        body: JSON.stringify({
+          email: formData.email,
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+          nickname: formData.nickname,
+          profileImageUrl: null // 프로필 이미지는 별도 페이지에서 관리
+        }),
       });
 
       console.log('API 응답:', result);

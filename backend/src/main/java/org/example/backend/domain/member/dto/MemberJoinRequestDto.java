@@ -14,5 +14,7 @@ public record MemberJoinRequestDto(
     String password,
 
     @NotBlank
-    String nickname
+    String nickname,
+
+    String profileImageUrl
 ) {}
