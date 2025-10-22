@@ -11,6 +11,8 @@ import org.example.backend.domain.postcomment.dto.PostCommentModifyRequestDto;
 import org.example.backend.domain.postcomment.dto.PostCommentReadResponseDto;
 import org.example.backend.domain.postcomment.entity.PostComment;
 import org.example.backend.domain.postcomment.repository.PostCommentRepository;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,11 +25,11 @@ public class PostCommentService {
     public void modifyPostComment(Long commentId, PostCommentModifyRequestDto reqBody, Member member) {
 
         PostComment postComment = postCommentRepository.findByIdWithAuthor(commentId)
-            .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
         // 작성자 검증
         if (!postComment.getAuthor().getMemberId().equals(member.getMemberId())) {
-            throw new SecurityException("본인이 작성한 댓글만 수정할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
         postComment.modifyContent(reqBody.content());
@@ -36,11 +38,11 @@ public class PostCommentService {
     public void deletePostComment(Long commentId, Member member) {
 
         PostComment postComment = postCommentRepository.findByIdWithAuthor(commentId)
-            .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
         // 작성자 검증
         if (!postComment.getAuthor().getMemberId().equals(member.getMemberId())) {
-            throw new SecurityException("본인이 작성한 댓글만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
         postCommentRepository.delete(postComment);
@@ -49,7 +51,7 @@ public class PostCommentService {
     public void createPostComment(PostCommentCreateRequestDto reqBody, Member member) {
 
         Post post = postService.findById(reqBody.postId())
-            .orElseThrow(() -> new RuntimeException("게시글이 없습니다"));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
         PostComment postcomment = new PostComment(
             reqBody.content(),

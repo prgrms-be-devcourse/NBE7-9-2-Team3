@@ -2,7 +2,6 @@ package org.example.backend.domain.post.service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.follow.service.FollowService;
@@ -16,6 +15,8 @@ import org.example.backend.domain.post.entity.Post;
 import org.example.backend.domain.post.entity.Post.BoardType;
 import org.example.backend.domain.post.entity.PostImage;
 import org.example.backend.domain.post.repository.PostRepository;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.example.backend.global.image.ImageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,10 +41,10 @@ public class PostService {
     public void delete(Long id, Member member) {
 
         Post post = postRepository.findByIdWithAuthorAndImages(id)
-            .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
         if (!post.getAuthor().getMemberId().equals(member.getMemberId())) {
-            throw new SecurityException("본인이 작성한 게시글만 삭제할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
         if (!post.getImages().isEmpty()) {
@@ -62,7 +63,7 @@ public class PostService {
 
         if (Post.BoardType.valueOf(reqBody.boardType()) == Post.BoardType.SHOWOFF
             && (reqBody.images() == null || reqBody.images().isEmpty())) {
-            throw new IllegalArgumentException("자랑 게시판 게시글은 최소 1개의 이미지가 필요합니다.");
+            throw new BusinessException(ErrorCode.IMAGE_FILE_EMPTY);
         }
 
         if (reqBody.images() != null && !reqBody.images().isEmpty()) {
@@ -82,11 +83,11 @@ public class PostService {
     public void modify(Long id, PostModifyRequestDto reqBody, Member member) {
 
         Post post = postRepository.findByIdWithAuthorAndImages(id)
-            .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
         // 작성자 검증
         if (!post.getAuthor().getMemberId().equals(member.getMemberId())) {
-            throw new SecurityException("본인이 작성한 게시글만 수정할 수 있습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
         }
 
         post.updateTitle(reqBody.title());
@@ -197,7 +198,7 @@ public class PostService {
     public PostReadResponseDto getPostById(Long id, Member member) {
 
         Post post = postRepository.findByIdWithAuthorAndImages(id)
-            .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
         boolean liked = likeService.existsByMemberAndPost(member, post);
         boolean following = followService.existsByFollowerAndFollowee(
