@@ -5,15 +5,15 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { fetchApi } from '@/lib/client';
 
-interface FollowUser {
+interface SearchUser {
   memberId: number;
   nickname: string;
   profileImage: string | null;
-  following?: boolean;
+  isFollowing: boolean;
 }
 
-interface FollowListResponse {
-  users: FollowUser[];
+interface SearchResponse {
+  members: SearchUser[];
   totalCount: number;
 }
 
@@ -23,75 +23,100 @@ interface ApiResponse<T> {
   data: T | null;
 }
 
-export default function FollowingPage() {
+export default function SearchPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [following, setFollowing] = useState<FollowUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [unfollowing, setUnfollowing] = useState<Set<number>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredFollowing, setFilteredFollowing] = useState<FollowUser[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [following, setFollowing] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || !user)) {
       router.push('/login');
       return;
     }
-
-    if (isAuthenticated && user) {
-      fetchFollowing();
-    }
   }, [isAuthenticated, authLoading, user, router]);
 
-  const fetchFollowing = async () => {
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const response: ApiResponse<FollowListResponse> = await fetchApi(`/api/follows/${user!.memberId}/followings`);
+      const response: ApiResponse<SearchResponse> = await fetchApi(
+        `/api/members/search?nickname=${encodeURIComponent(query)}&page=0&size=20`
+      );
       if (response.data) {
-        setFollowing(response.data.users);
-        setFilteredFollowing(response.data.users);
+        setSearchResults(response.data.members);
       }
     } catch (error) {
-      console.error('팔로잉 목록 조회 실패:', error);
-      setError('팔로잉 목록을 불러올 수 없습니다.');
+      console.error('검색 실패:', error);
+      setError('검색 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (!query.trim()) {
-      setFilteredFollowing(following);
-    } else {
-      const filtered = following.filter(user => 
-        user.nickname.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredFollowing(filtered);
+  const handleFollow = async (memberId: number) => {
+    try {
+      setFollowing(prev => new Set(prev).add(memberId));
+      
+      const response = await fetchApi(`/api/follows/${memberId}`, {
+        method: 'POST',
+      });
+      
+      if (response.resultCode === '200') {
+        // 검색 결과에서 팔로우 상태 업데이트
+        setSearchResults(prev => 
+          prev.map(user => 
+            user.memberId === memberId 
+              ? { ...user, isFollowing: true }
+              : user
+          )
+        );
+      } else {
+        console.error('팔로우 실패:', response.msg);
+      }
+    } catch (error) {
+      console.error('팔로우 실패:', error);
+    } finally {
+      setFollowing(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(memberId);
+        return newSet;
+      });
     }
   };
 
   const handleUnfollow = async (memberId: number) => {
     try {
-      setUnfollowing(prev => new Set(prev).add(memberId));
+      setFollowing(prev => new Set(prev).add(memberId));
       
       const response = await fetchApi(`/api/follows/${memberId}`, {
         method: 'DELETE',
       });
       
       if (response.resultCode === '200') {
-        // 목록에서 제거
-        setFollowing(prev => prev.filter(user => user.memberId !== memberId));
-        setFilteredFollowing(prev => prev.filter(user => user.memberId !== memberId));
+        // 검색 결과에서 팔로우 상태 업데이트
+        setSearchResults(prev => 
+          prev.map(user => 
+            user.memberId === memberId 
+              ? { ...user, isFollowing: false }
+              : user
+          )
+        );
       } else {
         console.error('언팔로우 실패:', response.msg);
       }
     } catch (error) {
       console.error('언팔로우 실패:', error);
     } finally {
-      setUnfollowing(prev => {
+      setFollowing(prev => {
         const newSet = new Set(prev);
         newSet.delete(memberId);
         return newSet;
@@ -111,14 +136,6 @@ export default function FollowingPage() {
     return null;
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -135,30 +152,41 @@ export default function FollowingPage() {
                 </svg>
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">팔로우</h1>
-                <p className="text-gray-600">{following.length}명</p>
+                <h1 className="text-2xl font-bold text-gray-900">회원 검색</h1>
+                <p className="text-gray-600">닉네임으로 회원을 검색하고 팔로우하세요</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 팔로우 검색 섹션 */}
+        {/* 검색 입력 */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">팔로우 검색</h2>
           <div className="flex space-x-4">
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="팔로우 중에서 닉네임을 검색해보세요..."
+                placeholder="닉네임을 입력하세요..."
                 value={searchQuery}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch(searchQuery);
+                  }
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+            <button
+              onClick={() => handleSearch(searchQuery)}
+              disabled={loading}
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {loading ? '검색 중...' : '검색'}
+            </button>
           </div>
         </div>
 
-        {/* 팔로우 목록 */}
+        {/* 검색 결과 */}
         <div className="bg-white rounded-lg shadow-sm">
           {error ? (
             <div className="p-8 text-center">
@@ -170,24 +198,24 @@ export default function FollowingPage() {
               <h3 className="text-lg font-medium text-gray-900 mb-2">오류가 발생했습니다</h3>
               <p className="text-gray-500 mb-4">{error}</p>
               <button
-                onClick={fetchFollowing}
+                onClick={() => handleSearch(searchQuery)}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
                 다시 시도
               </button>
             </div>
-          ) : filteredFollowing.length === 0 && !searchQuery ? (
+          ) : searchResults.length === 0 && searchQuery ? (
             <div className="p-8 text-center">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">아직 팔로우하는 사용자가 없습니다</h3>
-              <p className="mt-1 text-sm text-gray-500">관심 있는 사용자를 팔로우해보세요.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">검색 결과가 없습니다</h3>
+              <p className="mt-1 text-sm text-gray-500">다른 검색어를 시도해보세요.</p>
             </div>
-          ) : (
+          ) : searchResults.length > 0 ? (
             <div className="divide-y divide-gray-200">
-              {filteredFollowing.map((user) => (
-                <div key={`following-${user.memberId}`} className="p-6 hover:bg-gray-50 transition-colors">
+              {searchResults.map((user) => (
+                <div key={user.memberId} className="p-6 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-4">
                     {/* 프로필 이미지 */}
                     <div className="flex-shrink-0">
@@ -216,21 +244,43 @@ export default function FollowingPage() {
                     
                     {/* 액션 버튼 */}
                     <div className="flex-shrink-0">
-                      <button
-                        onClick={() => handleUnfollow(user.memberId)}
-                        disabled={unfollowing.has(user.memberId)}
-                        className={`px-4 py-2 rounded-lg transition-colors ${
-                          unfollowing.has(user.memberId)
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-red-500 text-white hover:bg-red-600'
-                        }`}
-                      >
-                        {unfollowing.has(user.memberId) ? '언팔로우 중...' : '언팔로우'}
-                      </button>
+                      {user.isFollowing ? (
+                        <button
+                          onClick={() => handleUnfollow(user.memberId)}
+                          disabled={following.has(user.memberId)}
+                          className={`px-4 py-2 rounded-lg transition-colors ${
+                            following.has(user.memberId)
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-red-500 text-white hover:bg-red-600'
+                          }`}
+                        >
+                          {following.has(user.memberId) ? '언팔로우 중...' : '언팔로우'}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleFollow(user.memberId)}
+                          disabled={following.has(user.memberId)}
+                          className={`px-4 py-2 rounded-lg transition-colors ${
+                            following.has(user.memberId)
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-blue-500 text-white hover:bg-blue-600'
+                          }`}
+                        >
+                          {following.has(user.memberId) ? '팔로우 중...' : '팔로우'}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center">
+              <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">회원을 검색해보세요</h3>
+              <p className="mt-1 text-sm text-gray-500">닉네임을 입력하여 회원을 찾아보세요.</p>
             </div>
           )}
         </div>

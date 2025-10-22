@@ -9,6 +9,7 @@ interface FollowUser {
   memberId: number;
   nickname: string;
   profileImage: string | null;
+  following?: boolean;
 }
 
 interface FollowListResponse {
@@ -28,6 +29,7 @@ export default function FollowersPage() {
   const [followers, setFollowers] = useState<FollowUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || !user)) {
@@ -55,6 +57,7 @@ export default function FollowersPage() {
       setLoading(false);
     }
   };
+
 
   if (authLoading) {
     return (
@@ -99,6 +102,23 @@ export default function FollowersPage() {
           </div>
         </div>
 
+        {/* 팔로워 검색 섹션 */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">팔로워 검색</h2>
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="팔로워 중에서 닉네임을 검색해보세요..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+
         {/* 팔로워 목록 */}
         <div className="bg-white rounded-lg shadow-sm">
           {error ? (
@@ -127,8 +147,13 @@ export default function FollowersPage() {
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
-              {followers.map((follower) => (
-                <div key={follower.memberId} className="p-6 hover:bg-gray-50 transition-colors">
+              {followers
+                .filter(follower => 
+                  searchQuery === '' || 
+                  follower.nickname.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((follower) => (
+                <div key={`follower-${follower.memberId}`} className="p-6 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-4">
                     {/* 프로필 이미지 */}
                     <div className="flex-shrink-0">
@@ -153,19 +178,6 @@ export default function FollowersPage() {
                       <p className="text-sm text-gray-500">
                         ID: {follower.memberId}
                       </p>
-                    </div>
-                    
-                    {/* 액션 버튼 */}
-                    <div className="flex-shrink-0">
-                      <button
-                        onClick={() => {
-                          // TODO: 사용자 프로필 페이지로 이동 또는 팔로우/언팔로우 기능
-                          console.log('사용자 프로필 보기:', follower.memberId);
-                        }}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                      >
-                        프로필 보기
-                      </button>
                     </div>
                   </div>
                 </div>
