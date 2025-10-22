@@ -53,7 +53,7 @@ export default function AquariumsPage() {
       alert('어항 이름을 입력해주세요 :)');
       return;
     }
-    if (trimmed === ' 내가 키운 물고기') {
+    if (trimmed === '내가 키운 물고기') {
       alert('"내가 키운 물고기"는 어항 이름으로 사용할 수 없습니다.');
       return;
     }
