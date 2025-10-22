@@ -10,3 +10,15 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+
+cloud:
+  aws:
+    s3:
+      bucket: nbe7-9-2-team03
+    region:
+      static: ap-northeast-2
+    credentials:
+      access-key: dummy  # test시, S3 접근 X
+      secret-key: dummy  # test시, S3 접근 X
+    stack:
+      auto: false
