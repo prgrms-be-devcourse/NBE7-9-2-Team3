@@ -33,7 +33,6 @@ public class PostCommentController {
 
     // 게시글에 달린 댓글 확인
     @GetMapping
-    @Transactional(readOnly = true)
     public ApiResponse<List<PostCommentReadResponseDto>> getPostComments(
         @RequestParam Long postId,
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -70,7 +69,6 @@ public class PostCommentController {
     }
 
     @DeleteMapping("/{commentId}")
-    @Transactional
     public ApiResponse<Void> deletePostComment(
         @PathVariable Long commentId,
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -83,7 +81,6 @@ public class PostCommentController {
     }
 
     @PostMapping
-    @Transactional
     public ApiResponse<Void> createPostComment(
         @RequestBody PostCommentCreateRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -97,7 +94,6 @@ public class PostCommentController {
     }
 
     @PatchMapping("/{commentId}")
-    @Transactional
     public ApiResponse<Void> modifyItem(
         @PathVariable Long commentId,
         @RequestBody PostCommentModifyRequestDto reqBody,

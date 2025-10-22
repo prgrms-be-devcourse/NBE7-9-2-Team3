@@ -14,6 +14,7 @@ import org.example.backend.domain.postcomment.repository.PostCommentRepository;
 import org.example.backend.global.exception.BusinessException;
 import org.example.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,7 @@ public class PostCommentService {
     private final PostCommentRepository postCommentRepository;
     private final PostService postService;
 
+    @Transactional
     public void modifyPostComment(Long commentId, PostCommentModifyRequestDto reqBody, Member member) {
 
         PostComment postComment = postCommentRepository.findByIdWithAuthor(commentId)
@@ -35,6 +37,7 @@ public class PostCommentService {
         postComment.modifyContent(reqBody.content());
     }
 
+    @Transactional
     public void deletePostComment(Long commentId, Member member) {
 
         PostComment postComment = postCommentRepository.findByIdWithAuthor(commentId)
@@ -48,6 +51,7 @@ public class PostCommentService {
         postCommentRepository.delete(postComment);
     }
 
+    @Transactional
     public void createPostComment(PostCommentCreateRequestDto reqBody, Member member) {
 
         Post post = postService.findById(reqBody.postId())
@@ -66,6 +70,7 @@ public class PostCommentService {
         return postCommentRepository.findByAuthor_MemberIdAndPost_BoardType(member.getMemberId(), boardType);
     }
 
+    @Transactional(readOnly = true)
     public List<PostCommentReadResponseDto> getPostComments(Long postId, Member member) {
 
         List<PostComment> comments = postCommentRepository.findByPostIdWithAuthor(postId);

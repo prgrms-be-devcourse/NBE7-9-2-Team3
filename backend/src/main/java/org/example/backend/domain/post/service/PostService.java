@@ -21,6 +21,7 @@ import org.example.backend.global.image.ImageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -38,6 +39,7 @@ public class PostService {
 
     }
 
+    @Transactional
     public void delete(Long id, Member member) {
 
         Post post = postRepository.findByIdWithAuthorAndImages(id)
@@ -58,6 +60,7 @@ public class PostService {
         postRepository.delete(post);
     }
 
+    @Transactional
     public void write(PostWriteRequestDto reqBody, Member member) {
         Post post = new Post(reqBody, member);
 
@@ -80,6 +83,7 @@ public class PostService {
         postRepository.save(post);
     }
 
+    @Transactional
     public void modify(Long id, PostModifyRequestDto reqBody, Member member) {
 
         Post post = postRepository.findByIdWithAuthorAndImages(id)
@@ -127,6 +131,7 @@ public class PostService {
 
     }
 
+    @Transactional(readOnly = true)
     public PostListResponse getPosts(BoardType boardType, String filterType, Member member,
         String keyword, String category, Pageable pageable) {
 
@@ -195,6 +200,7 @@ public class PostService {
 
     }
 
+    @Transactional(readOnly = true)
     public PostReadResponseDto getPostById(Long id, Member member) {
 
         Post post = postRepository.findByIdWithAuthorAndImages(id)

@@ -15,6 +15,7 @@ import org.example.backend.domain.post.repository.PostRepository;
 import org.example.backend.global.exception.BusinessException;
 import org.example.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,7 @@ public class LikeService {
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
 
+    @Transactional
     public Map<String, Object> toggleLike(Long postId, Long memberId) {
         Member member = memberRepository.findById(memberId)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
@@ -67,10 +69,12 @@ public class LikeService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
     public boolean existsByMemberAndPost(Member member, Post post) {
         return  likeRepository.existsByMemberAndPost(member, post);
     }
 
+    @Transactional(readOnly = true)
     public List<Long> findPostIdsByMember(Member member) {
         return likeRepository.findPostIdsByMember(member);
     }
