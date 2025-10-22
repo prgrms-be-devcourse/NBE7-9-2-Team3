@@ -53,13 +53,13 @@ public class AquariumControllerTest {
             MvcResult result = mvc.perform(post("/api/members/join")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                                {
-                                                  "email": "test1@test.com",
-                                                  "password": "test1234",
-                                                  "nickname": "test",
-                                                  "profileImage": null
-                                                }
-                                                """))
+                        {
+                          "email": "test1@test.com",
+                          "password": "test1234",
+                          "nickname": "test",
+                          "profileImage": null
+                        }
+                        """))
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -76,11 +76,11 @@ public class AquariumControllerTest {
     MvcResult loginResult = mvc.perform(post("/api/members/login")
             .contentType(MediaType.APPLICATION_JSON)
             .content("""
-                                {
-                                  "email": "test1@test.com",
-                                  "password": "test1234"
-                                }
-                                """))
+                {
+                   "email": "test1@test.com",
+                   "password": "test1234"
+                 }
+                """))
         .andExpect(status().isOk())
         .andReturn();
 
