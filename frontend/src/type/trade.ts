@@ -39,6 +39,7 @@ export interface TradeFormData {
   price: number;
   status: TradeStatus;
   category: string;
+  imageUrls?: string[];
 }
 
 export interface CommentFormData {

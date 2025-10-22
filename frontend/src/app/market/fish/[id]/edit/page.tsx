@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { TradeFormData, TradeStatus, ApiResponse, Trade } from '@/type/trade';
 import { fetchApi } from '@/lib/client';
 import { useAuth } from '@/context/AuthContext';
+import { uploadImages } from '@/lib/uploadImage';
 
 export default function FishEditPage() {
   const router = useRouter();
@@ -101,57 +102,25 @@ export default function FishEditPage() {
     setSubmitting(true);
 
     try {
-      // Create FormData for multipart/form-data
-      const formDataToSend = new FormData();
-      formDataToSend.append('memberId', formData.memberId.toString());
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('price', formData.price.toString());
-      formDataToSend.append('status', formData.status);
-      formDataToSend.append('category', formData.category);
+      // 1. Upload new images to S3 using Presigned URLs
+      let newImageUrls: string[] = [];
+      if (images.length > 0) {
+        newImageUrls = await uploadImages(images, 'trade');
+      }
 
-      // Add new images if any
-      images.forEach((image) => {
-        formDataToSend.append('images', image);
-      });
+      // 2. Combine existing images and new images
+      const allImageUrls = [...existingImages, ...newImageUrls];
 
-      // Add existing images URLs
-      existingImages.forEach((url) => {
-        formDataToSend.append('existingImages', url);
-      });
-
-      // [FIX] 백엔드의 CustomAuthenticationFilter가 Authorization 헤더를 통해 인증을 처리하도록
-      // 쿠키에서 accessToken을 읽어서 헤더에 추가합니다.
-      const getCookie = (name: string): string | null => {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) {
-          return parts.pop()?.split(';').shift() || null;
-        }
-        return null;
+      // 3. Send JSON data with image URLs
+      const requestData = {
+        ...formData,
+        imageUrls: allImageUrls
       };
 
-      const accessToken = getCookie('accessToken');
-      const headers: HeadersInit = {};
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
-      }
-
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-      const response = await fetch(`${baseUrl}/api/market/fish/${tradeId}`, {
+      const data: ApiResponse<Trade> = await fetchApi(`/api/market/fish/${tradeId}`, {
         method: 'PUT',
-        credentials: 'include',
-        headers,
-        body: formDataToSend,
+        body: JSON.stringify(requestData)
       });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server error response:', errorText);
-        throw new Error(`Server returned ${response.status}: ${errorText}`);
-      }
-
-      const data: ApiResponse<Trade> = await response.json();
 
       if (data.resultCode.startsWith('200')) {
         alert('게시글이 수정되었습니다!');
