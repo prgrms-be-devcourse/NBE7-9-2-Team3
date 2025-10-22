@@ -57,6 +57,7 @@ public class ImageService {
         return new PresignedUrlResponse(presignedUrl, finalUrl);
     }
 
+    /** S3에 PUT 요청할 수 있는 임시 URL 생성 */
     private String generatePresignedUrl(String key) {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
             .bucket(bucket)
@@ -72,13 +73,14 @@ public class ImageService {
         return presignedRequest.url().toString();
     }
 
+    /** S3 객체 키 생성 (디렉토리/UUID.확장자) */
     private String generateKey(String fileName, String directory) {
         String extension = getFileExtension(fileName);
         String uuid = UUID.randomUUID().toString();
         return directory + "/" + uuid + "." + extension;
     }
 
-    /** 최종 URL 생성 (업로드 완료 후) */
+    /** S3 객체의 공개 접근 URL 생성 */
     public String getFileUrl(String key) {
         return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, key);
     }
