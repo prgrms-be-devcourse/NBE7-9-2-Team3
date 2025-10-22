@@ -22,5 +22,4 @@ public interface PostCommentRepository extends JpaRepository<PostComment, Long> 
         "WHERE c.post.id = :postId " +
         "ORDER BY c.createDate DESC")
     List<PostComment> findByPostIdWithAuthor(@Param("postId") Long postId);
-
 }

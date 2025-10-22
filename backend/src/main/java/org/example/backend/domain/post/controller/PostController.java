@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -35,7 +34,6 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping("/my")
-    @Transactional(readOnly = true)
     public ApiResponse<List<MyPostReadResponseDto>> getMyPosts(
         @RequestParam BoardType boardType,
         @AuthenticationPrincipal CustomUserDetails userDetails

@@ -58,12 +58,12 @@ public class LikeService {
     public List<PostLikeResponseDto> getLikedPosts(Long memberId) {
 
         Member member = memberRepository.findById(memberId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
         return likeRepository.findAllByMember(member).stream()
             .map(like -> {
                 Post post = postRepository.findById(like.getPost().getId())
-                    .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
                 return new PostLikeResponseDto(post.getId(), post.getTitle());
             })
             .toList();
