@@ -8,7 +8,6 @@ import org.example.backend.domain.post.dto.PostModifyRequestDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
 import org.example.backend.domain.post.entity.Post;
 import org.example.backend.domain.post.entity.Post.BoardType;
-import org.example.backend.domain.post.entity.Post.Displaying;
 import org.example.backend.domain.post.entity.PostImage;
 import org.example.backend.domain.post.repository.PostRepository;
 import org.example.backend.global.image.ImageService;
@@ -41,12 +40,13 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    public Page<Post> findByBoardTypeAndDisplaying(BoardType boardType, Displaying displaying, Pageable pageable) {
-        return postRepository.findByBoardTypeAndDisplaying(boardType, displaying, pageable);
-    }
-
     public void write(PostWriteRequestDto reqBody, Member member) {
         Post post = new Post(reqBody, member);
+
+        if (Post.BoardType.valueOf(reqBody.boardType()) == Post.BoardType.SHOWOFF
+            && (reqBody.images() == null || reqBody.images().isEmpty())) {
+            throw new IllegalArgumentException("자랑 게시판 게시글은 최소 1개의 이미지가 필요합니다.");
+        }
 
         if (reqBody.images() != null && !reqBody.images().isEmpty()) {
             for (MultipartFile file : reqBody.images()) {
@@ -99,11 +99,32 @@ public class PostService {
         return postRepository.findByBoardType(boardType);
     }
 
-    public int countByBoardTypeAndDisplaying(BoardType boardType, Displaying displaying) {
-        return (int) postRepository.countByBoardTypeAndDisplaying(boardType, displaying);
+    public Page<Post> findByBoardTypeAndDisplayingAndAuthorIdInAndKeywordAndCategory(
+        BoardType boardType,
+        Post.Displaying displaying,
+        List<Long> authorIds,
+        String keyword,
+        String category,
+        Pageable pageable) {
+
+        return postRepository.searchByBoardTypeAndDisplayingAndAuthorIdInAndKeywordAndCategory(
+            boardType, displaying, authorIds, keyword, category, pageable
+        );
     }
 
-    public Page<Post> findByBoardTypeAndDisplayingAndAuthorIdIn(BoardType boardType, Displaying displaying, List<Long> followeeIds, Pageable pageable) {
-        return postRepository.findByBoardTypeAndDisplayingAndAuthor_MemberIdIn(boardType, displaying, followeeIds, pageable);
+    // 전체 게시판 + keyword + category
+    public Page<Post> findByBoardTypeAndDisplayingAndKeywordAndCategory(
+        BoardType boardType,
+        Post.Displaying displaying,
+        String keyword,
+        String category,
+        Pageable pageable) {
+
+        if ((keyword == null || keyword.isBlank()) && (category == null || category.equals("all"))) {
+            return postRepository.findByBoardTypeAndDisplaying(boardType, displaying, pageable);
+        }
+        return postRepository.searchByBoardTypeAndDisplayingAndKeywordAndCategory(
+            boardType, displaying, keyword, category, pageable
+        );
     }
 }

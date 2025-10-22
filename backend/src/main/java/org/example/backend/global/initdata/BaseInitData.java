@@ -198,7 +198,8 @@ public class BaseInitData {
                         title,
                         content,
                         boardType.name(),
-                        null // 이미지는 null로 설정
+                        null, // 이미지는 null로 설정
+                        null
                     );
 
                     Post post = new Post(requestDto, member);

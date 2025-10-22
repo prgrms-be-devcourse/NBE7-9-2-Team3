@@ -8,7 +8,8 @@ public record PostWriteRequestDto(
     String title,
     String content,
     String boardType,
-    List<MultipartFile> images
+    List<MultipartFile> images,
+    String category
 
 ) {
 

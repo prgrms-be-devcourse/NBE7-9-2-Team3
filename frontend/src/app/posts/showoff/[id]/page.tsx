@@ -11,10 +11,11 @@ interface PostReadResponseDto {
   nickname: string;
   createDate: string;
   images: string[];
-  likeCount: number;   // 카멜케이스 통일
+  likeCount: number;
   liked?: boolean;
-  following: boolean;     // 로그인 사용자 좋아요 여부
+  following: boolean;
   authorId: number;
+  isMine?: boolean; // 🔹 내 글 여부
 }
 
 interface ApiResponse<T> {
@@ -27,6 +28,7 @@ interface CommentDto {
   id: number;
   author: string;
   content: string;
+  isMine: boolean;
 }
 
 export default function PostDetailPage() {
@@ -44,6 +46,7 @@ export default function PostDetailPage() {
     id: number;
     content: string;
     nickname: string;
+    isMine: boolean
   }
 
   const loadPostAndComments = async () => {
@@ -64,6 +67,7 @@ export default function PostDetailPage() {
           id: c.id,
           author: c.nickname,
           content: c.content,
+          isMine: c.isMine
         }))
       );
     } catch (err) {
@@ -173,28 +177,56 @@ export default function PostDetailPage() {
             <button
               onClick={handleToggleLike}
               className={`px-3 py-1 rounded ${post.liked ? "bg-red-500 text-white" : "bg-gray-200"}`}
+
             >
               ❤️ {post.likeCount}
             </button>
 
             <button
               onClick={handleToggleFollow}
-              className={`px-3 py-1 rounded ${following ? "bg-gray-400 text-white" : "bg-blue-500 text-white"}`}
+              className={`px-2 py-1 rounded ${post.isMine
+                ? "bg-green-500 text-white"         // 🔹 내 글이면 초록
+                : post.following
+                  ? "bg-gray-400 text-white"         // 팔로잉
+                  : "bg-blue-500 text-white"         // 팔로우
+                }`}
+              disabled={post.isMine} // 내 글이면 클릭 불가
             >
-              {following ? "팔로잉" : "팔로우"}
+              {post.isMine ? "내 글" : post.following ? "팔로잉" : "팔로우"}
             </button>
           </div>
+
+
         </div>
 
         <div className="flex gap-2">
           <button
-            onClick={() => router.push(`/posts/showoff/${post.id}/edit`)}
+            onClick={() => {
+              if (!post?.isMine) {
+                alert("본인 글만 수정할 수 있습니다.");
+                return;
+              }
+              router.push(`/posts/showoff/${post.id}/edit`);
+            }}
             className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             수정
           </button>
           <button
-            onClick={handleDeletePost}
+            onClick={async () => {
+              if (!post?.isMine) {
+                alert("본인 글만 삭제할 수 있습니다.");
+                return;
+              }
+              if (!confirm("정말 삭제하시겠습니까?")) return;
+              try {
+                await fetchApi(`/api/posts/${post.id}`, { method: "DELETE" });
+                router.push("/posts/showoff");
+              } catch (err) {
+                console.error(err);
+                alert("삭제 실패");
+              }
+            }}
             className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
           >
             삭제
@@ -248,7 +280,13 @@ export default function PostDetailPage() {
             </div>
             <button
               onClick={async () => {
+                if (!comment.isMine) {
+                  alert("본인 댓글만 삭제할 수 있습니다.");
+                  return;
+                }
+
                 if (!confirm("댓글을 삭제하시겠습니까?")) return;
+
                 try {
                   await fetchApi(`/api/comments/${comment.id}`, { method: "DELETE" });
                   loadPostAndComments();

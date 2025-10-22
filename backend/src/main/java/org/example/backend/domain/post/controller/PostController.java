@@ -77,6 +77,8 @@ public class PostController {
         @RequestParam BoardType boardType,
         @RequestParam(defaultValue = "all") String filterType, // "all" or "following"
         @AuthenticationPrincipal CustomUserDetails userDetails,
+        @RequestParam(required = false) String keyword,
+        @RequestParam(defaultValue = "all") String category,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
 
@@ -84,22 +86,28 @@ public class PostController {
 
         if (filterType.equals("following")) {
 
+            List<Long> followeeIds = followRepository.findFolloweeIdsByFollower(
+                userDetails.getMember());
 
-            List<Long> followeeIds = followRepository.findFolloweeIdsByFollower(userDetails.getMember());
-
-            postPage = postService.findByBoardTypeAndDisplayingAndAuthorIdIn(
+            postPage = postService.findByBoardTypeAndDisplayingAndAuthorIdInAndKeywordAndCategory(
                 boardType,
                 Post.Displaying.PUBLIC,
                 followeeIds,
+                keyword,
+                category,
                 pageable
             );
 
-        }else{
-            postPage = postService.findByBoardTypeAndDisplaying(boardType, Post.Displaying.PUBLIC, pageable);
+        } else {
+            postPage = postService.findByBoardTypeAndDisplayingAndKeywordAndCategory(
+                boardType,
+                Post.Displaying.PUBLIC,
+                keyword,
+                category,
+                pageable
+            );
 
         }
-
-
 
         List<PostReadResponseDto> postDtos = postPage.getContent().stream()
             .map(post -> {
@@ -108,6 +116,8 @@ public class PostController {
                     userDetails.getMember(),   // 로그인 사용자
                     post.getAuthor()           // 게시글 작성자
                 );
+                boolean isMine = post.getAuthor().getMemberId()
+                    .equals(userDetails.getMember().getMemberId());
 
                 return new PostReadResponseDto(
                     post.getId(),
@@ -119,14 +129,15 @@ public class PostController {
                     post.getLikeCount(),
                     liked,
                     following,
-                    post.getAuthor().getMemberId()
+                    post.getAuthor().getMemberId(),
+                    post.getCategory(),
+                    isMine
                 );
             })
             .toList();
 
-        int totalCount = postService.countByBoardTypeAndDisplaying(boardType, Post.Displaying.PUBLIC);
+        int totalCount = (int) postPage.getTotalElements();
         PostListResponse response = new PostListResponse(postDtos, totalCount);
-
 
         return new ApiResponse<>("200-1",
             "게시판 게시글 다건 조회",
@@ -138,7 +149,7 @@ public class PostController {
     public ApiResponse<PostReadResponseDto> getPost(
         @PathVariable Long id,
         @AuthenticationPrincipal CustomUserDetails userDetails
-        ) {
+    ) {
         Post post = postService.findById(id)
             .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
 
@@ -147,6 +158,8 @@ public class PostController {
             userDetails.getMember(),   // 로그인 사용자
             post.getAuthor()          // 게시글 작성자
         );
+        boolean isMine = post.getAuthor().getMemberId()
+            .equals(userDetails.getMember().getMemberId());
 
         PostReadResponseDto response = new PostReadResponseDto(
             post.getId(),
@@ -160,7 +173,9 @@ public class PostController {
             post.getLikeCount(),
             liked,
             following,
-            post.getAuthor().getMemberId()
+            post.getAuthor().getMemberId(),
+            post.getCategory(),
+            isMine
         );
 
         return new ApiResponse<>(

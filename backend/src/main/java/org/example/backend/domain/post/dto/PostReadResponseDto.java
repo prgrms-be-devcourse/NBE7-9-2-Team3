@@ -14,7 +14,9 @@ public record PostReadResponseDto(
     int likeCount,
     boolean liked,
     boolean following,
-    Long authorId
+    Long authorId,
+    String category,
+    boolean isMine
 
 ) {
 

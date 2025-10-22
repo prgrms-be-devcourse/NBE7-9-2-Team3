@@ -35,7 +35,8 @@ public class PostCommentController {
     @GetMapping
     @Transactional(readOnly = true)
     public ApiResponse<List<PostCommentReadResponseDto>> getPostComments(
-        @RequestParam Long postId
+        @RequestParam Long postId,
+        @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
         List<PostComment> comments = postCommentService.findByPostId(postId);
@@ -45,7 +46,8 @@ public class PostCommentController {
             .map(c -> new PostCommentReadResponseDto(
                 c.getId(),
                 c.getContent(),
-                c.getAuthor().getNickname()
+                c.getAuthor().getNickname(),
+                c.getAuthor().getMemberId().equals(userDetails.getMember().getMemberId())
             ))
             .toList();
 
