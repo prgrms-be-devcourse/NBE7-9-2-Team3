@@ -44,19 +44,13 @@ public class PostService {
         Post post = new Post(reqBody, member);
 
         if (Post.BoardType.valueOf(reqBody.boardType()) == Post.BoardType.SHOWOFF
-            && (reqBody.images() == null || reqBody.images().isEmpty())) {
+            && (reqBody.imageUrls() == null || reqBody.imageUrls().isEmpty())) {
             throw new IllegalArgumentException("자랑 게시판 게시글은 최소 1개의 이미지가 필요합니다.");
         }
 
-        if (reqBody.images() != null && !reqBody.images().isEmpty()) {
-            for (MultipartFile file : reqBody.images()) {
-                // 1. S3 업로드
-                String imageUrl = imageService.uploadFile(file, "post");
-
-                // 2. PostImage 생성 후 Post에 추가
-                PostImage postImage = new PostImage(imageUrl, post);
-                post.addImage(postImage);
-            }
+        if (reqBody.imageUrls() != null && !reqBody.imageUrls().isEmpty()) {
+            reqBody.imageUrls().forEach(url ->
+                post.addImage(new PostImage(url, post)));
         }
 
         postRepository.save(post);
@@ -67,28 +61,20 @@ public class PostService {
         post.updateTitle(reqBody.title());
         post.updateContent(reqBody.content());
 
-        List<String> keepImages = reqBody.existingImages();
-        List<PostImage> toDelete = post.getImages().stream()
-            .filter(img -> keepImages == null || !keepImages.contains(img.getImageUrl()))
-            .toList();
-
-        if (!toDelete.isEmpty()) {
-            List<String> deleteUrls = toDelete.stream()
+        // 새 이미지 URL이 있으면 기존 이미지 모두 삭제하고 교체
+        if (reqBody.imageUrls() != null && !reqBody.imageUrls().isEmpty()) {
+            // 기존 이미지 삭제
+            List<String> oldImageUrls = post.getImages().stream()
                 .map(PostImage::getImageUrl)
                 .toList();
-            imageService.deleteFiles(deleteUrls);
-            post.getImages().removeAll(toDelete);
-        }
-
-        if (reqBody.images() != null && !reqBody.images().isEmpty()) {
-            for (MultipartFile file : reqBody.images()) {
-                // 1. S3 업로드
-                String imageUrl = imageService.uploadFile(file, "post");
-
-                // 2. PostImage 생성 후 Post에 추가
-                PostImage postImage = new PostImage(imageUrl, post);
-                post.addImage(postImage);
+            if (!oldImageUrls.isEmpty()) {
+                imageService.deleteFiles(oldImageUrls);
             }
+
+            // 새 이미지 URL 연결
+            post.deleteImageUrls();
+            reqBody.imageUrls().forEach(url ->
+                post.addImage(new PostImage(url, post)));
         }
 
         postRepository.save(post);
