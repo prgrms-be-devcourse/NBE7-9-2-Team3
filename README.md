@@ -79,6 +79,11 @@ NBE7-9-2-Team3/
     │   └── type/         # TypeScript 타입 정의
     └── package.json
 ```
+---
+
+## 🗄️ ERD
+
+<img width="2070" height="922" alt="image" src="https://github.com/user-attachments/assets/e90cd0e6-df19-45fb-a99c-c78bc914f720" />
 
 ---
 
