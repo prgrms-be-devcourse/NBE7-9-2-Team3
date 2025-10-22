@@ -2,7 +2,6 @@ package org.example.backend.domain.post.controller;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.domain.follow.repository.FollowRepository;
 import org.example.backend.domain.like.repository.LikeRepository;
 import org.example.backend.domain.post.dto.MyPostReadResponseDto;
 import org.example.backend.domain.post.dto.PostListResponse;
@@ -35,7 +34,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
 
     private final PostService postService;
-    private final FollowRepository followRepository;
 
     @GetMapping("/my")
     @Transactional(readOnly = true)
@@ -82,10 +80,7 @@ public class PostController {
             boardType, filterType, userDetails.getMember(), keyword, category, pageable
         );
 
-        return new ApiResponse<>("200-1",
-            "게시판 게시글 다건 조회",
-            response
-        );
+        return ApiResponse.ok("게시글 다건 조회", response);
     }
 
     @GetMapping("/{id}")
@@ -96,11 +91,8 @@ public class PostController {
 
         PostReadResponseDto response = postService.getPostById(id, userDetails.getMember());
 
-        return new ApiResponse<>(
-            "200-1",
-            "%d번 id 게시글 단건 조회".formatted(id),
-            response
-        );
+
+        return ApiResponse.ok("%d번 게시글 단건 조회".formatted(id), response);
 
     }
 
@@ -113,10 +105,7 @@ public class PostController {
 
         postService.delete(id, userDetails.getMember());
 
-        return new ApiResponse<>(
-            "200-1",
-            "%d번 게시물이 삭제되었습니다.".formatted(id)
-        );
+        return ApiResponse.ok("%d번 게시글 삭제".formatted(id));
 
     }
 
@@ -129,10 +118,8 @@ public class PostController {
 
         postService.write(reqBody, userDetails.getMember());
 
-        return new ApiResponse<>(
-            "200-1",
-            "게시글이 생성되었습니다."
-        );
+        return ApiResponse.ok("게시글 생성");
+
     }
 
     @PatchMapping("/{id}")
@@ -145,10 +132,7 @@ public class PostController {
 
         postService.modify(id, reqBody, userDetails.getMember());
 
-        return new ApiResponse<>(
-            "200-1",
-            "게시글이 수정되었습니다."
-        );
+        return ApiResponse.ok("%d번 게시글 수정".formatted(id));
     }
 
 }

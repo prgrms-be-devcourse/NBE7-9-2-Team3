@@ -1,8 +1,6 @@
 package org.example.backend.domain.postcomment.service;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.post.entity.Post;
@@ -24,7 +22,7 @@ public class PostCommentService {
 
     public void modifyPostComment(Long commentId, PostCommentModifyRequestDto reqBody, Member member) {
 
-        PostComment postComment = postCommentRepository.findById(commentId)
+        PostComment postComment = postCommentRepository.findByIdWithAuthor(commentId)
             .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
 
         // 작성자 검증
@@ -37,7 +35,7 @@ public class PostCommentService {
 
     public void deletePostComment(Long commentId, Member member) {
 
-        PostComment postComment = postCommentRepository.findById(commentId)
+        PostComment postComment = postCommentRepository.findByIdWithAuthor(commentId)
             .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
 
         // 작성자 검증
@@ -62,21 +60,15 @@ public class PostCommentService {
         postCommentRepository.save(postcomment);
     }
 
-    public Optional<PostComment> findById(Long id) {
-        return postCommentRepository.findById(id);
-    }
-
-
     public List<PostComment> findMyComments(Member member, BoardType boardType) {
         return postCommentRepository.findByAuthor_MemberIdAndPost_BoardType(member.getMemberId(), boardType);
     }
 
     public List<PostCommentReadResponseDto> getPostComments(Long postId, Member member) {
 
-        List<PostComment> comments = postCommentRepository.findByPost_Id(postId);
+        List<PostComment> comments = postCommentRepository.findByPostIdWithAuthor(postId);
 
         List<PostCommentReadResponseDto> response = comments.stream()
-            .sorted(Comparator.comparing(PostComment::getCreateDate).reversed())
             .map(c -> new PostCommentReadResponseDto(
                 c.getId(),
                 c.getContent(),

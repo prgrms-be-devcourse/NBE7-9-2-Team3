@@ -42,10 +42,7 @@ public class PostCommentController {
         List<PostCommentReadResponseDto> response =
             postCommentService.getPostComments(postId, userDetails.getMember());
 
-        return new ApiResponse<>("200-1",
-            "댓글 목록 조회",
-            response
-        );
+        return ApiResponse.ok("댓글 목록 조회", response);
     }
 
     @GetMapping("/my")
@@ -81,10 +78,7 @@ public class PostCommentController {
 
         postCommentService.deletePostComment(commentId, userDetails.getMember());
 
-        return  new ApiResponse<>(
-            "200-1",
-            "%d번 댓글 삭제".formatted(commentId)
-        );
+        return ApiResponse.ok("%d번 댓글 삭제".formatted(commentId));
 
     }
 
@@ -97,10 +91,8 @@ public class PostCommentController {
 
         postCommentService.createPostComment(reqBody, userDetails.getMember());
 
-        return new ApiResponse<>(
-            "201-1",
-            "댓글이 생성되었습니다."
-        );
+
+        return ApiResponse.ok("댓글이 생성되었습니다");
 
     }
 
@@ -114,9 +106,6 @@ public class PostCommentController {
 
         postCommentService.modifyPostComment(commentId, reqBody, userDetails.getMember());
 
-        return new ApiResponse<>(
-            "200-1",
-            "%d번 댓글이 수정되었습니다.".formatted(commentId)
-        );
+        return ApiResponse.ok("%d번 댓글 수정".formatted(commentId));
     }
 }

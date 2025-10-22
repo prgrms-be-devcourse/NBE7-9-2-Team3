@@ -68,4 +68,9 @@ public class LikeService {
     public boolean existsByMemberAndPost(Member member, Post post) {
         return  likeRepository.existsByMemberAndPost(member, post);
     }
+
+    public List<Long> findPostIdsByMember(Member member) {
+        return likeRepository.findPostIdsByMember(member);
+    }
+
 }

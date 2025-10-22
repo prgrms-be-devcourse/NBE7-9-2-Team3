@@ -140,7 +140,7 @@ public class FollowService {
     }
 
     public List<Long> findFolloweeIdsByFollower(Member member) {
-        return followRepository .findFolloweeIdsByFollower(member);
+        return followRepository.findFolloweeIdsByFollower(member);
     }
 
     public boolean existsByFollowerAndFollowee(Member member, Member author) {

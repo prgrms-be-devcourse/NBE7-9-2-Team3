@@ -5,6 +5,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.like.dto.PostLikeResponseDto;
 import org.example.backend.domain.like.service.LikeService;
+import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,11 +22,12 @@ public class LikeController {
     private final LikeService likeService;
 
     @PostMapping("/{postId}/likes")
-    public Map<String, Object> toggleLike(
+    public ApiResponse<Map<String, Object>> toggleLike(
         @PathVariable Long postId,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        return likeService.toggleLike(postId, userDetails.getId());
+        Map<String, Object> response = likeService.toggleLike(postId, userDetails.getId());
+        return ApiResponse.ok("좋아요 토글 완료",response);
     }
 
     @GetMapping("/likes/my")

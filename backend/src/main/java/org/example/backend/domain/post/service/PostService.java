@@ -1,5 +1,6 @@
 package org.example.backend.domain.post.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -38,7 +39,7 @@ public class PostService {
 
     public void delete(Long id, Member member) {
 
-        Post post = postRepository.findById(id)
+        Post post = postRepository.findByIdWithAuthorAndImages(id)
             .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
 
         if (!post.getAuthor().getMemberId().equals(member.getMemberId())) {
@@ -80,7 +81,7 @@ public class PostService {
 
     public void modify(Long id, PostModifyRequestDto reqBody, Member member) {
 
-        Post post = postRepository.findById(id)
+        Post post = postRepository.findByIdWithAuthorAndImages(id)
             .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
 
         // 작성자 검증
@@ -128,29 +129,36 @@ public class PostService {
     public PostListResponse getPosts(BoardType boardType, String filterType, Member member,
         String keyword, String category, Pageable pageable) {
 
+        // 로그인 사용자가 좋아요한 postId를 한번에 가져오기
+        List<Long> likedPostIds = likeService.findPostIdsByMember(member);
+
+        // 로그인 사용자가 팔로우하는 회원 ID 리스트 미리 가져오기
+        List<Long> followingIds = followService.findFolloweeIdsByFollower(member);
+
         Page<Post> postPage;
 
         if (filterType.equals("following")) {
 
-            List<Long> followeeIds = followService.findFolloweeIdsByFollower(
-                member);
+            // 팔로잉 대상이 없으면 바로 빈 결과 반환
+            if (followingIds.isEmpty()) {
+                return new PostListResponse(Collections.emptyList(), 0);
+            }
 
-            postPage = postRepository.searchByBoardTypeAndDisplayingAndAuthorIdInAndKeywordAndCategory(
-                boardType, Post.Displaying.PUBLIC, followeeIds, keyword, category, pageable);
+            postPage = postRepository.findByBoardTypeAndDisplayingWithAuthorAndImagesAndIds(
+                boardType, Post.Displaying.PUBLIC, followingIds, pageable);
 
         } else {
 
             if ((keyword == null || keyword.isBlank()) && (category == null || category.equals(
                 "all"))) {
 
-                postPage = postRepository.findByBoardTypeAndDisplaying(boardType,
+                postPage = postRepository.findByBoardTypeAndDisplayingWithAuthorAndImages(boardType,
                     Post.Displaying.PUBLIC, pageable);
 
             } else {
 
-                postPage = postRepository.searchByBoardTypeAndDisplayingAndKeywordAndCategory(
+                postPage = postRepository.searchByBoardTypeAndDisplayingAndKeywordAndCategoryWithAuthorAndImages(
                     boardType, Post.Displaying.PUBLIC, keyword, category, pageable
-
                 );
 
             }
@@ -159,11 +167,8 @@ public class PostService {
         List<PostReadResponseDto> postDtos = postPage.getContent().stream()
             .map(post -> {
 
-                boolean liked = likeService.existsByMemberAndPost(member, post);
-                boolean following = followService.existsByFollowerAndFollowee(
-                    member,                     // 로그인 사용자
-                    post.getAuthor()           // 게시글 작성자
-                );
+                boolean liked = likedPostIds.contains(post.getId());
+                boolean following = followingIds.contains(post.getAuthor().getMemberId());
                 boolean isMine = post.getAuthor().getMemberId()
                     .equals(member.getMemberId());
 
@@ -191,7 +196,7 @@ public class PostService {
 
     public PostReadResponseDto getPostById(Long id, Member member) {
 
-        Post post = postRepository.findById(id)
+        Post post = postRepository.findByIdWithAuthorAndImages(id)
             .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
 
         boolean liked = likeService.existsByMemberAndPost(member, post);
