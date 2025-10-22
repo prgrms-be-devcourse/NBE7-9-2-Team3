@@ -1,7 +1,6 @@
 package org.example.backend.domain.post.controller;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.follow.repository.FollowRepository;
 import org.example.backend.domain.like.repository.LikeRepository;
@@ -12,11 +11,9 @@ import org.example.backend.domain.post.dto.PostReadResponseDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
 import org.example.backend.domain.post.entity.Post;
 import org.example.backend.domain.post.entity.Post.BoardType;
-import org.example.backend.domain.post.entity.PostImage;
 import org.example.backend.domain.post.service.PostService;
 import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -81,62 +78,9 @@ public class PostController {
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
 
-        Page<Post> postPage;
-
-        if (filterType.equals("following")) {
-
-            List<Long> followeeIds = followRepository.findFolloweeIdsByFollower(
-                userDetails.getMember());
-
-            postPage = postService.findByBoardTypeAndDisplayingAndAuthorIdInAndKeywordAndCategory(
-                boardType,
-                Post.Displaying.PUBLIC,
-                followeeIds,
-                keyword,
-                category,
-                pageable
-            );
-
-        } else {
-            postPage = postService.findByBoardTypeAndDisplayingAndKeywordAndCategory(
-                boardType,
-                Post.Displaying.PUBLIC,
-                keyword,
-                category,
-                pageable
-            );
-
-        }
-
-        List<PostReadResponseDto> postDtos = postPage.getContent().stream()
-            .map(post -> {
-                boolean liked = likeRepository.existsByMemberAndPost(userDetails.getMember(), post);
-                boolean following = followRepository.existsByFollowerAndFollowee(
-                    userDetails.getMember(),   // 로그인 사용자
-                    post.getAuthor()           // 게시글 작성자
-                );
-                boolean isMine = post.getAuthor().getMemberId()
-                    .equals(userDetails.getMember().getMemberId());
-
-                return new PostReadResponseDto(
-                    post.getId(),
-                    post.getTitle(),
-                    post.getContent(),
-                    post.getAuthor().getNickname(),
-                    post.getCreateDate(),
-                    post.getImages().stream().map(PostImage::getImageUrl).toList(),
-                    post.getLikeCount(),
-                    liked,
-                    following,
-                    post.getAuthor().getMemberId(),
-                    post.getCategory(),
-                    isMine
-                );
-            })
-            .toList();
-
-        int totalCount = (int) postPage.getTotalElements();
-        PostListResponse response = new PostListResponse(postDtos, totalCount);
+        PostListResponse response = postService.getPosts(
+            boardType, filterType, userDetails.getMember(), keyword, category, pageable
+        );
 
         return new ApiResponse<>("200-1",
             "게시판 게시글 다건 조회",
@@ -149,33 +93,8 @@ public class PostController {
         @PathVariable Long id,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Post post = postService.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
 
-        boolean liked = likeRepository.existsByMemberAndPost(userDetails.getMember(), post);
-        boolean following = followRepository.existsByFollowerAndFollowee(
-            userDetails.getMember(),   // 로그인 사용자
-            post.getAuthor()          // 게시글 작성자
-        );
-        boolean isMine = post.getAuthor().getMemberId()
-            .equals(userDetails.getMember().getMemberId());
-
-        PostReadResponseDto response = new PostReadResponseDto(
-            post.getId(),
-            post.getTitle(),
-            post.getContent(),
-            post.getAuthor().getNickname(),
-            post.getCreateDate(),
-            post.getImages().stream()
-                .map(PostImage::getImageUrl)
-                .toList(),
-            post.getLikeCount(),
-            liked,
-            following,
-            post.getAuthor().getMemberId(),
-            post.getCategory(),
-            isMine
-        );
+        PostReadResponseDto response = postService.getPostById(id, userDetails.getMember());
 
         return new ApiResponse<>(
             "200-1",
@@ -192,14 +111,7 @@ public class PostController {
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        Post post = postService.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
-
-        if (!post.getAuthor().getMemberId().equals(userDetails.getId())) {
-            throw new SecurityException("본인이 작성한 게시글만 삭제할 수 있습니다.");
-        }
-
-        postService.delete(post);
+        postService.delete(id, userDetails.getMember());
 
         return new ApiResponse<>(
             "200-1",
@@ -231,15 +143,8 @@ public class PostController {
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        Post post = postService.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
+        postService.modify(id, reqBody, userDetails.getMember());
 
-        // 작성자 검증
-        if (!post.getAuthor().getMemberId().equals(userDetails.getId())) {
-            throw new SecurityException("본인이 작성한 게시글만 수정할 수 있습니다.");
-        }
-
-        postService.modify(post, reqBody);
         return new ApiResponse<>(
             "200-1",
             "게시글이 수정되었습니다."

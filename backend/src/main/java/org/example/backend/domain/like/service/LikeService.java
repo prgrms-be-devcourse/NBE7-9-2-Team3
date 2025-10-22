@@ -64,4 +64,8 @@ public class LikeService {
             })
             .toList();
     }
+
+    public boolean existsByMemberAndPost(Member member, Post post) {
+        return  likeRepository.existsByMemberAndPost(member, post);
+    }
 }

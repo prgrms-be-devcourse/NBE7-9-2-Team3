@@ -39,17 +39,8 @@ public class PostCommentController {
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        List<PostComment> comments = postCommentService.findByPostId(postId);
-
-        List<PostCommentReadResponseDto> response = comments.stream()
-            .sorted(Comparator.comparing(PostComment::getCreateDate).reversed())
-            .map(c -> new PostCommentReadResponseDto(
-                c.getId(),
-                c.getContent(),
-                c.getAuthor().getNickname(),
-                c.getAuthor().getMemberId().equals(userDetails.getMember().getMemberId())
-            ))
-            .toList();
+        List<PostCommentReadResponseDto> response =
+            postCommentService.getPostComments(postId, userDetails.getMember());
 
         return new ApiResponse<>("200-1",
             "댓글 목록 조회",
@@ -88,15 +79,7 @@ public class PostCommentController {
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        PostComment postComment = postCommentService.findById(commentId)
-            .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
-
-        // 작성자 검증
-        if (!postComment.getAuthor().getMemberId().equals(userDetails.getId())) {
-            throw new SecurityException("본인이 작성한 댓글만 삭제할 수 있습니다.");
-        }
-
-        postCommentService.deletePostComment(postComment);
+        postCommentService.deletePostComment(commentId, userDetails.getMember());
 
         return  new ApiResponse<>(
             "200-1",
@@ -129,15 +112,7 @@ public class PostCommentController {
         @AuthenticationPrincipal CustomUserDetails userDetails
     ){
 
-        PostComment postComment = postCommentService.findById(commentId)
-            .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
-
-        // 작성자 검증
-        if (!postComment.getAuthor().getMemberId().equals(userDetails.getId())) {
-            throw new SecurityException("본인이 작성한 댓글만 수정할 수 있습니다.");
-        }
-
-        postCommentService.modifyPostComment(postComment, reqBody);
+        postCommentService.modifyPostComment(commentId, reqBody, userDetails.getMember());
 
         return new ApiResponse<>(
             "200-1",
