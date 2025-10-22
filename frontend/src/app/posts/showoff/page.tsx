@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { fetchApi } from "@/lib/client";
+import { useAuth } from "@/context/AuthContext";
 
 interface PostDto {
   id: number;
@@ -27,6 +28,13 @@ interface ApiResponse<T> {
   resultCode: string;
   msg: string;
   data: T;
+}
+
+interface FollowUser {
+  memberId: number;
+  nickname: string;
+  profileImage: string | null;
+  following?: boolean;
 }
 
 // -------------------- PostItem --------------------
@@ -157,9 +165,20 @@ function PostItem({
 
 // -------------------- PostListPage --------------------
 export default function PostListPage() {
+  const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState<"all" | "following">("all");
   const [posts, setPosts] = useState<PostDto[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  
+  // 회원 검색 관련 상태
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<FollowUser[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [showSearchUI, setShowSearchUI] = useState(false);
+  const [unfollowing, setUnfollowing] = useState<Set<number>>(new Set());
+  const [lastSearchQuery, setLastSearchQuery] = useState(''); // 마지막 검색어 저장
+  const [followingList, setFollowingList] = useState<FollowUser[]>([]); // 팔로잉 목록
 
   const pageRef = useRef(0);
   const hasNextRef = useRef(true);
@@ -216,6 +235,30 @@ export default function PostListPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
+  // 드롭다운 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.search-dropdown-container')) {
+        setShowSearchDropdown(false);
+      }
+    };
+
+    if (showSearchDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showSearchDropdown]);
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // -------------------- 좋아요 상태 업데이트 함수 --------------------
   const handleLikeUpdate = (postId: number, liked: boolean, likeCount: number) => {
     setPosts((prev) =>
@@ -227,6 +270,151 @@ export default function PostListPage() {
     setPosts((prev) =>
       prev.map((p) => (p.authorId === authorId ? { ...p, following } : p))
     );
+  };
+
+  // 팔로잉 목록 가져오기
+  const fetchFollowingList = async () => {
+    if (!user) return;
+    
+    try {
+      const response: ApiResponse<{users: FollowUser[], totalCount: number}> = await fetchApi(
+        `/api/follows/${user.memberId}/followings`
+      );
+      if (response.data) {
+        setFollowingList(response.data.users);
+      }
+    } catch (error) {
+      console.error('팔로잉 목록 조회 실패:', error);
+    }
+  };
+
+  // 회원 검색 UI 토글
+  const toggleSearchUI = () => {
+    setShowSearchUI(!showSearchUI);
+    if (showSearchUI) {
+      // 검색 UI를 닫을 때 검색 상태 초기화
+      setSearchQuery('');
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      setLastSearchQuery('');
+      // 타이머도 취소
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    }
+  };
+
+  // Debouncing을 위한 타이머 ref
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 회원 검색 함수 (debounced)
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setShowSearchDropdown(false);
+      setLastSearchQuery('');
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const response: ApiResponse<{members: FollowUser[], totalCount: number}> = await fetchApi(
+        `/api/members/search?nickname=${encodeURIComponent(query)}&page=0&size=20`
+      );
+      if (response.data) {
+        setSearchResults(response.data.members);
+        setShowSearchDropdown(true);
+        setLastSearchQuery(query); // 검색 성공 시 마지막 검색어 저장
+      }
+    } catch (error) {
+      console.error('검색 실패:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounced 검색 함수
+  const debouncedSearch = (query: string) => {
+    // 이전 타이머가 있으면 취소
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // 검색 결과가 없고, 현재 검색어가 마지막 검색어를 포함하는 경우 검색하지 않음
+    if (searchResults.length === 0 && lastSearchQuery && query.includes(lastSearchQuery)) {
+      return;
+    }
+    
+    // 500ms 후에 검색 실행
+    searchTimeoutRef.current = setTimeout(() => {
+      handleSearch(query);
+    }, 500);
+  };
+
+  // 팔로우/언팔로우 함수
+  const handleFollow = async (memberId: number) => {
+    try {
+      setUnfollowing(prev => new Set(prev).add(memberId));
+      
+      const response = await fetchApi(`/api/follows/${memberId}`, {
+        method: 'POST',
+      });
+      
+      if (response.resultCode === '200') {
+        // 검색 결과에서 팔로우 상태만 업데이트 (제거하지 않음)
+        setSearchResults(prev => prev.map(user => 
+          user.memberId === memberId ? { ...user, following: true } : user
+        ));
+        
+        // 팔로잉 탭이 활성화되어 있으면 글 목록 새로고침
+        if (activeTab === 'following') {
+          loadPosts(true);
+        }
+      } else {
+        console.error('팔로우 실패:', response.msg);
+      }
+    } catch (error) {
+      console.error('팔로우 실패:', error);
+    } finally {
+      setUnfollowing(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(memberId);
+        return newSet;
+      });
+    }
+  };
+
+  const handleUnfollow = async (memberId: number) => {
+    try {
+      setUnfollowing(prev => new Set(prev).add(memberId));
+      
+      const response = await fetchApi(`/api/follows/${memberId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.resultCode === '200') {
+        // 검색 결과에서 팔로우 상태만 업데이트 (제거하지 않음)
+        setSearchResults(prev => prev.map(user => 
+          user.memberId === memberId ? { ...user, following: false } : user
+        ));
+        
+        // 팔로잉 탭이 활성화되어 있으면 글 목록 새로고침
+        if (activeTab === 'following') {
+          loadPosts(true);
+        }
+      } else {
+        console.error('언팔로우 실패:', response.msg);
+      }
+    } catch (error) {
+      console.error('언팔로우 실패:', error);
+    } finally {
+      setUnfollowing(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(memberId);
+        return newSet;
+      });
+    }
   };
 
   return (
@@ -245,13 +433,153 @@ export default function PostListPage() {
           ))}
         </div>
 
-        <Link
-          href="/posts/showoff/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
-        >
-          새 글 작성
-        </Link>
+        <div className="flex gap-2">
+          {isAuthenticated && (
+            <button
+              onClick={toggleSearchUI}
+              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
+                showSearchUI 
+                  ? 'bg-gray-600 text-white' 
+                  : 'bg-gray-500 text-white hover:bg-gray-600'
+              }`}
+            >
+              {showSearchUI ? '검색 닫기' : '회원 검색'}
+            </button>
+          )}
+          <Link
+            href="/posts/showoff/new"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
+          >
+            새 글 작성
+          </Link>
+        </div>
       </div>
+
+      {/* 회원 검색 섹션 */}
+      {isAuthenticated && showSearchUI && (
+        <div className="mb-6 relative search-dropdown-container">
+          <div className="flex space-x-4">
+            <div className="flex-1 relative">
+              <input
+                type="text"
+                placeholder="닉네임을 입력하여 회원을 찾아보세요..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value.trim()) {
+                    debouncedSearch(e.target.value);
+                  } else {
+                    setShowSearchDropdown(false);
+                    setSearchResults([]);
+                    // 타이머도 취소
+                    if (searchTimeoutRef.current) {
+                      clearTimeout(searchTimeoutRef.current);
+                    }
+                  }
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch(searchQuery);
+                  }
+                }}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => handleSearch(searchQuery)}
+              disabled={isSearching}
+              className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              {isSearching ? '검색 중...' : '검색'}
+            </button>
+          </div>
+
+          {/* 검색 결과 드롭다운 */}
+          {showSearchDropdown && searchResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+              <div className="p-2">
+                <div className="text-sm text-gray-500 mb-2 px-2">검색 결과</div>
+                {searchResults.map((user) => (
+                  <div key={`search-${user.memberId}`} className="p-3 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0">
+                    <div className="flex items-center space-x-3">
+                      {/* 프로필 이미지 */}
+                      <div className="flex-shrink-0">
+                        {user.profileImage ? (
+                          <img
+                            src={user.profileImage}
+                            alt={user.nickname}
+                            className="h-10 w-10 rounded-full object-cover border-2 border-gray-200"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold">
+                            {user.nickname.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* 사용자 정보 */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {user.nickname}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          ID: {user.memberId}
+                        </p>
+                      </div>
+                      
+                      {/* 액션 버튼 */}
+                      <div className="flex-shrink-0">
+                        {user.following ? (
+                          <button
+                            onClick={() => handleUnfollow(user.memberId)}
+                            disabled={unfollowing.has(user.memberId)}
+                            className={`px-3 py-1 text-xs rounded transition-colors ${
+                              unfollowing.has(user.memberId)
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-red-500 text-white hover:bg-red-600'
+                            }`}
+                          >
+                            {unfollowing.has(user.memberId) ? '언팔로우 중...' : '언팔로우'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleFollow(user.memberId)}
+                            disabled={unfollowing.has(user.memberId)}
+                            className={`px-3 py-1 text-xs rounded transition-colors ${
+                              unfollowing.has(user.memberId)
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-blue-500 text-white hover:bg-blue-600'
+                            }`}
+                          >
+                            {unfollowing.has(user.memberId) ? '팔로우 중...' : '팔로우'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 검색 결과가 없을 때 */}
+          {showSearchDropdown && searchResults.length === 0 && searchQuery.trim() && !isSearching && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              <div className="p-4 text-center">
+                <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <p className="text-sm text-gray-500">검색 결과가 없습니다</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {posts.map((post) => (
         <PostItem

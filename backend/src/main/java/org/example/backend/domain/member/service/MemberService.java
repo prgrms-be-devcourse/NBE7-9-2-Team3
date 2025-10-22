@@ -1,6 +1,8 @@
 package org.example.backend.domain.member.service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.follow.repository.FollowRepository;
 import org.example.backend.domain.member.dto.MemberEditRequestDto;
@@ -10,6 +12,8 @@ import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
 import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.dto.MemberResponseDto;
+import org.example.backend.domain.member.dto.MemberSearchResponseDto;
+import org.example.backend.domain.member.dto.MemberSearchListResponseDto;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.global.exception.BusinessException;
@@ -230,6 +234,35 @@ public class MemberService {
         // 응답 DTO 생성
         MemberEditResponseDto response = MemberEditResponseDto.from(updatedMember, null);
         return ApiResponse.ok("프로필 이미지가 성공적으로 업데이트되었습니다.", response);
+    }
+
+    @Transactional(readOnly = true)
+    public ApiResponse<MemberSearchListResponseDto> searchMembers(String nickname) {
+        Long currentMemberId = getCurrentMemberId();
+        
+        // N+1 문제 해결: 한 번의 쿼리로 회원 정보와 팔로우 상태를 함께 조회
+        List<Object[]> results = memberRepository.findByNicknameContainingWithFollowStatus(
+            nickname, currentMemberId);
+        
+        List<MemberSearchResponseDto> members = results.stream()
+            .map(result -> {
+                Member member = (Member) result[0];
+                Boolean isFollowing = (Boolean) result[1];
+                
+                return MemberSearchResponseDto.builder()
+                    .memberId(member.getMemberId())
+                    .nickname(member.getNickname())
+                    .profileImage(member.getProfileImage())
+                    .isFollowing(isFollowing)
+                    .build();
+            })
+            .collect(Collectors.toList());
+        
+        MemberSearchListResponseDto response = MemberSearchListResponseDto.builder()
+            .members(members)
+            .build();
+        
+        return ApiResponse.ok("회원 검색에 성공했습니다.", response);
     }
 
 }
