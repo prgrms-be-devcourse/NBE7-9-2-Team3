@@ -8,6 +8,8 @@ import org.example.backend.domain.point.dto.PointHistoryResponseDto;
 import org.example.backend.domain.point.dto.PurchaseRequestDto;
 import org.example.backend.domain.point.entity.Point;
 import org.example.backend.domain.point.repository.PointRepository;
+import org.example.backend.domain.trade.entity.Trade;
+import org.example.backend.domain.trade.repository.TradeRepository;
 import org.example.backend.global.exception.BusinessException;
 import org.example.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import java.util.List;
 public class PointService {
     private final PointRepository pointRepository;
     private final MemberRepository memberRepository;
+    private final TradeRepository tradeRepository;
 
     // 포인트 충전
     public void chargePoint(Long memberId, Long amount) {
@@ -70,5 +73,12 @@ public class PointService {
 
         pointRepository.save(Point.createPurchase(buyer, request.amount(), buyerNewPoints));
         pointRepository.save(Point.createSale(seller, request.amount(), sellerNewPoints));
+
+        // 거래 상태를 판매완료로 변경
+        if (request.tradeId() != null) {
+            Trade trade = tradeRepository.findById(request.tradeId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_NOT_FOUND));
+            trade.completeTransaction();
+        }
     }
 }
