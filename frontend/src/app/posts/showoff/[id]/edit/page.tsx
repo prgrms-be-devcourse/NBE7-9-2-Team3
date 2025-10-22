@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { fetchApi } from '@/lib/client';
 import { useRouter, useParams } from 'next/navigation';
+import { uploadImages } from '@/lib/uploadImage';
 
 interface PostDto {
   id: number;
@@ -64,22 +65,26 @@ export default function PostEditPage() {
       return;
     }
 
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('content', content);
-    formData.append('boardType', 'SHOWOFF');
-
-    // 기존 이미지는 서버가 남겨두도록 ID 또는 URL 전달
-    existingImages.forEach((url) => formData.append('existingImages', url));
-
-    // 새 이미지만 추가
-    newImages.forEach((img) => formData.append('images', img));
-
     try {
+      // 1. 새 이미지를 S3에 업로드
+      let newImageUrls: string[] = [];
+      if (newImages.length > 0) {
+        newImageUrls = await uploadImages(newImages, 'post');
+      }
+
+      // 2. 기존 이미지 + 새 이미지 URL 병합
+      const allImageUrls = [...existingImages, ...newImageUrls];
+
+      // 3. JSON으로 데이터 전송
       await fetchApi(`/api/posts/${id}`, {
         method: 'PATCH',
-        body: formData,
+        body: JSON.stringify({
+          title,
+          content,
+          imageUrls: allImageUrls
+        })
       });
+
       alert('게시글이 수정되었습니다.');
       router.push('/posts/showoff');
     } catch (err) {

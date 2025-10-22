@@ -61,19 +61,27 @@ public class PostService {
         post.updateTitle(reqBody.title());
         post.updateContent(reqBody.content());
 
-        // 새 이미지 URL이 있으면 기존 이미지 모두 삭제하고 교체
-        if (reqBody.imageUrls() != null && !reqBody.imageUrls().isEmpty()) {
-            // 기존 이미지 삭제
+        // 새 이미지 URL이 있고, 기존과 다를 때만 교체
+        if (reqBody.imageUrls() != null) {
             List<String> oldImageUrls = post.getImages().stream()
                 .map(PostImage::getImageUrl)
                 .toList();
-            if (!oldImageUrls.isEmpty()) {
-                imageService.deleteFiles(oldImageUrls);
+
+            List<String> newImageUrls = reqBody.imageUrls();
+
+            // 삭제할 이미지 : 기존에는 있었는데 새 목록에는 없는 것
+            List<String> toDelete = oldImageUrls.stream()
+                .filter(url -> !newImageUrls.contains(url))
+                .toList();
+
+            // S3에서 삭제
+            if (!toDelete.isEmpty()) {
+                imageService.deleteFiles(toDelete);
             }
 
-            // 새 이미지 URL 연결
+            // DB 이미지 목록 갱신
             post.deleteImageUrls();
-            reqBody.imageUrls().forEach(url ->
+            newImageUrls.forEach(url ->
                 post.addImage(new PostImage(url, post)));
         }
 
