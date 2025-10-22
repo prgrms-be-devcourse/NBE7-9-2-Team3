@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.tradechat.dto.TradeChatMessageDto;
 import org.example.backend.domain.tradechat.dto.TradeChatRoomDto;
 import org.example.backend.domain.tradechat.service.TradeChatService;
+import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -41,13 +42,13 @@ public class TradeChatController {
      */
     @Operation(summary = "채팅방 생성", description = "현재 거래게시글에 대한 채팅방을 생성합니다.")
     @PostMapping("/{tradeId}/room")
-    public ResponseEntity<Long> createChatRoom(
+    public ResponseEntity<ApiResponse<Long>> createChatRoom(
         @Parameter(description = "거래 게시글 ID", required = true)
         @PathVariable Long tradeId, 
         @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long memberId = userDetails.getId();
         Long roomId = tradeChatService.createChatRoom(tradeId, memberId);
-        return ResponseEntity.ok(roomId);
+        return ResponseEntity.ok(ApiResponse.ok("채팅방이 생성되었습니다.", roomId));
     }
 
     /*
@@ -56,13 +57,13 @@ public class TradeChatController {
      */
     @Operation(summary = "채팅 내역 조회", description = "특정 채팅방의 이전 채팅 내역을 조회합니다.")
     @GetMapping("/rooms/messages/{roomId}")
-    public ResponseEntity<List<TradeChatMessageDto>> getMessages(
+    public ResponseEntity<ApiResponse<List<TradeChatMessageDto>>> getMessages(
         @Parameter(description = "채팅방 ID", required = true)
         @PathVariable Long roomId, 
         @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long memberId = userDetails.getId();
         List<TradeChatMessageDto> messages = tradeChatService.getMessages(roomId, memberId);
-        return ResponseEntity.ok(messages);
+        return ResponseEntity.ok(ApiResponse.ok("채팅 내역을 조회했습니다.", messages));
     }
 
     /*
@@ -71,9 +72,9 @@ public class TradeChatController {
      */
     @Operation(summary = "내 채팅방 목록 조회", description = "내가 참여한 채팅방 목록을 조회합니다.")
     @GetMapping("/rooms/me")
-    public ResponseEntity<List<TradeChatRoomDto>> getMyChatRooms(@AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<ApiResponse<List<TradeChatRoomDto>>> getMyChatRooms(@AuthenticationPrincipal CustomUserDetails userDetails) {
         Long memberId = userDetails.getId();
         List<TradeChatRoomDto> chatRooms = tradeChatService.getMyChatRooms(memberId);
-        return ResponseEntity.ok(chatRooms);
+        return ResponseEntity.ok(ApiResponse.ok("채팅방 목록을 조회했습니다.", chatRooms));
     }
 }
