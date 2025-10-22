@@ -49,7 +49,8 @@ export default function ImageUpload({
         // 이미지는 회원가입/수정 시 함께 전송되므로 여기서는 미리보기만 처리
         const file = files[0];
         const imageUrl = URL.createObjectURL(file);
-        setUploadedImages(prev => [...prev, imageUrl]);
+        // 단일 파일이므로 기존 이미지를 대체
+        setUploadedImages([imageUrl]);
         onImageUpload(file);
       }
     } catch (error) {

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User, LoginRequest, SignupRequest, LoginResponse, SignupResponse, ApiResponse } from '@/type/user';
 import { fetchApi } from '@/lib/client';
+import { uploadImage } from '@/lib/uploadImage';
 
 interface AuthContextType {
   user: User | null;
@@ -98,17 +99,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signup = async (email: string, password: string, nickname: string, profileImage?: File) => {
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('email', email.trim());
-      formData.append('password', password.trim());
-      formData.append('nickname', nickname.trim());
+      // 1. S3에 이미지 업로드 (있는 경우에만)
+      let profileImageUrl: string | undefined;
       if (profileImage) {
-        formData.append('profileImageFile', profileImage);
+        profileImageUrl = await uploadImage(profileImage, 'profile');
       }
-      
+
+      // 2. JSON으로 데이터 전송
       const data: ApiResponse<SignupResponse> = await fetchApi('/api/members/join', {
         method: 'POST',
-        body: formData,
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.trim(),
+          nickname: nickname.trim(),
+          profileImageUrl
+        }),
       });
 
       if (data.data) {
