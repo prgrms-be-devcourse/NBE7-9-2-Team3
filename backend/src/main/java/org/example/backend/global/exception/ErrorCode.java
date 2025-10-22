@@ -45,9 +45,11 @@ public enum ErrorCode {
     AQUARIUM_NOT_FOUND("A001", HttpStatus.NOT_FOUND, "어항이 존재하지 않습니다."),
     AQUARIUM_OWNED_NOT_FOUND("A002", HttpStatus.NOT_FOUND, "'내가 키운 물고기' 어항이 존재하지 않습니다."),
     AQUARIUM_OWNED_ALREADY_HAVE("A003", HttpStatus.NOT_FOUND, "어항 이름으로 '내가 키운 물고기'는 사용할 수 없습니다."),
+    AQUARIUM_LOG_NOT_FOUND("A004", HttpStatus.NOT_FOUND, "어항 로그가 존재하지 않습니다."),
 
     // ========== Fish 도메인 에러 ==========
     FISH_NOT_FOUND("F001", HttpStatus.NOT_FOUND, "물고기가 존재하지 않습니다."),
+    FISH_LOG_NOT_FOUND("F002", HttpStatus.NOT_FOUND, "물고기 로그가 존재하지 않습니다."),
 
     // ========== Point 도메인 에러 ==========
     POINT_MEMBER_NOT_FOUND("P001", HttpStatus.NOT_FOUND, "회원이 존재하지 않습니다."),
