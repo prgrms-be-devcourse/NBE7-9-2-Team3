@@ -45,12 +45,6 @@ public class Member {
         this.nickname = nickname;
         this.profileImage = profileImage;
     }
-  
-    public Member(long id,String email, String nickname) {
-        this.email = email;
-        this.memberId = id;
-        this.nickname = nickname;
-    }
 
     public void updatePoints(Long newPoint) {
         this.points = newPoint;

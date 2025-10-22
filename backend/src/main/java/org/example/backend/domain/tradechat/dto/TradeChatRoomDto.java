@@ -8,6 +8,10 @@ import java.time.LocalDateTime;
 public record TradeChatRoomDto(
         Long Id,
         String tradeTitle,
+        Long sellerId,
+        String sellerNickname,
+        Long buyerId,
+        String buyerNickname,
         LocalDateTime createDate,
         ChatStatus status
 ) {
@@ -15,6 +19,10 @@ public record TradeChatRoomDto(
         return new TradeChatRoomDto(
                 room.getId(),
                 room.getTrade().getTitle(),
+                room.getSellerId().getMemberId(),
+                room.getSellerId().getNickname(),
+                room.getBuyerId().getMemberId(),
+                room.getBuyerId().getNickname(),
                 room.getCreateDate(),
                 room.getStatus()
         );

@@ -7,6 +7,8 @@ import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.entity.AquariumLog;
 import org.example.backend.domain.aquarium.repository.AquariumLogRepository;
 import org.example.backend.domain.aquarium.repository.AquariumRepository;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +28,7 @@ public class AquariumLogService {
     public AquariumLogResponseDto createLog(AquariumLogRequestDto requestDto) {
         // 어항 엔티티 조회
         Aquarium aquarium = aquariumRepository.findById(requestDto.getAquariumId())
-                .orElseThrow(() -> new IllegalArgumentException("어항을 찾을 수 없습니다. ID: " + requestDto.getAquariumId()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
         
         AquariumLog aquariumLog = AquariumLog.builder()
                 .aquarium(aquarium)
@@ -49,7 +51,7 @@ public class AquariumLogService {
     // Read - 특정 로그 조회
     public AquariumLogResponseDto getLogById(Long logId) {
         AquariumLog aquariumLog = aquariumLogRepository.findById(logId)
-                .orElseThrow(() -> new IllegalArgumentException("로그를 찾을 수 없습니다. ID: " + logId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_LOG_NOT_FOUND));
         return AquariumLogResponseDto.from(aquariumLog);
     }
 
@@ -64,11 +66,11 @@ public class AquariumLogService {
     @Transactional
     public AquariumLogResponseDto updateLog(Long logId, AquariumLogRequestDto requestDto) {
         AquariumLog aquariumLog = aquariumLogRepository.findById(logId)
-                .orElseThrow(() -> new IllegalArgumentException("로그를 찾을 수 없습니다. ID: " + logId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_LOG_NOT_FOUND));
 
         // 어항 엔티티 조회
         Aquarium aquarium = aquariumRepository.findById(requestDto.getAquariumId())
-                .orElseThrow(() -> new IllegalArgumentException("어항을 찾을 수 없습니다. ID: " + requestDto.getAquariumId()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
 
         aquariumLog.setAquarium(aquarium);
         aquariumLog.setTemperature(requestDto.getTemperature());
@@ -81,9 +83,8 @@ public class AquariumLogService {
     // Delete - 로그 삭제
     @Transactional
     public void deleteLog(Long logId) {
-        if (!aquariumLogRepository.existsById(logId)) {
-            throw new IllegalArgumentException("로그를 찾을 수 없습니다. ID: " + logId);
-        }
-        aquariumLogRepository.deleteById(logId);
+        AquariumLog aquariumLog = aquariumLogRepository.findById(logId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_LOG_NOT_FOUND));
+        aquariumLogRepository.delete(aquariumLog);
     }
 }

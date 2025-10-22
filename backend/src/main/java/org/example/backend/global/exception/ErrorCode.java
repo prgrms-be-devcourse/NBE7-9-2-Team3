@@ -45,9 +45,11 @@ public enum ErrorCode {
     AQUARIUM_NOT_FOUND("A001", HttpStatus.NOT_FOUND, "어항이 존재하지 않습니다."),
     AQUARIUM_OWNED_NOT_FOUND("A002", HttpStatus.NOT_FOUND, "'내가 키운 물고기' 어항이 존재하지 않습니다."),
     AQUARIUM_OWNED_ALREADY_HAVE("A003", HttpStatus.NOT_FOUND, "어항 이름으로 '내가 키운 물고기'는 사용할 수 없습니다."),
+    AQUARIUM_LOG_NOT_FOUND("A004", HttpStatus.NOT_FOUND, "어항 로그가 존재하지 않습니다."),
 
     // ========== Fish 도메인 에러 ==========
     FISH_NOT_FOUND("F001", HttpStatus.NOT_FOUND, "물고기가 존재하지 않습니다."),
+    FISH_LOG_NOT_FOUND("F002", HttpStatus.NOT_FOUND, "물고기 로그가 존재하지 않습니다."),
 
     // ========== Point 도메인 에러 ==========
     POINT_MEMBER_NOT_FOUND("P001", HttpStatus.NOT_FOUND, "회원이 존재하지 않습니다."),
@@ -64,7 +66,13 @@ public enum ErrorCode {
     IMAGE_NAME_INVALID("I005", HttpStatus.BAD_REQUEST, "파일 이름이 유효하지 않습니다."),
     IMAGE_EXTENSION_NOT_ALLOWED("I006", HttpStatus.BAD_REQUEST, "허용하지 않는 파일 형식입니다. (jpg, jpeg, png, gif, webp만 가능)"),
     IMAGE_URL_NOT_ALLOWED("I007", HttpStatus.BAD_REQUEST, "허용되지 않은 URL입니다."),
-    IMAGE_URL_INVALID("I008", HttpStatus.BAD_REQUEST, "유효하지 않은 S3 URL 형식입니다.");
+    IMAGE_URL_INVALID("I008", HttpStatus.BAD_REQUEST, "유효하지 않은 S3 URL 형식입니다."),
+
+    // ========== TradeChat 도메인 에러 ==========
+    TRADE_CHAT_ROOM_NOT_FOUND("TC001", HttpStatus.NOT_FOUND, "채팅방이 존재하지 않습니다."),
+    TRADE_CHAT_SENDER_NOT_FOUND("TC002", HttpStatus.NOT_FOUND, "보낸 사용자가 존재하지 않습니다."),
+    TRADE_CHAT_TRADE_NOT_FOUND("TC003", HttpStatus.NOT_FOUND, "거래글이 존재하지 않습니다."),
+    TRADE_CHAT_BUYER_NOT_FOUND("TC004", HttpStatus.NOT_FOUND, "구매자가 존재하지 않습니다.");
 
     private final String code;
     private final HttpStatus status;

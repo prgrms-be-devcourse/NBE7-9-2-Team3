@@ -146,7 +146,7 @@ export default function MyPage() {
                   className="text-center hover:bg-gray-100 px-4 py-2 rounded-lg transition-colors"
                 >
                   <div className="text-2xl font-bold text-gray-900">{memberData.followingCount}</div>
-                  <div className="text-sm text-gray-500">팔로잉</div>
+                  <div className="text-sm text-gray-500">팔로우</div>
                 </button>
               </div>
             </div>
@@ -157,20 +157,20 @@ export default function MyPage() {
                 onClick={() => router.push('/mypage/profile-image')}
                 className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
               >
-                프로필 이미지
+                프로필 이미지 변경
               </button>
               <button
                 onClick={() => router.push('/mypage/edit')}
                 className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
               >
-                프로필 편집
+                회원 정보 수정
               </button>
             </div>
           </div>
         </div>
 
         {/* 통계 카드들 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <button
             onClick={() => router.push('/mypage/posts')}
             className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow text-left"
@@ -218,19 +218,25 @@ export default function MyPage() {
               </div>
             </div>
           </button>
+
+          <button
+            onClick={() => router.push('/chat')}
+            className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow text-left"
+          >
+            <div className="flex items-center">
+              <div className="p-3 bg-indigo-100 rounded-lg">
+                <svg className="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">채팅목록</p>
+              </div>
+            </div>
+          </button>
+
         </div>
 
-        {/* 최근 활동 */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">최근 활동</h2>
-          <div className="text-center py-8">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">아직 활동이 없습니다</h3>
-            <p className="mt-1 text-sm text-gray-500">게시글을 작성하거나 다른 사용자를 팔로우해보세요.</p>
-          </div>
-        </div>
       </div>
     </div>
   );

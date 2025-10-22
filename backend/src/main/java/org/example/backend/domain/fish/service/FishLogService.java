@@ -7,6 +7,8 @@ import org.example.backend.domain.fish.entity.Fish;
 import org.example.backend.domain.fish.entity.FishLog;
 import org.example.backend.domain.fish.repository.FishLogRepository;
 import org.example.backend.domain.fish.repository.FishRepository;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -27,7 +29,7 @@ public class FishLogService {
     public FishLogResponseDto createLog(FishLogRequestDto requestDto) {
         // 물고기 엔티티 조회
         Fish fish = fishRepository.findById(requestDto.getFishId())
-                .orElseThrow(() -> new IllegalArgumentException("물고기를 찾을 수 없습니다. ID: " + requestDto.getFishId()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_NOT_FOUND));
         
         FishLog fishLog = FishLog.builder()
                 .fish(fish)
@@ -49,7 +51,7 @@ public class FishLogService {
     // Read - 특정 물고기 로그 조회
     public FishLogResponseDto getLogById(Long logId) {
         FishLog fishLog = fishLogRepository.findById(logId)
-                .orElseThrow(() -> new IllegalArgumentException("물고기 로그를 찾을 수 없습니다. ID: " + logId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_LOG_NOT_FOUND));
         return FishLogResponseDto.from(fishLog);
     }
     
@@ -64,11 +66,11 @@ public class FishLogService {
     @Transactional
     public FishLogResponseDto updateLog(Long logId, FishLogRequestDto requestDto) {
         FishLog fishLog = fishLogRepository.findById(logId)
-                .orElseThrow(() -> new IllegalArgumentException("물고기 로그를 찾을 수 없습니다. ID: " + logId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_LOG_NOT_FOUND));
 
         // 물고기 엔티티 조회
         Fish fish = fishRepository.findById(requestDto.getFishId())
-                .orElseThrow(() -> new IllegalArgumentException("물고기를 찾을 수 없습니다. ID: " + requestDto.getFishId()));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_NOT_FOUND));
 
         fishLog.setFish(fish);
         fishLog.setStatus(requestDto.getStatus());
@@ -81,7 +83,7 @@ public class FishLogService {
     @Transactional
     public void deleteLog(Long logId) {
         FishLog fishLog = fishLogRepository.findById(logId)
-                .orElseThrow(() -> new IllegalArgumentException("물고기 로그를 찾을 수 없습니다. ID: " + logId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_LOG_NOT_FOUND));
         fishLogRepository.delete(fishLog);
     }
 }

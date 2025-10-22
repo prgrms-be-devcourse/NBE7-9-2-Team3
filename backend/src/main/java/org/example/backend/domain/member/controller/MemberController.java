@@ -2,7 +2,6 @@ package org.example.backend.domain.member.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +12,7 @@ import org.example.backend.domain.member.dto.MemberJoinResponseDto;
 import org.example.backend.domain.member.dto.MemberLoginRequestDto;
 import org.example.backend.domain.member.dto.MemberLoginResponseDto;
 import org.example.backend.domain.member.dto.MemberResponseDto;
+import org.example.backend.domain.member.dto.MemberSearchListResponseDto;
 import org.example.backend.domain.member.service.MemberService;
 import org.example.backend.global.exception.BusinessException;
 import org.example.backend.global.exception.ErrorCode;
@@ -100,6 +100,14 @@ public class MemberController {
         }
 
         return result;
+    }
+
+    @Operation(summary = "회원 검색", description = "닉네임으로 회원을 검색합니다.")
+    @GetMapping("/search")
+    public ApiResponse<MemberSearchListResponseDto> searchMembers(
+        @Parameter(description = "검색할 닉네임", required = true)
+        @RequestParam String nickname) {
+        return memberService.searchMembers(nickname);
     }
 
 }
