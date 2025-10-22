@@ -139,4 +139,11 @@ public class FollowService {
         return followRepository.existsByFollowerMemberIdAndFolloweeMemberId(followerId, followeeId);
     }
 
+    public List<Long> findFolloweeIdsByFollower(Member member) {
+        return followRepository.findFolloweeIdsByFollower(member);
+    }
+
+    public boolean existsByFollowerAndFollowee(Member member, Member author) {
+        return  followRepository.existsByFollowerAndFollowee(member, author);
+    }
 }
