@@ -9,6 +9,7 @@ interface FollowUser {
   memberId: number;
   nickname: string;
   profileImage: string | null;
+  following?: boolean;
 }
 
 interface FollowListResponse {
@@ -28,6 +29,9 @@ export default function FollowingPage() {
   const [following, setFollowing] = useState<FollowUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [unfollowing, setUnfollowing] = useState<Set<number>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredFollowing, setFilteredFollowing] = useState<FollowUser[]>([]);
 
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || !user)) {
@@ -47,12 +51,51 @@ export default function FollowingPage() {
       const response: ApiResponse<FollowListResponse> = await fetchApi(`/api/follows/${user!.memberId}/followings`);
       if (response.data) {
         setFollowing(response.data.users);
+        setFilteredFollowing(response.data.users);
       }
     } catch (error) {
       console.error('팔로잉 목록 조회 실패:', error);
       setError('팔로잉 목록을 불러올 수 없습니다.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setFilteredFollowing(following);
+    } else {
+      const filtered = following.filter(user => 
+        user.nickname.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredFollowing(filtered);
+    }
+  };
+
+  const handleUnfollow = async (memberId: number) => {
+    try {
+      setUnfollowing(prev => new Set(prev).add(memberId));
+      
+      const response = await fetchApi(`/api/follows/${memberId}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.resultCode === '200') {
+        // 목록에서 제거
+        setFollowing(prev => prev.filter(user => user.memberId !== memberId));
+        setFilteredFollowing(prev => prev.filter(user => user.memberId !== memberId));
+      } else {
+        console.error('언팔로우 실패:', response.msg);
+      }
+    } catch (error) {
+      console.error('언팔로우 실패:', error);
+    } finally {
+      setUnfollowing(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(memberId);
+        return newSet;
+      });
     }
   };
 
@@ -92,14 +135,30 @@ export default function FollowingPage() {
                 </svg>
               </button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">팔로잉</h1>
+                <h1 className="text-2xl font-bold text-gray-900">팔로우</h1>
                 <p className="text-gray-600">{following.length}명</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* 팔로잉 목록 */}
+        {/* 팔로우 검색 섹션 */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">팔로우 검색</h2>
+          <div className="flex space-x-4">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="팔로우 중에서 닉네임을 검색해보세요..."
+                value={searchQuery}
+                onChange={(e) => handleSearch(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* 팔로우 목록 */}
         <div className="bg-white rounded-lg shadow-sm">
           {error ? (
             <div className="p-8 text-center">
@@ -117,18 +176,18 @@ export default function FollowingPage() {
                 다시 시도
               </button>
             </div>
-          ) : following.length === 0 ? (
+          ) : filteredFollowing.length === 0 && !searchQuery ? (
             <div className="p-8 text-center">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">아직 팔로잉하는 사용자가 없습니다</h3>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">아직 팔로우하는 사용자가 없습니다</h3>
               <p className="mt-1 text-sm text-gray-500">관심 있는 사용자를 팔로우해보세요.</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
-              {following.map((user) => (
-                <div key={user.memberId} className="p-6 hover:bg-gray-50 transition-colors">
+              {filteredFollowing.map((user) => (
+                <div key={`following-${user.memberId}`} className="p-6 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-4">
                     {/* 프로필 이미지 */}
                     <div className="flex-shrink-0">
@@ -158,13 +217,15 @@ export default function FollowingPage() {
                     {/* 액션 버튼 */}
                     <div className="flex-shrink-0">
                       <button
-                        onClick={() => {
-                          // TODO: 사용자 프로필 페이지로 이동 또는 언팔로우 기능
-                          console.log('사용자 프로필 보기:', user.memberId);
-                        }}
-                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                        onClick={() => handleUnfollow(user.memberId)}
+                        disabled={unfollowing.has(user.memberId)}
+                        className={`px-4 py-2 rounded-lg transition-colors ${
+                          unfollowing.has(user.memberId)
+                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            : 'bg-red-500 text-white hover:bg-red-600'
+                        }`}
                       >
-                        프로필 보기
+                        {unfollowing.has(user.memberId) ? '언팔로우 중...' : '언팔로우'}
                       </button>
                     </div>
                   </div>
