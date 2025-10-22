@@ -345,7 +345,7 @@ export default function AquariumsPage() {
               {/* "내가 키운 물고기" 어항 */}
               {aquarium.aquariumName === "내가 키운 물고기" ? (
                 <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium text-gray-900">🐠 내가 키운 물고기</h3>
+                  <h3 className="text-lg font-medium text-gray-900">내가 키운 물고기</h3>
                   <button
                     onClick={() => goToMyfishesPage(aquarium.aquariumId)}
                     className="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-lg text-sm transition-colors"
