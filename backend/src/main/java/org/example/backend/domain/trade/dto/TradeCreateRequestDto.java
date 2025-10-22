@@ -6,7 +6,6 @@ import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.trade.entity.Trade;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.enums.TradeStatus;
-import org.springframework.web.multipart.MultipartFile;
 
 public record TradeCreateRequestDto(
     Long memberId,
@@ -15,11 +14,10 @@ public record TradeCreateRequestDto(
     String description,
     Long price,
     String category,
-    List<MultipartFile> images
+    List<String> imageUrls
 ) {
 
-    public static TradeCreateRequestDto from(TradeRequestDto dto, BoardType type, Long memberId,
-        List<MultipartFile> images) {
+    public static TradeCreateRequestDto from(TradeRequestDto dto, BoardType type, Long memberId) {
         return new TradeCreateRequestDto(
             memberId,
             type,
@@ -27,7 +25,7 @@ public record TradeCreateRequestDto(
             dto.description(),
             dto.price(),
             dto.category(),
-            images
+            dto.imageUrls()
         );
     }
 

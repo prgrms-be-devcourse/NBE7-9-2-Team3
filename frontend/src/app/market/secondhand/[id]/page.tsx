@@ -343,13 +343,15 @@ export default function SecondhandDetailPage() {
               </button>
             )}
 
-            {/* 채팅하기 버튼 */}
-            <button
-              onClick={() => alert('채팅 기능은 준비 중입니다.')}
-              className="w-full bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600 font-semibold transition"
-            >
-              채팅하기
-            </button>
+            {/* 채팅하기 버튼 - 본인 게시글이 아닐 때만 표시 */}
+            {user && user.memberId !== post.memberId && (
+              <button
+                onClick={() => alert('채팅 기능은 준비 중입니다.')}
+                className="w-full bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600 font-semibold transition"
+              >
+                채팅하기
+              </button>
+            )}
 
             {/* 수정/삭제 버튼 - 작성자만 표시 */}
             {user && user.memberId === post.memberId && (

@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.trade.dto.PageResponseDto;
 import org.example.backend.domain.trade.dto.TradeCreateRequestDto;
@@ -23,11 +22,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
+
 
 @RestController
 @RequestMapping("/api/market/{boardType}")
@@ -44,13 +43,10 @@ public class TradeController {
         @Parameter(description = "게시판 타입 (FISH: 물고기, SECONDHAND: 중고물품)", required = true)
         @PathVariable String boardType,
         @Parameter(description = "거래 게시글 정보", required = true)
-        @Valid @ModelAttribute TradeRequestDto request,
-        @Parameter(description = "이미지 파일들 (선택사항)")
-        @RequestPart(required = false) List<MultipartFile> images) {
+        @Valid @RequestBody TradeRequestDto request) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
-        TradeCreateRequestDto serviceRequest = TradeCreateRequestDto.from(request, type, memberId,
-            images);
+        TradeCreateRequestDto serviceRequest = TradeCreateRequestDto.from(request, type, memberId);
         TradeResponseDto trade = tradeService.createTrade(serviceRequest);
         return ApiResponse.ok("거래 게시글 등록 성공", trade);
     }
@@ -87,13 +83,11 @@ public class TradeController {
         @Parameter(description = "거래 게시글 ID", required = true)
         @PathVariable Long tradeId,
         @Parameter(description = "거래 게시글 수정 정보", required = true)
-        @Valid @ModelAttribute TradeRequestDto request,
-        @Parameter(description = "이미지 파일들 (선택사항)")
-        @RequestPart(required = false) List<MultipartFile> images) {
+        @Valid @RequestBody TradeRequestDto request) {
         Long memberId = userDetails.getId();
         BoardType type = BoardType.from(boardType);
         TradeUpdateRequestDto updateRequest = TradeUpdateRequestDto.of(type, tradeId, memberId,
-            request, images);
+            request, request.imageUrls());
         TradeResponseDto trade = tradeService.updateTrade(updateRequest);
         return ApiResponse.ok("거래 게시글 수정 성공", trade);
     }

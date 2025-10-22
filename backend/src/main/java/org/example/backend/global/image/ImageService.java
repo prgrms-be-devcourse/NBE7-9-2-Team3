@@ -2,6 +2,7 @@ package org.example.backend.global.image;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +16,9 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
 /**
  * AWS S3 이미지 업로드/삭제 공통 서비스
@@ -40,6 +44,48 @@ public class ImageService {
 
     /** 최대 파일 크기: 5MB */
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+    private final S3Presigner s3Presigner;
+
+
+    /** Presigned URL + 최종 URL 함께 생성 */
+    public PresignedUrlResponse createPresignedUrl(String fileName, String directory) {
+        String key = generateKey(fileName, directory);
+        String presignedUrl = generatePresignedUrl(key);
+        String finalUrl = getFileUrl(key);
+
+        return new PresignedUrlResponse(presignedUrl, finalUrl);
+    }
+
+    /** S3에 PUT 요청할 수 있는 임시 URL 생성 */
+    private String generatePresignedUrl(String key) {
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .build();
+
+        PutObjectPresignRequest presignRequest = PutObjectPresignRequest.builder()
+            .putObjectRequest(putObjectRequest)
+            .signatureDuration(Duration.ofMinutes(10))
+            .build();
+
+        PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(presignRequest);
+        return presignedRequest.url().toString();
+    }
+
+    /** S3 객체 키 생성 (디렉토리/UUID.확장자) */
+    private String generateKey(String fileName, String directory) {
+        String extension = getFileExtension(fileName);
+        String uuid = UUID.randomUUID().toString();
+        return directory + "/" + uuid + "." + extension;
+    }
+
+    /** S3 객체의 공개 접근 URL 생성 */
+    public String getFileUrl(String key) {
+        return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, key);
+    }
+
+
 
     /**
      * S3에 단일 파일 업로드

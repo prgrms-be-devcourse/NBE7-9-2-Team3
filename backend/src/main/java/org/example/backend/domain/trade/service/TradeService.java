@@ -14,7 +14,6 @@ import org.example.backend.domain.trade.dto.TradeSearchRequestDto;
 import org.example.backend.domain.trade.dto.TradeUpdateRequestDto;
 import org.example.backend.domain.trade.entity.Trade;
 import org.example.backend.domain.trade.enums.BoardType;
-import org.example.backend.domain.trade.enums.TradeStatus;
 import org.example.backend.domain.trade.repository.TradeRepository;
 import org.example.backend.global.exception.BusinessException;
 import org.example.backend.global.exception.ErrorCode;
@@ -25,7 +24,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 @RequiredArgsConstructor
 @Service
@@ -41,19 +39,13 @@ public class TradeService {
         Member member = memberRepository.findById(request.memberId())
             .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        // 이미지 업로드 (S3)
-        List<String> imageUrls = new ArrayList<>();
-        if (request.images() != null && !request.images().isEmpty()) {
-            imageUrls = imageService.uploadFiles(request.images(), "trade");
-        }
-
-        // Trade 엔티티 생성 및 이미지 연결
         Trade trade = request.toEntity(member);
 
-        imageUrls.forEach(trade::addImage);
-        Trade saved = tradeRepository.save(trade);
+        if (request.imageUrls() != null) {
+            request.imageUrls().forEach(trade::addImage);
+        }
 
-        return TradeResponseDto.from(saved);
+        return TradeResponseDto.from(tradeRepository.save(trade));
     }
 
     public PageResponseDto<TradeResponseDto> getAllTrade(BoardType boardType,
@@ -118,19 +110,16 @@ public class TradeService {
             request.category()
         );
 
-        // 이미지 교체 로직 (새 이미지가 있는 경우만)
-        List<MultipartFile> images = updateRequest.images();
-        if (images != null && !images.isEmpty()) {
-            // 1. 먼저 새 이미지 업로드 (업로드 실패 시 기존 이미지 유지)
-            List<String> newImageUrls = imageService.uploadFiles(images, "trade");
-
-            // 2. 업로드 성공 시 기존 S3 이미지 삭제
+        // 이미지 교체 로직 (새 이미지 URL이 있는 경우만)
+        List<String> newImageUrls = updateRequest.imageUrls();
+        if (newImageUrls != null && !newImageUrls.isEmpty()) {
+            // 1. 기존 S3 이미지 삭제
             List<String> oldImageUrls = trade.getImageUrls();
             if (!oldImageUrls.isEmpty()) {
                 imageService.deleteFiles(oldImageUrls);
             }
 
-            // 3. DB에서 기존 이미지 제거 후 새 이미지 연결
+            // 2. DB에서 기존 이미지 제거 후 새 이미지 URL 연결
             trade.clearImages();
             newImageUrls.forEach(trade::addImage);
         }

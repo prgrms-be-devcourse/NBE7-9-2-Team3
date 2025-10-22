@@ -9,15 +9,15 @@ public record TradeUpdateRequestDto(
     Long tradeId,
     Long memberId,
     TradeRequestDto tradeData,
-    List<MultipartFile> images
+    List<String> imageUrls
 ) {
     public static TradeUpdateRequestDto of(
         BoardType boardType,
         Long tradeId,
         Long memberId,
         TradeRequestDto tradeData,
-        List<MultipartFile> images
+        List<String> imageUrls
     ) {
-        return new TradeUpdateRequestDto(boardType, tradeId, memberId, tradeData, images);
+        return new TradeUpdateRequestDto(boardType, tradeId, memberId, tradeData, imageUrls);
     }
 }

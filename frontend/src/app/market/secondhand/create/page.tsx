@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { TradeFormData, TradeStatus, ApiResponse, Trade } from '@/type/trade';
 import { fetchApi } from '@/lib/client';
 import { useAuth } from '@/context/AuthContext';
+import { uploadImages } from '@/lib/uploadImage';
 
 export default function SecondhandCreatePage() {
   const router = useRouter();
@@ -75,34 +76,22 @@ export default function SecondhandCreatePage() {
     setLoading(true);
 
     try {
-      // Create FormData for multipart/form-data
-      const formDataToSend = new FormData();
-      formDataToSend.append('memberId', formData.memberId.toString());
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('price', formData.price.toString());
-      formDataToSend.append('status', formData.status);
-      formDataToSend.append('category', formData.category);
-
-      // Add images if any
-      images.forEach((image) => {
-        formDataToSend.append('images', image);
-      });
-
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-      const response = await fetch(`${baseUrl}/api/market/secondhand`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formDataToSend,
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Server error response:', errorText);
-        throw new Error(`Server returned ${response.status}: ${errorText}`);
+      // 1. Upload images to S3 using Presigned URLs
+      let imageUrls: string[] = [];
+      if (images.length > 0) {
+        imageUrls = await uploadImages(images, 'trade');
       }
 
-      const data: ApiResponse<Trade> = await response.json();
+      // 2. Send JSON data with image URLs
+      const requestData = {
+        ...formData,
+        imageUrls
+      };
+
+      const data: ApiResponse<Trade> = await fetchApi('/api/market/secondhand', {
+        method: 'POST',
+        body: JSON.stringify(requestData)
+      });
 
       if (data.resultCode.startsWith('201') || data.resultCode.startsWith('200')) {
         alert('게시글이 등록되었습니다!');
