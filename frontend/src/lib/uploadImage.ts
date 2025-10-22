@@ -6,6 +6,24 @@ interface PresignedURLResponse {
   fileUrl : string;
 }
 
+// 파일 검증 상수
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+/** 파일 유효성 검증 */
+function validateFile(file: File): void {
+  // 파일 크기 검증
+  if (file.size > MAX_FILE_SIZE) {
+    throw new Error('파일 크기는 5MB를 초과할 수 없습니다.');
+  }
+
+  // 파일 확장자 검증
+  const extension = file.name.split('.').pop()?.toLowerCase();
+  if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
+    throw new Error(`허용되지 않는 파일 형식입니다. (허용: ${ALLOWED_EXTENSIONS.join(', ')})`);
+  }
+}
+
 /** 1단계: 백엔드에서 Presigned URL 요청 */
 async function getPresignedUrl(
     fileName: string,
@@ -43,6 +61,9 @@ export async function uploadImage(
     file: File,
     directory: string
 ): Promise<string> {
+  // 파일 검증
+  validateFile(file);
+
   const { presignedUrl, fileUrl } = await getPresignedUrl(file.name, directory);
   await uploadToS3(presignedUrl, file);
   return fileUrl;
