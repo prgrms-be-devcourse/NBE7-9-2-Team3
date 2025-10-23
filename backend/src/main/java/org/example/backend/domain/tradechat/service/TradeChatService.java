@@ -95,6 +95,22 @@ public class TradeChatService {
                 });
     }
 
+    // 채팅방 거래정보 조회
+    public TradeChatRoomDto getChatRoomDetail(Long roomId, Long memberId) {
+        TradeChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_ROOM_NOT_FOUND));
+        
+        Long sellerId = room.getSellerId().getMemberId();
+        Long buyerId = room.getBuyerId().getMemberId();
+
+        // 현재 채팅방의 구매자, 판매자 아이디 모두 아닐 경우 접근 제한
+        if (!sellerId.equals(memberId) && !buyerId.equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
+        }
+
+        return TradeChatRoomDto.from(room);
+    }
+
     // 이전 채팅내역 조회
     public List<TradeChatMessageDto> getMessages(Long roomId, Long memberId) {
         TradeChatRoom room = chatRoomRepository.findById(roomId)

@@ -50,10 +50,21 @@ public class TradeChatController {
         return ApiResponse.ok("채팅방이 생성되었습니다.", roomId);
     }
 
-    /*
-    특정 채팅방의 이전 채팅 내역 조회
-        - 참여자 검증 로직 포함
-     */
+    // 해당 채팅방의 게시글 경로 확인
+    @Operation(summary = "채팅방 거래정보 조회", description = "채팅방의 거래정보를 조회합니다.")
+    @GetMapping("/rooms/{roomId}")
+    public ApiResponse<TradeChatRoomDto> getChatRoomDetail(
+            @Parameter(description = "채팅방 ID", required = true)
+            @PathVariable Long roomId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        Long memberId = userDetails.getId();
+        TradeChatRoomDto chatRoom = tradeChatService.getChatRoomDetail(roomId, memberId);
+        return ApiResponse.ok("채팅방 거래정보를 조회했습니다.", chatRoom);
+    }
+
+
+    // 특정 채팅방의 이전 채팅 내역 조회
     @Operation(summary = "채팅 내역 조회", description = "특정 채팅방의 이전 채팅 내역을 조회합니다.")
     @GetMapping("/rooms/messages/{roomId}")
     public ApiResponse<List<TradeChatMessageDto>> getMessages(
