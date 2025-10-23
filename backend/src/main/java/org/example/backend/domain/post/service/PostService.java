@@ -193,6 +193,11 @@ public class PostService {
         Post post = postRepository.findByIdWithAuthorAndImages(id)
             .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
+        if (post.getDisplaying() == Post.Displaying.PRIVATE &&
+            !post.getAuthor().getMemberId().equals(member.getMemberId())) {
+            throw new BusinessException(ErrorCode.POST_FORBIDDEN_ACCESS); // 비공개글
+        }
+
         boolean liked = likeService.existsByMemberAndPost(member, post);
         boolean following = followService.existsByFollowerAndFollowee(
             member,                     // 로그인 사용자
