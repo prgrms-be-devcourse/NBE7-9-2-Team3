@@ -75,8 +75,7 @@ function PostItem({
         `/api/posts/${post.id}/likes`,
         { method: "POST" }
       );
-      onLike(rs.data?.liked ?? newLiked, rs.data?.likeCount ?? newLikeCount);
-    } catch (err) {
+      onLike(rs.data?.liked ?? newLiked, rs.data?.likeCount ?? newLikeCount);    } catch (err) {
       console.error(err);
       onLike(post.liked ?? false, post.likeCount);
     }

@@ -1,10 +1,7 @@
 package org.example.backend.domain.post.controller;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.domain.follow.repository.FollowRepository;
-import org.example.backend.domain.like.repository.LikeRepository;
 import org.example.backend.domain.post.dto.MyPostReadResponseDto;
 import org.example.backend.domain.post.dto.PostListResponse;
 import org.example.backend.domain.post.dto.PostModifyRequestDto;
@@ -12,19 +9,15 @@ import org.example.backend.domain.post.dto.PostReadResponseDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
 import org.example.backend.domain.post.entity.Post;
 import org.example.backend.domain.post.entity.Post.BoardType;
-import org.example.backend.domain.post.entity.PostImage;
 import org.example.backend.domain.post.service.PostService;
 import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,10 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
 
     private final PostService postService;
-    private final FollowRepository followRepository;
 
     @GetMapping("/my")
-    @Transactional(readOnly = true)
     public ApiResponse<List<MyPostReadResponseDto>> getMyPosts(
         @RequestParam BoardType boardType,
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -71,8 +62,6 @@ public class PostController {
         );
     }
 
-    private final LikeRepository likeRepository;
-
     @GetMapping
     public ApiResponse<PostListResponse> getPosts(
         @RequestParam BoardType boardType,
@@ -83,67 +72,11 @@ public class PostController {
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
 
-        Page<Post> postPage;
-
-        if (filterType.equals("following")) {
-
-            List<Long> followeeIds = followRepository.findFolloweeIdsByFollower(
-                userDetails.getMember());
-
-            postPage = postService.findByBoardTypeAndDisplayingAndAuthorIdInAndKeywordAndCategory(
-                boardType,
-                Post.Displaying.PUBLIC,
-                followeeIds,
-                keyword,
-                category,
-                pageable
-            );
-
-        } else {
-            postPage = postService.findByBoardTypeAndDisplayingAndKeywordAndCategory(
-                boardType,
-                Post.Displaying.PUBLIC,
-                keyword,
-                category,
-                pageable
-            );
-
-        }
-
-        List<PostReadResponseDto> postDtos = postPage.getContent().stream()
-            .map(post -> {
-                boolean liked = likeRepository.existsByMemberAndPost(userDetails.getMember(), post);
-                boolean following = followRepository.existsByFollowerAndFollowee(
-                    userDetails.getMember(),   // 로그인 사용자
-                    post.getAuthor()           // 게시글 작성자
-                );
-                boolean isMine = post.getAuthor().getMemberId()
-                    .equals(userDetails.getMember().getMemberId());
-
-                return new PostReadResponseDto(
-                    post.getId(),
-                    post.getTitle(),
-                    post.getContent(),
-                    post.getAuthor().getNickname(),
-                    post.getCreateDate(),
-                    post.getImages().stream().map(PostImage::getImageUrl).toList(),
-                    post.getLikeCount(),
-                    liked,
-                    following,
-                    post.getAuthor().getMemberId(),
-                    post.getCategory(),
-                    isMine
-                );
-            })
-            .toList();
-
-        int totalCount = (int) postPage.getTotalElements();
-        PostListResponse response = new PostListResponse(postDtos, totalCount);
-
-        return new ApiResponse<>("200-1",
-            "게시판 게시글 다건 조회",
-            response
+        PostListResponse response = postService.getPosts(
+            boardType, filterType, userDetails.getMember(), keyword, category, pageable
         );
+
+        return ApiResponse.ok("게시글 다건 조회", response);
     }
 
     @GetMapping("/{id}")
@@ -151,67 +84,27 @@ public class PostController {
         @PathVariable Long id,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        Post post = postService.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
 
-        boolean liked = likeRepository.existsByMemberAndPost(userDetails.getMember(), post);
-        boolean following = followRepository.existsByFollowerAndFollowee(
-            userDetails.getMember(),   // 로그인 사용자
-            post.getAuthor()          // 게시글 작성자
-        );
-        boolean isMine = post.getAuthor().getMemberId()
-            .equals(userDetails.getMember().getMemberId());
+        PostReadResponseDto response = postService.getPostById(id, userDetails.getMember());
 
-        PostReadResponseDto response = new PostReadResponseDto(
-            post.getId(),
-            post.getTitle(),
-            post.getContent(),
-            post.getAuthor().getNickname(),
-            post.getCreateDate(),
-            post.getImages().stream()
-                .map(PostImage::getImageUrl)
-                .toList(),
-            post.getLikeCount(),
-            liked,
-            following,
-            post.getAuthor().getMemberId(),
-            post.getCategory(),
-            isMine
-        );
 
-        return new ApiResponse<>(
-            "200-1",
-            "%d번 id 게시글 단건 조회".formatted(id),
-            response
-        );
+        return ApiResponse.ok("%d번 게시글 단건 조회".formatted(id), response);
 
     }
 
     @DeleteMapping("/{id}")
-    @Transactional
     public ApiResponse<Void> deletePost(
         @PathVariable Long id,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        Post post = postService.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
+        postService.delete(id, userDetails.getMember());
 
-        if (!post.getAuthor().getMemberId().equals(userDetails.getId())) {
-            throw new SecurityException("본인이 작성한 게시글만 삭제할 수 있습니다.");
-        }
-
-        postService.delete(post);
-
-        return new ApiResponse<>(
-            "200-1",
-            "%d번 게시물이 삭제되었습니다.".formatted(id)
-        );
+        return ApiResponse.ok("%d번 게시글 삭제".formatted(id));
 
     }
 
     @PostMapping
-    @Transactional
     public ApiResponse<Void> createPost(
         @RequestBody PostWriteRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -219,33 +112,20 @@ public class PostController {
 
         postService.write(reqBody, userDetails.getMember());
 
-        return new ApiResponse<>(
-            "200-1",
-            "게시글이 생성되었습니다."
-        );
+        return ApiResponse.ok("게시글 생성");
+
     }
 
     @PatchMapping("/{id}")
-    @Transactional
     public ApiResponse<Void> modifyPost(
         @PathVariable Long id,
         @RequestBody PostModifyRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        Post post = postService.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("게시글을 찾을 수 없습니다. id=" + id));
+        postService.modify(id, reqBody, userDetails.getMember());
 
-        // 작성자 검증
-        if (!post.getAuthor().getMemberId().equals(userDetails.getId())) {
-            throw new SecurityException("본인이 작성한 게시글만 수정할 수 있습니다.");
-        }
-
-        postService.modify(post, reqBody);
-        return new ApiResponse<>(
-            "200-1",
-            "게시글이 수정되었습니다."
-        );
+        return ApiResponse.ok("%d번 게시글 수정".formatted(id));
     }
 
 }

@@ -12,7 +12,10 @@ import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.domain.post.entity.Post;
 import org.example.backend.domain.post.repository.PostRepository;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,11 +25,12 @@ public class LikeService {
     private final PostRepository postRepository;
     private final MemberRepository memberRepository;
 
+    @Transactional
     public Map<String, Object> toggleLike(Long postId, Long memberId) {
         Member member = memberRepository.findById(memberId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
         Post post = postRepository.findById(postId)
-            .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
         Optional<Like> existingLike = likeRepository.findByMemberAndPost(member, post);
 
@@ -54,14 +58,24 @@ public class LikeService {
     public List<PostLikeResponseDto> getLikedPosts(Long memberId) {
 
         Member member = memberRepository.findById(memberId)
-            .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
 
         return likeRepository.findAllByMember(member).stream()
             .map(like -> {
                 Post post = postRepository.findById(like.getPost().getId())
-                    .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
                 return new PostLikeResponseDto(post.getId(), post.getTitle());
             })
             .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean existsByMemberAndPost(Member member, Post post) {
+        return  likeRepository.existsByMemberAndPost(member, post);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Long> findPostIdsByMember(Member member) {
+        return likeRepository.findPostIdsByMember(member);
     }
 }
