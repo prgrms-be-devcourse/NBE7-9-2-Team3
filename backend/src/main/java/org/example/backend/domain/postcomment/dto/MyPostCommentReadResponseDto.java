@@ -4,5 +4,7 @@ public record MyPostCommentReadResponseDto(
     Long id,
     Long postId,
     String postTitle,
-    String content
+    String content,
+    String boardType,
+    String category
 ) {}

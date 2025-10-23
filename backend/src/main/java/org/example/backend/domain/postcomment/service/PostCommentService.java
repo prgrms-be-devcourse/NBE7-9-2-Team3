@@ -1,11 +1,12 @@
 package org.example.backend.domain.postcomment.service;
 
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.post.entity.Post;
-import org.example.backend.domain.post.entity.Post.BoardType;
 import org.example.backend.domain.post.service.PostService;
+import org.example.backend.domain.postcomment.dto.MyPostCommentReadResponseDto;
 import org.example.backend.domain.postcomment.dto.PostCommentCreateRequestDto;
 import org.example.backend.domain.postcomment.dto.PostCommentModifyRequestDto;
 import org.example.backend.domain.postcomment.dto.PostCommentReadResponseDto;
@@ -66,14 +67,24 @@ public class PostCommentService {
         postCommentRepository.save(postcomment);
     }
 
-    public List<PostComment> findMyComments(Member member, BoardType boardType) {
-        if (boardType == null) {
-            // boardType이 null이면 모든 댓글 조회
-            return postCommentRepository.findByAuthor_MemberId(member.getMemberId());
-        } else {
-            // boardType이 지정되면 해당 게시판의 댓글만 조회
-            return postCommentRepository.findByAuthor_MemberIdAndPost_BoardType(member.getMemberId(), boardType);
-        }
+    @Transactional(readOnly = true)
+    public List<MyPostCommentReadResponseDto> findMyComments(Member member) {
+
+        List<PostComment> postComments = postCommentRepository.findByAuthor_MemberIdWithPost(member.getMemberId());
+
+        List<MyPostCommentReadResponseDto> response = postComments.stream()
+            .sorted(Comparator.comparing(PostComment::getCreateDate))
+            .map(c -> new MyPostCommentReadResponseDto(
+                c.getId(),
+                c.getPost().getId(),
+                c.getPost().getTitle(),
+                c.getContent(),
+                c.getPost().getBoardType().name(),
+                c.getPost().getCategory()
+            ))
+            .toList();
+
+        return response;
     }
 
     @Transactional(readOnly = true)
