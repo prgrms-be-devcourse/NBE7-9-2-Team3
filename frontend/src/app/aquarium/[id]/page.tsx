@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from "@/context/AuthContext";
 
 // 어항 데이터 타입
 interface Aquarium {
@@ -47,9 +48,18 @@ interface AquariumLogRequest {
 }
 
 export default function AquariumDetailPage() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const router = useRouter();
   const params = useParams();
   const aquariumId = params.id as string;
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const [aquarium, setAquarium] = useState<Aquarium | null>(null);
   const [fishes, setFishes] = useState<Fish[]>([]);
@@ -76,27 +86,43 @@ export default function AquariumDetailPage() {
 
   // 어항 단건 조회
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     fetch(`${baseUrl}/api/aquarium/${aquariumId}`, {
       credentials: 'include',
     })
       .then(res => res.json())
       .then(json => setAquarium(json.data))
-      .catch(err => console.error(err));
-  }, [aquariumId]);
+      .catch(err => {
+        console.error(err);
+        // 인증 오류인 경우 로그인 페이지로 리다이렉트
+        if (err.message && (err.message.includes('CMN006') || err.message.includes('인증이 필요합니다'))) {
+          window.location.href = '/login';
+        }
+      });
+  }, [aquariumId, isAuthenticated]);
 
   // 물고기 다건 조회
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     fetch(`${baseUrl}/api/aquarium/${aquariumId}/fish`, {
       credentials: 'include',
     })
       .then(res => res.json())
       .then(json => setFishes(json.data))
-      .catch(err => console.error(err));
-  }, []);
+      .catch(err => {
+        console.error(err);
+        // 인증 오류인 경우 로그인 페이지로 리다이렉트
+        if (err.message && (err.message.includes('CMN006') || err.message.includes('인증이 필요합니다'))) {
+          window.location.href = '/login';
+        }
+      });
+  }, [isAuthenticated]);
 
   // 물고기 상태 조회 (모든 물고기의 상태를 조회)
   useEffect(() => {
-    if (fishes.length === 0) return; // 물고기가 없으면 조회하지 않음
+    if (!isAuthenticated || fishes.length === 0) return; // 물고기가 없으면 조회하지 않음
     
     const fetchAllFishStatuses = async () => {
       try {
@@ -123,6 +149,8 @@ export default function AquariumDetailPage() {
 
   // 어항 로그 데이터 조회
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     fetch(`${baseUrl}/api/aquarium/${aquariumId}/aquariumLog`, {
       credentials: 'include',
     })
@@ -134,8 +162,14 @@ export default function AquariumDetailPage() {
         );
         setEnvironmentData(sortedData);
       })
-      .catch(err => console.error('Environment data fetch error:', err));
-  }, [aquariumId]);
+      .catch(err => {
+        console.error('Environment data fetch error:', err);
+        // 인증 오류인 경우 로그인 페이지로 리다이렉트
+        if (err.message && (err.message.includes('CMN006') || err.message.includes('인증이 필요합니다'))) {
+          window.location.href = '/login';
+        }
+      });
+  }, [aquariumId, isAuthenticated]);
 
   // 물고기 상태 보기/안보기 토글
   const toggleFishStatus = (fishId: number) => {
@@ -473,6 +507,23 @@ export default function AquariumDetailPage() {
         });
     }
   };
+
+  // 로딩 중이거나 인증되지 않은 경우
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-center">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-center">로그인이 필요합니다.</p>
+      </div>
+    );
+  }
 
   if (!aquarium) {
     return <div className="flex justify-center items-center h-screen">로딩 중...</div>;

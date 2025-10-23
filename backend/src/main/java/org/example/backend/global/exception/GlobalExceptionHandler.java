@@ -8,6 +8,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -99,6 +100,24 @@ public class GlobalExceptionHandler {
         
         ApiResponse<Void> response = ApiResponse.error(ErrorCode.FORBIDDEN_ACCESS);
         return new ResponseEntity<>(response, ErrorCode.FORBIDDEN_ACCESS.getStatus());
+    }
+
+    // 정적 리소스 없음 처리 (Swagger UI 관련)
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFoundException(NoResourceFoundException ex) {
+        String resourcePath = ex.getResourcePath();
+        
+        // Swagger UI 관련 리소스는 조용히 처리 (로그 레벨 낮춤)
+        if (resourcePath.contains("swagger-ui") || 
+            resourcePath.contains("webjars") ||
+            resourcePath.contains("api-docs")) {
+            log.debug("Static resource not found (Swagger UI): {}", resourcePath);
+        } else {
+            log.warn("Static resource not found: {}", resourcePath);
+        }
+        
+        ApiResponse<Void> response = ApiResponse.error(ErrorCode.NOT_FOUND_DATA);
+        return new ResponseEntity<>(response, ErrorCode.NOT_FOUND_DATA.getStatus());
     }
 
     // 그 외 모든 예외 처리
