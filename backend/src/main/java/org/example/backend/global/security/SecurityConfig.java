@@ -34,7 +34,9 @@ public class SecurityConfig {
                 // H2 Console 경로 허용
                 .requestMatchers("/h2-console/**").permitAll()
                 // 회원가입, 로그인, 로그아웃 경로 허용
-                .requestMatchers("api/members/join", "api/members/login", "api/members/logout").permitAll()
+                .requestMatchers("/api/members/join", "/api/members/login", "/api/members/logout").permitAll()
+                // WebSocket 경로 허용
+                .requestMatchers("/ws/**").permitAll()
                 // Swagger UI 경로 허용 (정적 리소스 포함)
                 .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html", "/webjars/**", "/v3/api-docs/**").permitAll()
                 // 나머지 모든 요청은 인증 필요
