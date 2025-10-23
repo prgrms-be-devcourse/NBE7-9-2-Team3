@@ -19,7 +19,7 @@ interface PostDto {
   isMine?: boolean;
 }
 
-interface PostListResponse {
+interface PostListResponseDto {
   posts: PostDto[];
   totalCount: number;
 }
@@ -200,7 +200,7 @@ export default function PostListPage() {
       const pageToLoad = reset ? 0 : pageRef.current;
 
       try {
-        const rsData: ApiResponse<PostListResponse> = await fetchApi(
+        const rsData: ApiResponse<PostListResponseDto> = await fetchApi(
           `/api/posts?boardType=SHOWOFF&filterType=${activeTab}&page=${pageToLoad}&size=${PAGE_SIZE}`
         );
 

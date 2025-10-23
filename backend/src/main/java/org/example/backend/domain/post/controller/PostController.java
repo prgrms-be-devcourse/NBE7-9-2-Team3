@@ -1,13 +1,13 @@
 package org.example.backend.domain.post.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.post.dto.MyPostReadResponseDto;
-import org.example.backend.domain.post.dto.PostListResponse;
+import org.example.backend.domain.post.dto.PostListResponseDto;
 import org.example.backend.domain.post.dto.PostModifyRequestDto;
 import org.example.backend.domain.post.dto.PostReadResponseDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
-import org.example.backend.domain.post.entity.Post;
 import org.example.backend.domain.post.entity.Post.BoardType;
 import org.example.backend.domain.post.service.PostService;
 import org.example.backend.global.response.ApiResponse;
@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/posts")
+@Tag(name = "Post", description = "질문/자랑 게시판 관리 API")
 public class PostController {
 
     private final PostService postService;
@@ -39,31 +40,13 @@ public class PostController {
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        Long memberId = userDetails.getId();
+        List<MyPostReadResponseDto> response = postService.getMyPosts(boardType, userDetails.getId());
 
-        List<Post> posts = postService.findByBoardType(boardType);
-
-        List<Post> myPosts = posts.stream()
-            .filter(post -> post.getAuthor().getMemberId().equals(memberId))
-            .toList();
-
-        List<MyPostReadResponseDto> response = myPosts.stream()
-            .map(post -> new MyPostReadResponseDto(
-                post.getId(),
-                post.getTitle(),
-                post.getDisplaying()
-            ))
-            .toList();
-
-        return new ApiResponse<>(
-            "200-1",
-            "내가 쓴 게시글 다건 조회",
-            response
-        );
+        return ApiResponse.ok("내가 쓴 게시글 다건 조회", response);
     }
 
     @GetMapping
-    public ApiResponse<PostListResponse> getPosts(
+    public ApiResponse<PostListResponseDto> getPosts(
         @RequestParam BoardType boardType,
         @RequestParam(defaultValue = "all") String filterType, // "all" or "following"
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -72,7 +55,7 @@ public class PostController {
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
 
-        PostListResponse response = postService.getPosts(
+        PostListResponseDto response = postService.getPosts(
             boardType, filterType, userDetails.getMember(), keyword, category, pageable
         );
 

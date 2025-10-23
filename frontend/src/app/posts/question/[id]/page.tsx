@@ -54,7 +54,7 @@ export default function PostDetailPage() {
 
       // 댓글 불러오기
       const commentsRs: ApiResponse<PostCommentReadResponseDto[]> =
-        await fetchApi(`/api/comments?postId=${postId}`);
+        await fetchApi(`/api/posts/comments?postId=${postId}`);
 
       setComments(
         (commentsRs.data ?? []).map((c) => ({
@@ -88,14 +88,14 @@ export default function PostDetailPage() {
 
     try {
       // 1. 댓글 생성 API 호출
-      await fetchApi('/api/comments', {
+      await fetchApi('/api/posts/comments', {
         method: 'POST',
         body: JSON.stringify({ postId: Number(postId), content: newComment })
       });
 
       // 2. 댓글 리스트 새로 조회
       const commentsRs: ApiResponse<PostCommentReadResponseDto[]> =
-        await fetchApi(`/api/comments?postId=${postId}`);
+        await fetchApi(`/api/posts/comments?postId=${postId}`);
 
       setComments(
         (commentsRs.data ?? []).map((c) => ({
@@ -215,11 +215,11 @@ export default function PostDetailPage() {
                 if (!confirm("댓글을 삭제하시겠습니까?")) return;
 
                 try {
-                  await fetchApi(`/api/comments/${comment.id}`, { method: "DELETE" });
+                  await fetchApi(`/api/posts/comments/${comment.id}`, { method: "DELETE" });
 
                   // 삭제 후 댓글 리스트 새로 조회
                   const commentsRs: ApiResponse<PostCommentReadResponseDto[]> =
-                    await fetchApi(`/api/comments?postId=${postId}`);
+                    await fetchApi(`/api/posts/comments?postId=${postId}`);
 
                   setComments(
                     (commentsRs.data ?? []).map((c) => ({

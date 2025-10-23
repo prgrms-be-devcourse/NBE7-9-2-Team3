@@ -1,5 +1,6 @@
 package org.example.backend.domain.like.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
+@Tag(name = "Like", description = "자랑게시판 좋아요 관리 API")
 public class LikeController {
 
     private final LikeService likeService;

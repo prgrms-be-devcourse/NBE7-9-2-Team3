@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.follow.service.FollowService;
 import org.example.backend.domain.like.service.LikeService;
 import org.example.backend.domain.member.entity.Member;
-import org.example.backend.domain.post.dto.PostListResponse;
+import org.example.backend.domain.post.dto.MyPostReadResponseDto;
+import org.example.backend.domain.post.dto.PostListResponseDto;
 import org.example.backend.domain.post.dto.PostModifyRequestDto;
 import org.example.backend.domain.post.dto.PostReadResponseDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
@@ -122,7 +123,7 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostListResponse getPosts(BoardType boardType, String filterType, Member member,
+    public PostListResponseDto getPosts(BoardType boardType, String filterType, Member member,
         String keyword, String category, Pageable pageable) {
 
         // 로그인 사용자가 좋아요한 postId를 한번에 가져오기
@@ -137,7 +138,7 @@ public class PostService {
 
             // 팔로잉 대상이 없으면 바로 빈 결과 반환
             if (followingIds.isEmpty()) {
-                return new PostListResponse(Collections.emptyList(), 0);
+                return new PostListResponseDto(Collections.emptyList(), 0);
             }
 
             postPage = postRepository.findByBoardTypeAndDisplayingWithAuthorAndImagesAndIds(
@@ -186,7 +187,7 @@ public class PostService {
             .toList();
 
         int totalCount = (int) postPage.getTotalElements();
-        return new PostListResponse(postDtos, totalCount);
+        return new PostListResponseDto(postDtos, totalCount);
 
     }
 
@@ -220,5 +221,18 @@ public class PostService {
             post.getCategory(),
             isMine
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyPostReadResponseDto> getMyPosts(BoardType boardType, Long id) {
+
+        List<Post> posts = postRepository.findMyPostsWithAuthor(boardType, id);
+
+        List<MyPostReadResponseDto> response = posts.stream()
+            .map(p -> new MyPostReadResponseDto(p.getId(), p.getTitle(), p.getDisplaying()))
+            .toList();
+
+        return response;
+
     }
 }

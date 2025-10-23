@@ -60,7 +60,7 @@ export default function PostDetailPage() {
 
       // 댓글 불러오기
       const commentsRs: ApiResponse<PostCommentReadResponseDto[]> =
-        await fetchApi(`/api/comments?postId=${postId}`);
+        await fetchApi(`/api/posts/comments?postId=${postId}`);
 
       setComments(
         (commentsRs.data ?? []).map((c) => ({
@@ -142,7 +142,7 @@ export default function PostDetailPage() {
     if (!newComment.trim() || !postId) return;
 
     try {
-      await fetchApi("/api/comments", {
+      await fetchApi("/api/posts/comments", {
         method: "POST",
         body: JSON.stringify({ postId: Number(postId), content: newComment }),
       });
@@ -288,7 +288,7 @@ export default function PostDetailPage() {
                 if (!confirm("댓글을 삭제하시겠습니까?")) return;
 
                 try {
-                  await fetchApi(`/api/comments/${comment.id}`, { method: "DELETE" });
+                  await fetchApi(`/api/posts/comments/${comment.id}`, { method: "DELETE" });
                   loadPostAndComments();
                 } catch (err) {
                   console.error(err);

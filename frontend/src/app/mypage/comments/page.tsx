@@ -55,7 +55,7 @@ export default function MyCommentsPage() {
       setLoading(true);
       setError(null);
       console.log('게시글 댓글 API 호출 시작...'); // 디버깅용
-      const response: ApiResponse<PostComment[]> = await fetchApi('/api/comments/my');
+      const response: ApiResponse<PostComment[]> = await fetchApi('/api/posts/comments/my');
       console.log('게시글 댓글 응답:', response); // 디버깅용
       console.log('게시글 댓글 데이터:', response.data); // 디버깅용
       if (response.data && Array.isArray(response.data)) {
