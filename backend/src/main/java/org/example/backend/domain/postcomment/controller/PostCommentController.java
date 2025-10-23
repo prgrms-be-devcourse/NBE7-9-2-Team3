@@ -1,20 +1,16 @@
 package org.example.backend.domain.postcomment.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.example.backend.domain.post.entity.Post.BoardType;
 import org.example.backend.domain.postcomment.dto.MyPostCommentReadResponseDto;
 import org.example.backend.domain.postcomment.dto.PostCommentCreateRequestDto;
 import org.example.backend.domain.postcomment.dto.PostCommentModifyRequestDto;
 import org.example.backend.domain.postcomment.dto.PostCommentReadResponseDto;
-import org.example.backend.domain.postcomment.entity.PostComment;
 import org.example.backend.domain.postcomment.service.PostCommentService;
 import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -47,24 +43,11 @@ public class PostCommentController {
     }
 
     @GetMapping("/my")
-    @Transactional(readOnly = true)
     public ApiResponse<List<MyPostCommentReadResponseDto>> getMyPostComments(
-        @RequestParam(required = false) BoardType boardType,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        List<PostComment> postComments = postCommentService.findMyComments(userDetails.getMember(), boardType);
-
-        List<MyPostCommentReadResponseDto> response = postComments.stream()
-            .sorted(Comparator.comparing(PostComment::getCreateDate).reversed())
-            .map(c -> new MyPostCommentReadResponseDto(
-                c.getId(),
-                c.getPost().getId(),
-                c.getPost().getTitle(),
-                c.getContent()
-            ))
-            .toList();
-
+        List<MyPostCommentReadResponseDto> response = postCommentService.findMyComments(userDetails.getMember());
         return new ApiResponse<>("200-1",
             "내가 쓴 댓글 목록 조회",
             response
