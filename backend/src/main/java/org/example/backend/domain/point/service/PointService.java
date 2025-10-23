@@ -54,13 +54,27 @@ public class PointService {
     }
 
 
-    // 결제
+    // 결제 (동시 구매 방지 적용)
+    @Transactional
     public void purchaseItem(Long buyerId, PurchaseRequestDto request) {
         Member buyer = memberRepository.findById(buyerId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POINT_BUYER_NOT_FOUND));
         Member seller = memberRepository.findById(request.sellerId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.POINT_SELLER_NOT_FOUND));
 
+        if (request.tradeId() == null) {
+            throw new BusinessException(ErrorCode.TRADE_NOT_FOUND);
+        }
+
+        Trade trade = tradeRepository.findByIdForUpdate(request.tradeId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_NOT_FOUND));
+
+        // 이미 판매 완료된 상품인지 확인
+        if (trade.isSoldOut()) {
+            throw new BusinessException(ErrorCode.TRADE_ALREADY_SOLD);
+        }
+
+        // 포인트 보유량 확인
         if (buyer.getPoints() < request.amount()) {
             throw new BusinessException(ErrorCode.POINT_INSUFFICIENT);
         }
@@ -74,11 +88,11 @@ public class PointService {
         pointRepository.save(Point.createPurchase(buyer, request.amount(), buyerNewPoints));
         pointRepository.save(Point.createSale(seller, request.amount(), sellerNewPoints));
 
-        // 거래 상태를 판매완료로 변경
-        if (request.tradeId() != null) {
-            Trade trade = tradeRepository.findById(request.tradeId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_NOT_FOUND));
-            trade.completeTransaction();
-        }
+        // 거래 상태를 판매 완료로 변경 (엔티티 내부에서 중복 방지 체크)
+        trade.completeTransaction();
+
+        memberRepository.save(buyer);
+        memberRepository.save(seller);
+        tradeRepository.save(trade);
     }
 }

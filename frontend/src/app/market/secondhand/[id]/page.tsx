@@ -209,9 +209,22 @@ export default function SecondhandDetailPage() {
 
       alert('구매가 완료되었습니다!');
       fetchPost(); // 게시글 상태 업데이트
-    } catch (error) {
+    } catch (error: any) {
       console.error('구매 실패:', error);
-      alert('구매에 실패했습니다. 포인트가 부족하거나 오류가 발생했습니다.');
+      
+      // 에러 메시지 추출
+      const errorMessage = error?.response?.data?.message || error?.message || '알 수 없는 오류가 발생했습니다.';
+      
+      // 에러 코드에 따른 메시지 처리
+      if (errorMessage.includes('이미 판매') || errorMessage.includes('TRADE_ALREADY_SOLD')) {
+        alert('해당 물품은 이미 판매되었습니다.');
+      } else if (errorMessage.includes('포인트가 부족') || errorMessage.includes('POINT_INSUFFICIENT')) {
+        alert('포인트가 부족합니다.');
+      } else {
+        alert(`구매에 실패했습니다: ${errorMessage}`);
+      }
+      
+      fetchPost(); // 상태 새로고침
     }
   };
 
