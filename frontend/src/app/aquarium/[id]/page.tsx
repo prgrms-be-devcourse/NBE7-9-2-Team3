@@ -133,8 +133,9 @@ export default function AquariumDetailPage() {
         );
         
         const allStatuses = await Promise.all(statusPromises);
-        // 각 물고기별로 반환된 배열들을 하나로 합치고 날짜 최신순으로 정렬
+        // ApiResponse 구조에서 data 추출하여 각 물고기별로 반환된 배열들을 하나로 합치고 날짜 최신순으로 정렬
         const flatStatuses = allStatuses
+            .map(response => response?.data || [])
             .flat()
             .sort((a, b) => new Date(b.logDate).getTime() - new Date(a.logDate).getTime())
         setFishStatuses(flatStatuses);
@@ -156,8 +157,10 @@ export default function AquariumDetailPage() {
     })
       .then(res => res.json())
       .then(json => {
+        // ApiResponse 구조에서 data 추출
+        const data = json?.data || [];
         // 날짜 최신순으로 정렬
-        const sortedData = (json || []).sort((a: EnvironmentData, b: EnvironmentData) => 
+        const sortedData = data.sort((a: EnvironmentData, b: EnvironmentData) => 
           new Date(b.logDate).getTime() - new Date(a.logDate).getTime()
         );
         setEnvironmentData(sortedData);

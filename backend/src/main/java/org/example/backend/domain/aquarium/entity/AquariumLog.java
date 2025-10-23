@@ -31,4 +31,11 @@ public class AquariumLog {
 
     @Column(name = "log_date", nullable = false)
     private LocalDateTime logDate;
+
+    @PrePersist
+    protected void onCreate() {
+        if (logDate == null) {
+            logDate = LocalDateTime.now();
+        }
+    }
 }

@@ -6,8 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.fish.dto.FishLogRequestDto;
 import org.example.backend.domain.fish.dto.FishLogResponseDto;
 import org.example.backend.domain.fish.service.FishLogService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.example.backend.global.response.ApiResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,54 +22,44 @@ public class FishLogController {
     // Create - 특정 물고기에 로그 생성
     @Operation(summary = "물고기 기록 생성", description = "특정 물고기 관리를 위한 기록을 생성합니다.")
     @PostMapping
-    public ResponseEntity<FishLogResponseDto> createLog(
+    public ApiResponse<FishLogResponseDto> createLog(
             @PathVariable Long fishId,
             @RequestBody FishLogRequestDto requestDto) {
         // fishId를 requestDto에 설정
         requestDto.setFishId(fishId);
         FishLogResponseDto responseDto = fishLogService.createLog(requestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+        return ApiResponse.ok("물고기 기록이 생성되었습니다.", responseDto);
     }
     
     // Read - 특정 물고기의 모든 로그 조회
     @Operation(summary = "물고기 기록 목록 조회", description = "특정 물고기의 모든 기록을 조회합니다.")
     @GetMapping
-    public ResponseEntity<List<FishLogResponseDto>> getLogsByFishId(
+    public ApiResponse<List<FishLogResponseDto>> getLogsByFishId(
             @PathVariable Long fishId) {
         List<FishLogResponseDto> logs = fishLogService.getLogsByFishId(fishId);
-        return ResponseEntity.ok(logs);
-    }
-    
-    // 특정 로그 조회
-    @Operation(summary = "물고기 기록 조회", description = "특정 물고기 특정 기록을 조회합니다.")
-    @GetMapping("/{logId}")
-    public ResponseEntity<FishLogResponseDto> getLogById(
-            @PathVariable Long fishId,
-            @PathVariable Long logId) {
-        FishLogResponseDto responseDto = fishLogService.getLogById(logId);
-        return ResponseEntity.ok(responseDto);
+        return ApiResponse.ok("물고기 기록 목록이 조회되었습니다.", logs);
     }
     
     // Update - 로그 수정
     @Operation(summary = "물고기 기록 수정", description = "특정 물고기의 특정 기록을 수정합니다.")
     @PutMapping("/{logId}")
-    public ResponseEntity<FishLogResponseDto> updateLog(
+    public ApiResponse<FishLogResponseDto> updateLog(
             @PathVariable Long fishId,
             @PathVariable Long logId,
             @RequestBody FishLogRequestDto requestDto) {
         // fishId를 requestDto에 설정
         requestDto.setFishId(fishId);
         FishLogResponseDto responseDto = fishLogService.updateLog(logId, requestDto);
-        return ResponseEntity.ok(responseDto);
+        return ApiResponse.ok("물고기 기록이 수정되었습니다.", responseDto);
     }
     
     // Delete - 로그 삭제
     @Operation(summary = "물고기 기록 삭제", description = "특정 물고기의 특정 기록을 삭제합니다.")
     @DeleteMapping("/{logId}")
-    public ResponseEntity<Void> deleteLog(
+    public ApiResponse<Void> deleteLog(
             @PathVariable Long fishId,
             @PathVariable Long logId) {
         fishLogService.deleteLog(logId);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.ok("물고기 기록이 삭제되었습니다.");
     }
 }
