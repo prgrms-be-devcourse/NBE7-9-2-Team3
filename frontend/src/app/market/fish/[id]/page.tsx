@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Trade, ApiResponse, TradeStatus, TradeComment, CommentFormData } from '@/type/trade';
-import { fetchApi } from '@/lib/client';
+import { fetchApi, api } from '@/lib/client';
 import { useAuth } from '@/context/AuthContext';
 
 export default function FishDetailPage() {
@@ -215,6 +215,26 @@ export default function FishDetailPage() {
     }
   };
 
+  const handleChat = async () => {
+    if (!isAuthenticated || !user) {
+      alert('로그인이 필요합니다.');
+      router.push('/login');
+      return;
+    }
+
+    try {
+      // 채팅방 생성 또는 기존 채팅방 ID 가져오기
+      const response = await api.post<ApiResponse<number>>(`/api/chat/${tradeId}/room`);
+      const chatRoomId = response.data;
+      
+      // 채팅방으로 이동
+      router.push(`/mypage/chats/${chatRoomId}`);
+    } catch (error) {
+      console.error('채팅방 생성 실패:', error);
+      alert('채팅방을 생성하는데 실패했습니다.');
+    }
+  };
+
   if (loading) {
     return <div className="p-8">Loading...</div>;
   }
@@ -347,7 +367,7 @@ export default function FishDetailPage() {
             {/* 채팅하기 버튼 - 본인 게시글이 아닐 때만 표시 */}
             {user && user.memberId !== post.memberId && (
               <button
-                onClick={() => alert('채팅 기능은 준비 중입니다.')}
+                onClick={handleChat}
                 className="w-full bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600 font-semibold transition"
               >
                 채팅하기
