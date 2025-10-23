@@ -27,5 +27,4 @@ public class ImageController {
 
         return ApiResponse.ok("Presigned URL 생성 성공", response);
     }
-
 }

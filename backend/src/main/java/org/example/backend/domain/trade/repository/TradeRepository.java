@@ -1,6 +1,5 @@
 package org.example.backend.domain.trade.repository;
 
-import java.util.List;
 import org.example.backend.domain.trade.entity.Trade;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.enums.TradeStatus;

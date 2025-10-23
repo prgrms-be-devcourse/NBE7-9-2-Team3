@@ -1,7 +1,6 @@
 package org.example.backend.domain.trade.service;
 
 
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.entity.Member;
@@ -83,10 +82,7 @@ public class TradeService {
     }
 
     public TradeResponseDto getTrade(BoardType boardType, Long id) {
-        Trade trade = tradeRepository
-            .findById(id).orElseThrow(
-                () -> new BusinessException(ErrorCode.TRADE_NOT_FOUND));
-
+        Trade trade = findTradeById(id);
         validateBoardType(trade, boardType);
 
         return TradeResponseDto.from(trade);
@@ -94,10 +90,7 @@ public class TradeService {
 
     @Transactional
     public TradeResponseDto updateTrade(TradeUpdateRequestDto updateRequest) {
-        Trade trade = tradeRepository.findById(updateRequest.tradeId())
-            .orElseThrow(
-                () -> new BusinessException(ErrorCode.TRADE_NOT_FOUND));
-
+        Trade trade = findTradeById(updateRequest.tradeId());
         validateBoardType(trade, updateRequest.boardType());
         validateTradeOwner(trade, updateRequest.memberId());
 
@@ -110,34 +103,14 @@ public class TradeService {
             request.category()
         );
 
-        List<String> newImageUrls = updateRequest.imageUrls();
-        if (newImageUrls != null) {
-            List<String> oldImageUrls = trade.getImageUrls();
-
-            // 삭제할 이미지: 기존에는 있었는데 새 목록에는 없는 것
-            List<String> toDelete = oldImageUrls.stream()
-                .filter(url -> !newImageUrls.contains(url))
-                .toList();
-
-            // S3에서 삭제
-            if (!toDelete.isEmpty()) {
-                imageService.deleteFiles(toDelete);
-            }
-
-            // DB 이미지 목록 갱신
-            trade.clearImages();
-            newImageUrls.forEach(trade::addImage);
-        }
+        updateTradeImages(trade, updateRequest.imageUrls());
 
         return TradeResponseDto.from(trade);
     }
 
     @Transactional
     public void deleteTrade(BoardType boardType, Long tradeId, Long memberId) {
-        Trade trade = tradeRepository.findById(tradeId)
-            .orElseThrow(
-                () -> new BusinessException(ErrorCode.TRADE_NOT_FOUND));
-
+        Trade trade = findTradeById(tradeId);
         validateBoardType(trade, boardType);
         validateTradeOwner(trade, memberId);
 
@@ -162,8 +135,6 @@ public class TradeService {
 
         Page<TradeResponseDto> responsePage = tradePage.map(TradeResponseDto::from);
         return PageResponseDto.from(responsePage);
-
-
     }
 
     private void validateBoardType(Trade trade, BoardType boardType) {
@@ -176,5 +147,32 @@ public class TradeService {
         if (!trade.getMember().getMemberId().equals(memberId)) {
             throw new BusinessException(ErrorCode.TRADE_OWNER_MISMATCH);
         }
+    }
+
+    public Trade findTradeById(Long tradeId) {
+        return tradeRepository.findById(tradeId)
+            .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_NOT_FOUND));
+    }
+
+    private void updateTradeImages(Trade trade, List<String> newImageUrls) {
+        if (newImageUrls == null) {
+            return;
+        }
+
+        List<String> oldImageUrls = trade.getImageUrls();
+
+        // 삭제할 이미지: 기존에는 있었는데 새 목록에는 없는 것
+        List<String> toDelete = oldImageUrls.stream()
+            .filter(url -> !newImageUrls.contains(url))
+            .toList();
+
+        // S3에서 삭제
+        if (!toDelete.isEmpty()) {
+            imageService.deleteFiles(toDelete);
+        }
+
+        // DB 이미지 목록 갱신
+        trade.clearImages();
+        newImageUrls.forEach(trade::addImage);
     }
 }
