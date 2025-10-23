@@ -44,7 +44,8 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             response.getWriter().write("""
                     {
                         "resultCode": "%s",
-                        "msg": "%s"
+                        "msg": "%s",
+                        "data": null
                     }
                     """.formatted(errorCode.getCode(), errorCode.getMessage()));
         } catch (Exception e) {
@@ -58,7 +59,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        if(List.of("/api/members/join", "/api/members/login", "/api/images/presigned-url").contains(request.getRequestURI())) {
+        if(List.of("/api/members/join", "/api/members/login", "/api/members/logout").contains(request.getRequestURI())) {
             filterChain.doFilter(request, response);
             return;
         }
