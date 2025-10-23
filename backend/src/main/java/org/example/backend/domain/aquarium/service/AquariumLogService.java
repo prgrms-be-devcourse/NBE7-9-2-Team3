@@ -7,71 +7,87 @@ import org.example.backend.domain.aquarium.entity.Aquarium;
 import org.example.backend.domain.aquarium.entity.AquariumLog;
 import org.example.backend.domain.aquarium.repository.AquariumLogRepository;
 import org.example.backend.domain.aquarium.repository.AquariumRepository;
-import org.example.backend.global.exception.BusinessException;
+import org.example.backend.domain.log.service.AbstractLogService;
 import org.example.backend.global.exception.ErrorCode;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class AquariumLogService {
+public class AquariumLogService extends AbstractLogService<AquariumLog, AquariumLogRequestDto, AquariumLogResponseDto, Aquarium> {
 
     private final AquariumLogRepository aquariumLogRepository;
     private final AquariumRepository aquariumRepository;
 
-    // Create - 로그 생성
-    @Transactional
-    public AquariumLogResponseDto createLog(AquariumLogRequestDto requestDto) {
-        // 어항 엔티티 조회
-        Aquarium aquarium = aquariumRepository.findById(requestDto.getAquariumId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
-        
-        AquariumLog aquariumLog = AquariumLog.builder()
+    @Override
+    protected JpaRepository<AquariumLog, Long> getLogRepository() {
+        return aquariumLogRepository;
+    }
+
+    @Override
+    protected JpaRepository<Aquarium, Long> getParentRepository() {
+        return aquariumRepository;
+    }
+
+    @Override
+    protected ErrorCode getLogNotFoundErrorCode() {
+        return ErrorCode.AQUARIUM_LOG_NOT_FOUND;
+    }
+
+    @Override
+    protected ErrorCode getParentNotFoundErrorCode() {
+        return ErrorCode.AQUARIUM_NOT_FOUND;
+    }
+
+    @Override
+    protected AquariumLog createEntity(AquariumLogRequestDto requestDto, Aquarium aquarium) {
+        return AquariumLog.builder()
                 .aquarium(aquarium)
                 .temperature(requestDto.getTemperature())
                 .ph(requestDto.getPh())
                 .logDate(requestDto.getLogDate())
                 .build();
-
-        AquariumLog savedLog = aquariumLogRepository.save(aquariumLog);
-        return AquariumLogResponseDto.from(savedLog);
     }
 
+    @Override
+    protected AquariumLogResponseDto convertToResponseDto(AquariumLog entity) {
+        return AquariumLogResponseDto.from(entity);
+    }
 
-    // Read - aquariumId로 로그 조회
+    @Override
+    protected void updateEntity(AquariumLog entity, AquariumLogRequestDto requestDto, Aquarium aquarium) {
+        entity.setAquarium(aquarium);
+        entity.setTemperature(requestDto.getTemperature());
+        entity.setPh(requestDto.getPh());
+        entity.setLogDate(requestDto.getLogDate());
+    }
+
+    @Override
+    protected List<AquariumLog> findByParentId(Long parentId) {
+        return aquariumLogRepository.findByAquariumId(parentId);
+    }
+
+    // 기존 메서드들을 추상 클래스의 메서드로 위임
+    @Transactional
+    public AquariumLogResponseDto createLog(AquariumLogRequestDto requestDto) {
+        return createLog(requestDto, requestDto.getAquariumId());
+    }
+
     public List<AquariumLogResponseDto> getLogsByAquariumId(Long aquariumId) {
-        return aquariumLogRepository.findByAquariumId(aquariumId).stream()
-                .map(AquariumLogResponseDto::from)
-                .collect(Collectors.toList());
+        return getLogsByParentId(aquariumId);
     }
 
-    // Update - 로그 수정
     @Transactional
     public AquariumLogResponseDto updateLog(Long logId, AquariumLogRequestDto requestDto) {
-        AquariumLog aquariumLog = aquariumLogRepository.findById(logId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_LOG_NOT_FOUND));
-
-        // 어항 엔티티 조회
-        Aquarium aquarium = aquariumRepository.findById(requestDto.getAquariumId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_NOT_FOUND));
-
-        aquariumLog.setAquarium(aquarium);
-        aquariumLog.setTemperature(requestDto.getTemperature());
-        aquariumLog.setPh(requestDto.getPh());
-        aquariumLog.setLogDate(requestDto.getLogDate());
-
-        return AquariumLogResponseDto.from(aquariumLog);
+        return updateLog(logId, requestDto, requestDto.getAquariumId());
     }
 
-    // Delete - 로그 삭제
     @Transactional
     public void deleteLog(Long logId) {
-        AquariumLog aquariumLog = aquariumLogRepository.findById(logId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_LOG_NOT_FOUND));
-        aquariumLogRepository.delete(aquariumLog);
+        super.deleteLog(logId);
     }
 }

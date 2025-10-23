@@ -7,70 +7,86 @@ import org.example.backend.domain.fish.entity.Fish;
 import org.example.backend.domain.fish.entity.FishLog;
 import org.example.backend.domain.fish.repository.FishLogRepository;
 import org.example.backend.domain.fish.repository.FishRepository;
-import org.example.backend.global.exception.BusinessException;
+import org.example.backend.domain.log.service.AbstractLogService;
 import org.example.backend.global.exception.ErrorCode;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class FishLogService {
+public class FishLogService extends AbstractLogService<FishLog, FishLogRequestDto, FishLogResponseDto, Fish> {
     
     private final FishLogRepository fishLogRepository;
     private final FishRepository fishRepository;
-    
-    // Create - 물고기 로그 생성
-    @Transactional
-    public FishLogResponseDto createLog(FishLogRequestDto requestDto) {
-        // 물고기 엔티티 조회
-        Fish fish = fishRepository.findById(requestDto.getFishId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_NOT_FOUND));
-        
-        FishLog fishLog = FishLog.builder()
+
+    @Override
+    protected JpaRepository<FishLog, Long> getLogRepository() {
+        return fishLogRepository;
+    }
+
+    @Override
+    protected JpaRepository<Fish, Long> getParentRepository() {
+        return fishRepository;
+    }
+
+    @Override
+    protected ErrorCode getLogNotFoundErrorCode() {
+        return ErrorCode.FISH_LOG_NOT_FOUND;
+    }
+
+    @Override
+    protected ErrorCode getParentNotFoundErrorCode() {
+        return ErrorCode.FISH_NOT_FOUND;
+    }
+
+    @Override
+    protected FishLog createEntity(FishLogRequestDto requestDto, Fish fish) {
+        return FishLog.builder()
                 .fish(fish)
                 .status(requestDto.getStatus())
                 .logDate(requestDto.getLogDate() != null ? requestDto.getLogDate() : LocalDateTime.now())
                 .build();
-        
-        FishLog savedLog = fishLogRepository.save(fishLog);
-        return FishLogResponseDto.from(savedLog);
     }
-    
-    
-    // Read - fishId로 물고기 로그 조회
+
+    @Override
+    protected FishLogResponseDto convertToResponseDto(FishLog entity) {
+        return FishLogResponseDto.from(entity);
+    }
+
+    @Override
+    protected void updateEntity(FishLog entity, FishLogRequestDto requestDto, Fish fish) {
+        entity.setFish(fish);
+        entity.setStatus(requestDto.getStatus());
+        entity.setLogDate(requestDto.getLogDate());
+    }
+
+    @Override
+    protected List<FishLog> findByParentId(Long parentId) {
+        return fishLogRepository.findByFishId(parentId);
+    }
+
+    // 기존 메서드들을 추상 클래스의 메서드로 위임
+    @Transactional
+    public FishLogResponseDto createLog(FishLogRequestDto requestDto) {
+        return createLog(requestDto, requestDto.getFishId());
+    }
+
     public List<FishLogResponseDto> getLogsByFishId(Long fishId) {
-        return fishLogRepository.findByFishId(fishId).stream()
-                .map(FishLogResponseDto::from)
-                .collect(Collectors.toList());
+        return getLogsByParentId(fishId);
     }
-    
-    // Update - 물고기 로그 수정
+
     @Transactional
     public FishLogResponseDto updateLog(Long logId, FishLogRequestDto requestDto) {
-        FishLog fishLog = fishLogRepository.findById(logId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_LOG_NOT_FOUND));
-
-        // 물고기 엔티티 조회
-        Fish fish = fishRepository.findById(requestDto.getFishId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_NOT_FOUND));
-
-        fishLog.setFish(fish);
-        fishLog.setStatus(requestDto.getStatus());
-        fishLog.setLogDate(requestDto.getLogDate());
-
-        return FishLogResponseDto.from(fishLog);
+        return updateLog(logId, requestDto, requestDto.getFishId());
     }
-    
-    // Delete - 물고기 로그 삭제
+
     @Transactional
     public void deleteLog(Long logId) {
-        FishLog fishLog = fishLogRepository.findById(logId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_LOG_NOT_FOUND));
-        fishLogRepository.delete(fishLog);
+        super.deleteLog(logId);
     }
 }
