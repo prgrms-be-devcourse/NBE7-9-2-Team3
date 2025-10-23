@@ -24,17 +24,17 @@ public class WebSocketTokenController {
     private final MemberRepository memberRepository;
     private final AuthTokenService authTokenService;
 
+    // 웹소켓 연결용 10분 수명 임시 토큰 발급
     @Operation(summary = "웹소켓용 단기 Access Token 발급", description = "현재 로그인한 회원의 정보를 기반으로 STOMP 연결 시 사용할 짧은 JWT를 발급합니다.")
     @GetMapping("/token")
     public ApiResponse<String> getWebSocketToken(@AuthenticationPrincipal CustomUserDetails userDetails) {
+
         // 현재 로그인한 사용자 정보 조회
         Member member = memberRepository.findById(userDetails.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         // 단기 JWT 생성
         String token = authTokenService.genTempToken(member);
-
-        // 응답으로 토큰 반환
         return ApiResponse.ok("웹소켓 토큰이 발급되었습니다.", token);
     }
 }

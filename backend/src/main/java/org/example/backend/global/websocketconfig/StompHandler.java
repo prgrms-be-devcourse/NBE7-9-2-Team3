@@ -25,6 +25,11 @@ public class StompHandler implements ChannelInterceptor {
     private final AuthTokenService authTokenService;
     private final MemberRepository memberRepository;
 
+    /*
+    STOMP 메세지 전송 전 JWT 인증을 처리
+        - 웹소켓 연결 시 헤더에서 JWT 토큰 추출
+        - 이후 세션에 memberId 저장
+     */
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
 
@@ -59,6 +64,9 @@ public class StompHandler implements ChannelInterceptor {
             SecurityContextHolder.getContext().setAuthentication(auth);
 
             accessor.setUser(auth);
+
+            // STOMP 세션에 memberId 저장 (이후 메시지 전송 시 사용)
+            accessor.getSessionAttributes().put("memberId", memberId);
         }
 
         return message;
