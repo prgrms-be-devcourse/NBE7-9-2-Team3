@@ -1,14 +1,17 @@
 package org.example.backend.domain.trade.repository;
 
-import java.util.List;
+import jakarta.persistence.LockModeType;
 import org.example.backend.domain.trade.entity.Trade;
 import org.example.backend.domain.trade.enums.BoardType;
 import org.example.backend.domain.trade.enums.TradeStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.util.Optional;
 
 
 public interface TradeRepository extends JpaRepository<Trade, Long> {
@@ -33,4 +36,9 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
         @Param("status") TradeStatus status,
         Pageable pageable
     );
+
+    // 결제 처리 시점에 레코드를 FOR UPDATE로 잠궈서 동시 접근을 직렬화
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM Trade t WHERE t.id = :id")
+    Optional<Trade> findByIdForUpdate(@Param("id") Long id);
 }
