@@ -32,11 +32,13 @@ public class TradeChatService {
     private final SimpMessagingTemplate messagingTemplate;
 
 
+    // 메세지 전송
     @Transactional
-    public void sendMessage(Long roomId, TradeChatMessageDto request) {
+    public void sendMessage(Long roomId, TradeChatMessageDto request, Long memberId) {
         TradeChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_ROOM_NOT_FOUND));
-        Member sender = memberRepository.findById(request.senderId())
+        // 클라이언트에서 받은 memberId로 발신자 조회
+        Member sender = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_SENDER_NOT_FOUND));
 
         // 메세지 채팅 생성
@@ -48,16 +50,28 @@ public class TradeChatService {
         messagingTemplate.convertAndSend("/receive/" + roomId, messageDto);
     }
 
+    // 로그인 사용자의 채팅방 목록 조회
     public List<TradeChatRoomDto> getMyChatRooms(Long id) {
 
         // 현재 ONGOING 상태의 채팅방만 조회
         List<TradeChatRoom> rooms = chatRoomRepository.findAllWithMemberAndTrade(ChatStatus.ONGOING, id);
 
+        // 최근 메시지 시간 순으로 정렬
         return rooms.stream()
+                .sorted((r1, r2) -> {
+                    LocalDateTime date1 = chatRoomRepository.findLatestMessageDate(r1.getId());
+                    LocalDateTime date2 = chatRoomRepository.findLatestMessageDate(r2.getId());
+                    // 메시지가 없으면 채팅방 생성 시간 사용
+                    date1 = date1 != null ? date1 : r1.getCreateDate();
+                    date2 = date2 != null ? date2 : r2.getCreateDate();
+                    // 최신순 정렬 (내림차순)
+                    return date2.compareTo(date1);
+                })
                 .map(TradeChatRoomDto::from)
                 .toList();
     }
 
+    // 채팅방 생성
     public Long createChatRoom(Long tradeId, Long memberId) {
         Trade trade = tradeRepository.findById(tradeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_TRADE_NOT_FOUND));
@@ -81,6 +95,7 @@ public class TradeChatService {
                 });
     }
 
+    // 이전 채팅내역 조회
     public List<TradeChatMessageDto> getMessages(Long roomId, Long memberId) {
         TradeChatRoom room = chatRoomRepository.findById(roomId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TRADE_CHAT_ROOM_NOT_FOUND));

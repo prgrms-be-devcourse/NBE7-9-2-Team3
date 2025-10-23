@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,4 +30,12 @@ public interface TradeChatRoomRepository extends JpaRepository<TradeChatRoom, Lo
             @Param("status") ChatStatus status,
             @Param("memberId") Long memberId
     );
+    
+    //채팅방의 가장 최근 메시지 시간 조회
+    @Query("""
+        SELECT MAX(m.sendDate)
+        FROM TradeChatMessage m
+        WHERE m.chatRoom.Id = :roomId
+    """)
+    LocalDateTime findLatestMessageDate(@Param("roomId") Long roomId);
 }
