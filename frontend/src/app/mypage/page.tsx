@@ -220,7 +220,7 @@ export default function MyPage() {
           </button>
 
           <button
-            onClick={() => router.push('/chat')}
+            onClick={() => router.push('/mypage/chats')}
             className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow text-left"
           >
             <div className="flex items-center">
@@ -230,7 +230,7 @@ export default function MyPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">채팅목록</p>
+                <p className="text-sm font-medium text-gray-500">거래 채팅</p>
               </div>
             </div>
           </button>
