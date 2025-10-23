@@ -57,8 +57,14 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     private void authenticate(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String requestURI = request.getRequestURI();
         
-        // API 경로가 아닌 경우 통과 (Swagger UI, H2 Console 등)
+        // API 경로가 아닌 경우 통과 (Swagger UI, H2 Console, WebSocket 등)
         if(!requestURI.startsWith("/api/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // WebSocket 경로 제외
+        if(requestURI.startsWith("/ws")) {
             filterChain.doFilter(request, response);
             return;
         }
