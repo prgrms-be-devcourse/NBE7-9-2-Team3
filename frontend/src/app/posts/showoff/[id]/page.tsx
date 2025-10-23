@@ -70,8 +70,14 @@ export default function PostDetailPage() {
           isMine: c.isMine
         }))
       );
-    } catch (err) {
+    } catch (err : any) {
       console.error(err);
+
+      if (err.message.includes("비공개")) {
+        alert("비공개 게시물입니다.");
+        router.push("/posts/showoff"); // 목록 페이지로 리다이렉트
+        return;
+      }
     }
   };
 

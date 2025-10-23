@@ -72,7 +72,10 @@ public enum ErrorCode {
     TRADE_CHAT_ROOM_NOT_FOUND("TC001", HttpStatus.NOT_FOUND, "채팅방이 존재하지 않습니다."),
     TRADE_CHAT_SENDER_NOT_FOUND("TC002", HttpStatus.NOT_FOUND, "보낸 사용자가 존재하지 않습니다."),
     TRADE_CHAT_TRADE_NOT_FOUND("TC003", HttpStatus.NOT_FOUND, "거래글이 존재하지 않습니다."),
-    TRADE_CHAT_BUYER_NOT_FOUND("TC004", HttpStatus.NOT_FOUND, "구매자가 존재하지 않습니다.");
+    TRADE_CHAT_BUYER_NOT_FOUND("TC004", HttpStatus.NOT_FOUND, "구매자가 존재하지 않습니다."),
+
+    // ========== Post 도메인 에러 ==========
+    POST_FORBIDDEN_ACCESS("PS001", HttpStatus.FORBIDDEN, "비공개 글입니다.");
 
     private final String code;
     private final HttpStatus status;
