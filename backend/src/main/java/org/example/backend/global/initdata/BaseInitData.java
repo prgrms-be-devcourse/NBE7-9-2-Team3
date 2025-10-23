@@ -11,7 +11,7 @@ import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
 import org.example.backend.domain.post.entity.Post;
-import org.example.backend.domain.post.entity.Post.BoardType;
+import org.example.backend.domain.post.entity.PostImage;
 import org.example.backend.domain.post.repository.PostRepository;
 import org.example.backend.domain.trade.entity.Trade;
 import org.example.backend.domain.trade.repository.TradeRepository;
@@ -21,6 +21,10 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.PageRequest;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
 
 @Configuration
 @RequiredArgsConstructor
@@ -49,11 +53,42 @@ public class BaseInitData {
             createAquariumsAndFish();
 
             // 게시글 데이터 생성
-            createPosts();
+            createShowoffPosts();
+            createQuestionPosts();
 
             // 거래 게시글 데이터 생성
-            createTrades();
+            createFishTrades();
+            createSecondhandTrades();
         };
+    }
+
+    // 글 생성 순서 섞기
+    private void createShuffledItems(int itemsPerUser, ItemCreator creator) {
+        List<Integer> allItems = new ArrayList<>();
+        for (int i = 1; i <= 10; i++) {
+            for (int itemNum = 1; itemNum <= itemsPerUser; itemNum++) {
+                allItems.add(i * 10 + itemNum); // 유저ID * 10 + 아이템번호로 고유 식별
+            }
+        }
+        Collections.shuffle(allItems); // 모든 아이템 순서를 완전히 섞기
+        
+        for (int itemIndex = 0; itemIndex < allItems.size(); itemIndex++) {
+            int itemId = allItems.get(itemIndex);
+            int i = itemId / 10; // 유저 ID
+            int itemNum = itemId % 10; // 아이템 번호
+            
+            Member member = memberRepository.findByMemberId((long) i).orElse(null);
+            if (member == null) {
+                continue;
+            }
+            
+            creator.create(i, itemNum, member);
+        }
+    }
+
+    @FunctionalInterface
+    private interface ItemCreator {
+        void create(int userId, int itemNum, Member member);
     }
 
     private void createTestUsers() {
@@ -76,7 +111,7 @@ public class BaseInitData {
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .nickname(nickname)
-                .profileImage(null)
+                .profileImage("https://upload.wikimedia.org/wikipedia/commons/7/75/%EC%82%AC%EB%9E%8C.png")
                 .build();
 
             memberRepository.save(member);
@@ -154,118 +189,215 @@ public class BaseInitData {
         }
     }
 
-    private void createPosts() {
-        // 이미 게시글 데이터가 있는지 확인
-        if (postRepository.count() > 0) {
+    private void createShowoffPosts() {
+        // 이미 자랑게시판 데이터가 있는지 확인 (SHOWOFF 타입만 체크)
+        if (!postRepository.findByBoardType(org.example.backend.domain.post.entity.Post.BoardType.SHOWOFF).isEmpty()) {
             return;
         }
 
-        String[] postTitles = {
-            "물고기 키우기 초보자를 위한 팁",
-            "어항 관리의 중요성",
-            "수질 관리 방법",
-            "물고기 건강 체크리스트",
-            "어항 장식 아이디어"
+        String[] showoffTitles = {
+            "우리 집 금붕어 자랑해요!",
+            "새로 만든 어항 세팅",
+            "물고기들이 너무 귀여워요",
+            "어항 장식 완성!",
+            "건강한 물고기들"
         };
 
-        String[] postContents = {
-            "물고기를 처음 키우시는 분들을 위한 기본적인 관리 방법을 알려드립니다.",
-            "깨끗한 어항을 유지하는 것이 물고기 건강의 핵심입니다.",
-            "적절한 수질을 유지하기 위한 다양한 방법들을 소개합니다.",
-            "물고기의 건강 상태를 확인하는 방법들을 정리했습니다.",
-            "어항을 더 아름답게 꾸미는 다양한 아이디어를 공유합니다."
+        String[] showoffContents = {
+            "우리 집 금붕어가 정말 건강하게 잘 자라고 있어요! 물을 깨끗하게 관리하고 있어서 색깔도 예쁘고 활발해요.",
+            "새로운 어항을 세팅했는데 물고기들이 정말 좋아하네요. 필터와 히터도 새로 설치해서 최적의 환경을 만들어줬어요.",
+            "우리 물고기들이 너무 귀여워서 매일 보는 재미가 있어요. 먹이를 줄 때마다 달려와서 정말 사랑스러워요.",
+            "어항 장식을 새로 해봤는데 물고기들이 더 예뻐 보여요. 산호와 돌로 자연스러운 환경을 만들어줬어요.",
+            "우리 물고기들이 정말 건강해요. 수질 관리도 잘하고 있고, 먹이도 적당히 주고 있어서 활발하게 헤엄치고 있어요."
         };
 
-        BoardType[] boardTypes = {BoardType.SHOWOFF, BoardType.QUESTION};
+        // 모든 게시글을 개별적으로 생성하여 완전히 섞기
+        createShuffledItems(5, (i, postNum, member) -> {
+            String title = showoffTitles[(i + postNum - 1) % showoffTitles.length] + " " + postNum;
+            String content = showoffContents[(i + postNum - 1) % showoffContents.length] +
+                " (작성자: test" + i + ")";
 
-        // test1부터 test10까지의 유저들에 대해 게시글 생성
-        for (int i = 1; i <= 10; i++) {
-            Member member = memberRepository.findByMemberId((long) i).orElse(null);
+            // 자랑게시판용 이미지들 (물고기/어항 관련)
+            String[] showoffImages = {
+                "https://images.unsplash.com/photo-1535591273668-578e31182c4f?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8JUVCJUFDJUJDJUVBJUIzJUEwJUVBJUI4JUIwfGVufDB8fDB8fHww&fm=jpg&q=60&w=3000",
+                "https://t1.daumcdn.net/news/202211/30/nongmin/20221130163646676iqlt.png",
+                "https://marketplace.canva.com/XdJTM/MAGyo8XdJTM/1/tl/canva-adorable-cartoon-blue-fish-illustration-MAGyo8XdJTM.png",
+                "https://thumbnail.coupangcdn.com/thumbnails/remote/492x492ex/image/vendor_inventory/5eed/1ba36cb8138318d15d5db5fccc1bb7693b7de596e033de724cb805e7ba4b.jpg",
+                "https://raraaqua.com/web/product/medium/202508/6101dc2e316a22869d4a905629f97970.jpg"
+            };
+            
+            String selectedImage = showoffImages[(i + postNum - 1) % showoffImages.length];
 
-            if (member == null) {
-                continue;
+            // PostWriteRequestDto를 사용하여 Post 생성
+            PostWriteRequestDto requestDto = new PostWriteRequestDto(
+                title,
+                content,
+                "SHOWOFF",
+                List.of(selectedImage), // 자랑게시판은 이미지 필수
+                null
+            );
+
+            Post post = new Post(requestDto, member);
+
+            // 게시글에 이미지 추가
+            if (requestDto.imageUrls() != null && !requestDto.imageUrls().isEmpty()) {
+                requestDto.imageUrls().forEach(url -> 
+                    post.addImage(new PostImage(url, post)));
             }
 
-            // 각 보드타입별로 5개씩 게시글 생성
-            for (BoardType boardType : boardTypes) {
-                for (int postNum = 1; postNum <= 5; postNum++) {
-                    String title = boardType.name() + " - " + postTitles[(i + postNum - 1) % postTitles.length] + " " + postNum;
-                    String content = postContents[(i + postNum - 1) % postContents.length] +
-                        " (작성자: test" + i + ", 보드타입: " + boardType.name() + ")";
-
-                    // PostWriteRequestDto를 사용하여 Post 생성
-                    PostWriteRequestDto requestDto = new PostWriteRequestDto(
-                        title,
-                        content,
-                        boardType.name(),
-                        null, // 이미지는 null로 설정
-                        null
-                    );
-
-                    Post post = new Post(requestDto, member);
-
-                    postRepository.save(post);
-                }
-            }
-        }
+            postRepository.save(post);
+        });
     }
 
-    private void createTrades() {
-        // 이미 거래 게시글 데이터가 있는지 확인
-        if (tradeRepository.count() > 0) {
+    private void createQuestionPosts() {
+        // 이미 질문게시판 데이터가 있는지 확인 (QUESTION 타입만 체크)
+        if (!postRepository.findByBoardType(org.example.backend.domain.post.entity.Post.BoardType.QUESTION).isEmpty()) {
             return;
         }
 
-        String[] tradeTitles = {
-            "금붕어 판매합니다",
+        String[] questionTitles = {
+            "물고기가 잘 안 먹어요",
+            "어항 수질 관리 질문",
+            "물고기 질병 증상이 뭔가요?",
+            "어항 크기 추천해주세요",
+            "물고기 키우기 초보 질문"
+        };
+
+        String[] questionContents = {
+            "물고기가 최근에 먹이를 잘 안 먹는데 왜 그런 건가요? 수질은 깨끗한 것 같은데...",
+            "어항 수질 관리를 어떻게 해야 할지 모르겠어요. 필터 교체 주기나 물갈이 주기를 알려주세요.",
+            "우리 물고기 몸에 하얀 점들이 생겼는데 이게 질병인가요? 어떻게 치료해야 할까요?",
+            "물고기 3마리 키우려는데 어항 크기는 얼마나 큰 게 좋을까요? 추천해주세요.",
+            "물고기 키우기를 처음 시작하는데 어떤 장비들이 필요한지, 초보자 팁을 알려주세요."
+        };
+
+        // 모든 게시글을 개별적으로 생성하여 완전히 섞기
+        createShuffledItems(5, (i, postNum, member) -> {
+            String title = questionTitles[(i + postNum - 1) % questionTitles.length] + " " + postNum;
+            String content = questionContents[(i + postNum - 1) % questionContents.length] +
+                " (작성자: test" + i + ")";
+
+            // PostWriteRequestDto를 사용하여 Post 생성 (질문게시판은 이미지 없음)
+            PostWriteRequestDto requestDto = new PostWriteRequestDto(
+                title,
+                content,
+                "QUESTION",
+                null, // 질문게시판은 이미지 없음
+                null
+            );
+
+            Post post = new Post(requestDto, member);
+            postRepository.save(post);
+        });
+    }
+
+    private void createFishTrades() {
+        // 이미 물고기 거래 데이터가 있는지 확인 (FISH 타입만 체크)
+        if (tradeRepository.findByBoardType(org.example.backend.domain.trade.enums.BoardType.FISH, 
+                PageRequest.of(0, 1)).getTotalElements() > 0) {
+            return;
+        }
+
+        String[] fishTitles = {
+            "건강한 금붕어 판매",
+            "구피 새끼 판매합니다",
+            "베타 물고기 판매",
+            "네온테트라 판매",
+            "앵거피시 판매"
+        };
+
+        String[] fishContents = {
+            "건강한 금붕어를 판매합니다. 초보자도 키우기 쉽고 색깔도 예뻐요.",
+            "구피 새끼들을 판매합니다. 부모 물고기도 건강하고 새끼들도 활발해요.",
+            "아름다운 베타 물고기를 판매합니다. 색깔이 정말 예쁘고 건강해요.",
+            "네온테트라를 판매합니다. 작고 귀여운 물고기로 어항에 잘 어울려요.",
+            "앵거피시를 판매합니다. 독특한 모양의 물고기로 관상용으로 좋아요."
+        };
+
+        // 모든 거래글을 개별적으로 생성하여 완전히 섞기
+        createShuffledItems(2, (i, tradeNum, member) -> {
+            String title = fishTitles[(i + tradeNum - 1) % fishTitles.length] + " " + tradeNum;
+            String content = fishContents[(i + tradeNum - 1) % fishContents.length] +
+                " (판매자: test" + i + ")";
+
+            // 물고기 거래는 물고기 이미지만 사용
+            String[] fishImages = {
+                "https://images.unsplash.com/photo-1535591273668-578e31182c4f?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8JUVCJUFDJUJDJUVBJUIzJUEwJUVBJUI4JUIwfGVufDB8fDB8fHww&fm=jpg&q=60&w=3000",
+                "https://marketplace.canva.com/XdJTM/MAGyo8XdJTM/1/tl/canva-adorable-cartoon-blue-fish-illustration-MAGyo8XdJTM.png"
+            };
+            
+            String selectedImage = fishImages[(i + tradeNum - 1) % fishImages.length];
+
+            Trade trade = new Trade(
+                member,
+                org.example.backend.domain.trade.enums.BoardType.FISH,
+                title,
+                content,
+                5000L + (i * 1000L) + (tradeNum * 500L), // 물고기 가격 (5000원부터 시작)
+                org.example.backend.domain.trade.enums.TradeStatus.SELLING,
+                "물고기",
+                java.time.LocalDateTime.now()
+            );
+
+            // 거래글에 이미지 추가
+            trade.addImage(selectedImage);
+
+            tradeRepository.save(trade);
+        });
+    }
+
+    private void createSecondhandTrades() {
+        // 이미 중고물품 거래 데이터가 있는지 확인
+        if (tradeRepository.findByBoardType(org.example.backend.domain.trade.enums.BoardType.SECONDHAND, 
+                PageRequest.of(0, 1)).getTotalElements() > 0) {
+            return;
+        }
+
+        String[] secondhandTitles = {
             "어항 세트 급처",
             "물고기 사료 판매",
             "어항 장식품 판매",
             "수질 테스트 키트 판매"
         };
 
-        String[] tradeContents = {
-            "건강한 금붕어를 판매합니다. 초보자도 키우기 쉽습니다.",
-            "사용하던 어항 세트를 급하게 판매합니다. 상태 양호합니다.",
-            "고품질 물고기 사료를 저렴하게 판매합니다.",
-            "어항을 예쁘게 꾸밀 수 있는 장식품들을 판매합니다.",
-            "수질을 정확히 측정할 수 있는 테스트 키트를 판매합니다."
+        String[] secondhandContents = {
+            "사용하던 어항 세트를 급하게 판매합니다. 상태 양호하고 깨끗해요.",
+            "고품질 물고기 사료를 저렴하게 판매합니다. 유통기한도 충분해요.",
+            "어항을 예쁘게 꾸밀 수 있는 장식품들을 판매합니다. 다양한 종류 있어요.",
+            "수질을 정확히 측정할 수 있는 테스트 키트를 판매합니다. 정확도 높아요."
         };
 
-        org.example.backend.domain.trade.enums.BoardType[] tradeBoardTypes = {
-            org.example.backend.domain.trade.enums.BoardType.FISH,
-            org.example.backend.domain.trade.enums.BoardType.SECONDHAND
-        };
+        // 모든 거래글을 개별적으로 생성하여 완전히 섞기
+        createShuffledItems(4, (i, tradeNum, member) -> {
+            String title = secondhandTitles[(i + tradeNum - 1) % secondhandTitles.length] + " " + tradeNum;
+            String content = secondhandContents[(i + tradeNum - 1) % secondhandContents.length] +
+                " (판매자: test" + i + ")";
 
-        // test1부터 test10까지의 유저들에 대해 거래 게시글 생성
-        for (int i = 1; i <= 10; i++) {
-            Member member = memberRepository.findByMemberId((long) i).orElse(null);
+            // 중고물품 거래는 중고물품 이미지만 사용 (제목 순서에 맞춰서)
+            String[] secondhandImages = {
+                "https://t1.daumcdn.net/news/202211/30/nongmin/20221130163646676iqlt.png", // 어항 세트
+                "https://sitem.ssgcdn.com/88/52/99/item/1000525995288_i1_750.jpg", // 물고기 사료
+                "https://thumbnail.coupangcdn.com/thumbnails/remote/492x492ex/image/vendor_inventory/5eed/1ba36cb8138318d15d5db5fccc1bb7693b7de596e033de724cb805e7ba4b.jpg", // 어항 장식품
+                "https://asset.m-gs.kr/prod/1050974578/1/550" // 수질 테스트 키트
+            };
+            
+            String selectedImage = secondhandImages[(i + tradeNum - 1) % secondhandImages.length];
 
-            if (member == null) {
-                continue;
-            }
+            Trade trade = new Trade(
+                member,
+                org.example.backend.domain.trade.enums.BoardType.SECONDHAND,
+                title,
+                content,
+                10000L + (i * 2000L) + (tradeNum * 1000L), // 중고물품 가격 (10000원부터 시작)
+                org.example.backend.domain.trade.enums.TradeStatus.SELLING,
+                "중고물품",
+                java.time.LocalDateTime.now()
+            );
 
-            // 각 보드타입별로 5개씩 거래 게시글 생성
-            for (org.example.backend.domain.trade.enums.BoardType boardType : tradeBoardTypes) {
-                for (int tradeNum = 1; tradeNum <= 5; tradeNum++) {
-                    String title = boardType.getDescription() + " - " + tradeTitles[(i + tradeNum - 1) % tradeTitles.length] + " " + tradeNum;
-                    String content = tradeContents[(i + tradeNum - 1) % tradeContents.length] +
-                        " (판매자: test" + i + ", 보드타입: " + boardType.getDescription() + ")";
+            // 거래글에 이미지 추가
+            trade.addImage(selectedImage);
 
-                    Trade trade = new Trade(
-                        member,
-                        boardType,
-                        title,
-                        content,
-                        10000L + (i * 1000L) + (tradeNum * 100L), // 가격 (10000원부터 시작)
-                        org.example.backend.domain.trade.enums.TradeStatus.SELLING,
-                        boardType.getDescription(),
-                        java.time.LocalDateTime.now()
-                    );
-
-                    tradeRepository.save(trade);
-                }
-            }
-        }
+            tradeRepository.save(trade);
+        });
     }
 }
