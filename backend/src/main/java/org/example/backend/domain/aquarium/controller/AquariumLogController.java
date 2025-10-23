@@ -40,15 +40,6 @@ public class AquariumLogController {
         return ResponseEntity.ok(logs);
     }
 
-    // Read - 특정 로그 조회
-    @Operation(summary = "어항 기록 조회", description = "특정 어항의 특정 기록을 조회합니다.")
-    @GetMapping("/{logId}")
-    public ResponseEntity<AquariumLogResponseDto> getLogById(
-            @PathVariable Long aquariumId,
-            @PathVariable Long logId) {
-        AquariumLogResponseDto responseDto = aquariumLogService.getLogById(logId);
-        return ResponseEntity.ok(responseDto);
-    }
 
     // Update - 로그 수정
     @Operation(summary = "어항 기록 수정", description = "특정 어항의 특정 기록을 수정합니다.")

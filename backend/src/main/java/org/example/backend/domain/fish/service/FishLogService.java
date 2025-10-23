@@ -41,19 +41,6 @@ public class FishLogService {
         return FishLogResponseDto.from(savedLog);
     }
     
-    // Read - 모든 물고기 로그 조회
-    public List<FishLogResponseDto> getAllLogs() {
-        return fishLogRepository.findAll().stream()
-                .map(FishLogResponseDto::from)
-                .collect(Collectors.toList());
-    }
-    
-    // Read - 특정 물고기 로그 조회
-    public FishLogResponseDto getLogById(Long logId) {
-        FishLog fishLog = fishLogRepository.findById(logId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.FISH_LOG_NOT_FOUND));
-        return FishLogResponseDto.from(fishLog);
-    }
     
     // Read - fishId로 물고기 로그 조회
     public List<FishLogResponseDto> getLogsByFishId(Long fishId) {

@@ -41,19 +41,6 @@ public class AquariumLogService {
         return AquariumLogResponseDto.from(savedLog);
     }
 
-    // Read - 모든 로그 조회
-    public List<AquariumLogResponseDto> getAllLogs() {
-        return aquariumLogRepository.findAll().stream()
-                .map(AquariumLogResponseDto::from)
-                .collect(Collectors.toList());
-    }
-
-    // Read - 특정 로그 조회
-    public AquariumLogResponseDto getLogById(Long logId) {
-        AquariumLog aquariumLog = aquariumLogRepository.findById(logId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.AQUARIUM_LOG_NOT_FOUND));
-        return AquariumLogResponseDto.from(aquariumLog);
-    }
 
     // Read - aquariumId로 로그 조회
     public List<AquariumLogResponseDto> getLogsByAquariumId(Long aquariumId) {

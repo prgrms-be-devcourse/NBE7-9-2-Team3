@@ -41,15 +41,6 @@ public class FishLogController {
         return ResponseEntity.ok(logs);
     }
     
-    // 특정 로그 조회
-    @Operation(summary = "물고기 기록 조회", description = "특정 물고기 특정 기록을 조회합니다.")
-    @GetMapping("/{logId}")
-    public ResponseEntity<FishLogResponseDto> getLogById(
-            @PathVariable Long fishId,
-            @PathVariable Long logId) {
-        FishLogResponseDto responseDto = fishLogService.getLogById(logId);
-        return ResponseEntity.ok(responseDto);
-    }
     
     // Update - 로그 수정
     @Operation(summary = "물고기 기록 수정", description = "특정 물고기의 특정 기록을 수정합니다.")
