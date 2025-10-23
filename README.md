@@ -9,7 +9,7 @@
 ## 🤝 팀원
 | <img src="https://github.com/do04080.png" width="120px;" alt=""/> | <img src="https://github.com/BE9koo.png" width="120px;" alt=""/> | <img src="https://github.com/kimwonmin.png" width="120px;" alt=""/> | <img src="https://github.com/premierbell.png" width="120px;" alt=""/> | <img src="https://github.com/qivvoon.png" width="120px;" alt=""/> | <img src="https://github.com/xoxoisme.png" width="120px;" alt=""/> |
 | :----------------------------------------------------: | :----------------------------------------------------: | :----------------------------------------------------: | :----------------------------------------------------: | :----------------------------------------------------: | :----------------------------------------------------: |
-|   [도석환](https://github.com/do04080)   |   [구본황](https://github.com/BE9koo)   |   [김원민](https://github.com/kimwonmin)   |   [박종원](https://github.com/premierbell)   |   [박지원](https://github.com/qivvoon)   |   [권태현](https://github.com/xoxoisme)   |
+|   [도석환](https://github.com/do04080)   |   [구본황](https://github.com/BE9koo)   |   [김원민](https://github.com/kimwonmin)   |   [박종원](https://github.com/premierbell)   |   [강지원](https://github.com/qivvoon)   |   [권태현](https://github.com/xoxoisme)   |
 
 ---
 
