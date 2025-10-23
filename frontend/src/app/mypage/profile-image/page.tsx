@@ -222,12 +222,12 @@ export default function ProfileImagePage() {
             </div>
 
             {/* 미리보기 */}
-            {selectedImage && (
+            {selectedImage && previewImage && (
               <div className="text-center">
                 <h3 className="text-lg font-medium text-gray-900 mb-4">미리보기</h3>
                 <div className="flex justify-center">
                   <img
-                    src={previewImage || ''}
+                    src={previewImage}
                     alt="미리보기"
                     className="h-32 w-32 rounded-full object-cover border-4 border-blue-200 shadow-lg"
                   />

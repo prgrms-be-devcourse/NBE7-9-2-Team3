@@ -73,7 +73,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 허용된 API 경로들
-        if(List.of("/api/members/join", "/api/members/login", "/api/images/presigned-url").contains(requestURI)) {
+        if(List.of("/api/members/join", "/api/members/login").contains(requestURI)) {
             filterChain.doFilter(request, response);
             return;
         }
