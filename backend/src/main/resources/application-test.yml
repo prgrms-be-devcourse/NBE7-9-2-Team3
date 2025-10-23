@@ -18,7 +18,7 @@ cloud:
     region:
       static: ap-northeast-2
     credentials:
-      access-key: dummy  # test시, S3 접근 X
-      secret-key: dummy  # test시, S3 접근 X
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
     stack:
       auto: false

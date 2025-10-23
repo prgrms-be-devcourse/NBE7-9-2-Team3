@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
@@ -32,7 +33,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
     private final RequestContext rq;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         logger.debug("CustomAuthenticationFilter called");
 
         try {
@@ -48,17 +49,37 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
                     }
                     """.formatted(errorCode.getCode(), errorCode.getMessage()));
         } catch (Exception e) {
+            logger.error("Unexpected error in authentication filter", e);
             throw e;
         }
     }
 
     private void authenticate(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        if(!request.getRequestURI().startsWith("/api/")) {
+        String requestURI = request.getRequestURI();
+        
+        // API 경로가 아닌 경우 통과 (Swagger UI, H2 Console, WebSocket 등)
+        if(!requestURI.startsWith("/api/")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        if(List.of("/api/members/join", "/api/members/login", "/api/images/presigned-url").contains(request.getRequestURI())) {
+        // WebSocket 경로 제외
+        if(requestURI.startsWith("/ws")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Swagger UI 관련 경로들 제외
+        if(requestURI.startsWith("/swagger-ui") || 
+           requestURI.startsWith("/api-docs") || 
+           requestURI.startsWith("/webjars") ||
+           requestURI.startsWith("/v3/api-docs")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 허용된 API 경로들
+        if(List.of("/api/members/join", "/api/members/login").contains(requestURI)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -67,9 +88,9 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         String headerAuthorization = rq.getHeader("Authorization", "");
 
         if (!headerAuthorization.isBlank()) {
-        if (!headerAuthorization.startsWith("Bearer "))
-            throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
-
+            if (!headerAuthorization.startsWith("Bearer ")) {
+                throw new BusinessException(ErrorCode.UNAUTHORIZED_ACCESS);
+            }
             accessToken = headerAuthorization.substring(7);
         } else {
             accessToken = rq.getCookieValue("accessToken", "");

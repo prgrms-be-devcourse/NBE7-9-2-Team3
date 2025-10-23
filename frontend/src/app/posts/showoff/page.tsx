@@ -164,10 +164,17 @@ function PostItem({
 
 // -------------------- PostListPage --------------------
 export default function PostListPage() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<"all" | "following">("all");
   const [posts, setPosts] = useState<PostDto[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+
+  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      window.location.href = '/login';
+    }
+  }, [isAuthenticated, authLoading]);
   
   // 회원 검색 관련 상태
   const [searchQuery, setSearchQuery] = useState('');
@@ -187,7 +194,7 @@ export default function PostListPage() {
 
   const loadPosts = useCallback(
     async (reset = false) => {
-      if (loadingRef.current || (!hasNextRef.current && !reset)) return;
+      if (!isAuthenticated || loadingRef.current || (!hasNextRef.current && !reset)) return;
       loadingRef.current = true;
 
       const pageToLoad = reset ? 0 : pageRef.current;
@@ -207,11 +214,15 @@ export default function PostListPage() {
         hasNextRef.current = (reset ? data.length : pageRef.current * PAGE_SIZE) < total;
       } catch (err) {
         console.error(err);
+        // 인증 오류인 경우 로그인 페이지로 리다이렉트
+        if (err instanceof Error && (err.message.includes('CMN006') || err.message.includes('인증이 필요합니다'))) {
+          window.location.href = '/login';
+        }
       } finally {
         loadingRef.current = false;
       }
     },
-    [activeTab]
+    [activeTab, isAuthenticated]
   );
 
   useEffect(() => {
@@ -415,6 +426,23 @@ export default function PostListPage() {
       });
     }
   };
+
+  // 로딩 중이거나 인증되지 않은 경우
+  if (authLoading) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <p className="text-center">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <p className="text-center">로그인이 필요합니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-6">

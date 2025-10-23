@@ -1,48 +1,58 @@
 package org.example.backend.global.security;
 
-import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableWebSecurity // 스프링 시큐리티 설정을 활성화
+@EnableWebSecurity
 public class SecurityConfig {
+
+    private final CustomAuthenticationFilter customAuthenticationFilter;
+
+    public SecurityConfig(CustomAuthenticationFilter customAuthenticationFilter) {
+        this.customAuthenticationFilter = customAuthenticationFilter;
+    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-        // 1. CSRF 비활성화 (API 서버의 경우 일반적으로 비활성화)
+        // CSRF 비활성화
         http.csrf(AbstractHttpConfigurer::disable);
 
-        // 2. H2 Console을 위한 설정
+        // H2 Console을 위한 설정
         http.headers(headers -> headers
                 .frameOptions(frameOptions -> frameOptions.sameOrigin()) // H2 Console이 iframe을 사용하므로 허용
         );
 
-        // 3. 인증/인가 설정 (모두 허용)
+        // 인증/인가 설정
         http.authorizeHttpRequests(authorize -> authorize
                 // H2 Console 경로 허용
                 .requestMatchers("/h2-console/**").permitAll()
-                // 모든 경로 ("/**")에 대한 요청을 인증/인가 없이 허용합니다.
-                .requestMatchers("/**").permitAll()
-                // 위 설정을 하지 않은 나머지 요청은 인증을 요구하도록 설정
+                // 회원가입, 로그인, 로그아웃 경로 허용
+                .requestMatchers("/api/members/join", "/api/members/login", "/api/members/logout").permitAll()
+                // WebSocket 경로 허용
+                .requestMatchers("/ws/**").permitAll()
+                // Swagger UI 경로 허용 (정적 리소스 포함)
+                .requestMatchers("/swagger-ui/**", "/api-docs/**", "/swagger-ui.html", "/webjars/**", "/v3/api-docs/**").permitAll()
+                // 나머지 모든 요청은 인증 필요
                 .anyRequest().authenticated()
         );
 
-        // 4. 폼 로그인 비활성화 (API 서버의 경우)
+        // 커스텀 인증 필터 추가
+        http.addFilterBefore(customAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
+        // 폼 로그인 비활성화
         http.formLogin(AbstractHttpConfigurer::disable);
 
-        // 5. HTTP Basic 인증 비활성화
+        // HTTP Basic 인증 비활성화
         http.httpBasic(AbstractHttpConfigurer::disable);
 
-        // 6. CORS 설정 활성화 (spring security는 기본적으로 cors 차단)
+        // CORS 설정 활성화 (spring security는 기본적으로 cors 차단)
         http.cors(cors -> {});
 
         return http.build();
