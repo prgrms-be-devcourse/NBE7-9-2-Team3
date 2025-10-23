@@ -19,6 +19,7 @@ public record TradeSearchRequestDto(
     Integer maxPrice,
     TradeStatus status
 ) {
+
     // 기본값 설정
     public TradeSearchRequestDto {
         page = (page == null || page < 0) ? 0 : page;
