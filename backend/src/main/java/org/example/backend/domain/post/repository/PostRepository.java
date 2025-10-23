@@ -13,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
+    List<Post> findByBoardType(BoardType boardType);
+
     @Query(
         value = "SELECT DISTINCT p FROM Post p " +
             "JOIN FETCH p.author " +
