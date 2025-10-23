@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { fetchApi } from '@/lib/client';
 import { useRouter, useParams } from 'next/navigation';
-import { uploadImages } from '@/lib/uploadImage';
+import { useAuth } from '@/context/AuthContext';
 
 interface PostDto {
   id: number;
@@ -13,6 +13,7 @@ interface PostDto {
 }
 
 export default function PostEditPage() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
   const { id } = useParams<{ id: string }>();
 
@@ -21,9 +22,17 @@ export default function PostEditPage() {
   const [existingImages, setExistingImages] = useState<string[]>([]); // 서버에 저장된 기존 이미지
   const [newImages, setNewImages] = useState<File[]>([]); // 새로 추가할 이미지
 
+  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
+
   // 게시글 데이터 불러오기
   useEffect(() => {
     const fetchPost = async () => {
+      if (!isAuthenticated) return;
       try {
         const res = await fetchApi(`/api/posts/${id}`, { method: 'GET' });
         const post: PostDto = res.data;
@@ -32,13 +41,18 @@ export default function PostEditPage() {
         setExistingImages(post.images || []);
       } catch (err: any) {
         console.error(err);
+        // 인증 오류인 경우 로그인 페이지로 리다이렉트
+        if (err.message && (err.message.includes('CMN006') || err.message.includes('인증이 필요합니다'))) {
+          window.location.href = '/login';
+          return;
+        }
         alert('게시글을 불러오는 중 오류가 발생했습니다.');
         router.push('/posts/showoff');
       }
     };
 
-    if (id) fetchPost();
-  }, [id, router]);
+    if (id && isAuthenticated) fetchPost();
+  }, [id, router, isAuthenticated]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -65,26 +79,22 @@ export default function PostEditPage() {
       return;
     }
 
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('boardType', 'SHOWOFF');
+
+    // 기존 이미지는 서버가 남겨두도록 ID 또는 URL 전달
+    existingImages.forEach((url) => formData.append('existingImages', url));
+
+    // 새 이미지만 추가
+    newImages.forEach((img) => formData.append('images', img));
+
     try {
-      // 1. 새 이미지를 S3에 업로드
-      let newImageUrls: string[] = [];
-      if (newImages.length > 0) {
-        newImageUrls = await uploadImages(newImages, 'post');
-      }
-
-      // 2. 기존 이미지 + 새 이미지 URL 병합
-      const allImageUrls = [...existingImages, ...newImageUrls];
-
-      // 3. JSON으로 데이터 전송
       await fetchApi(`/api/posts/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({
-          title,
-          content,
-          imageUrls: allImageUrls
-        })
+        body: formData,
       });
-
       alert('게시글이 수정되었습니다.');
       router.push('/posts/showoff');
     } catch (err) {
@@ -92,6 +102,23 @@ export default function PostEditPage() {
       alert('게시글 수정 중 오류가 발생했습니다.');
     }
   };
+
+  // 로딩 중이거나 인증되지 않은 경우
+  if (authLoading) {
+    return (
+      <div className="p-4 max-w-lg mx-auto">
+        <p className="text-center">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="p-4 max-w-lg mx-auto">
+        <p className="text-center">로그인이 필요합니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 max-w-lg mx-auto">

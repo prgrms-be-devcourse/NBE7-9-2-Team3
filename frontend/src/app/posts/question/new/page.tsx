@@ -1,16 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchApi } from "@/lib/client";
 import { useRouter } from 'next/navigation';
-import { uploadImages } from '@/lib/uploadImage';
+import { useAuth } from "@/context/AuthContext";
 
 export default function PostForm() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const router = useRouter();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('fish'); // 🏷 기본 카테고리
   const [images, setImages] = useState<File[]>([]);
-  const router = useRouter();
+
+  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -28,30 +36,23 @@ export default function PostForm() {
       return;
     }
 
-    try {
-      // 1. S3에 이미지 업로드
-      let imageUrls: string[] = [];
-      if (images.length > 0) {
-        imageUrls = await uploadImages(images, 'post');
-      }
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('boardType', 'QUESTION');
+    formData.append('category', category); // 🏷 category 추가
+    images.forEach((img) => formData.append('images', img));
 
-      // 2. JSON으로 데이터 전송
+    try {
       await fetchApi('/api/posts', {
         method: 'POST',
-        body: JSON.stringify({
-          title,
-          content,
-          boardType: 'QUESTION',
-          category,
-          imageUrls
-        })
+        body: formData,
       });
-
       alert('게시글이 생성되었습니다.');
       setTitle('');
       setContent('');
       setImages([]);
-      setCategory('fish');
+      setCategory('fish'); // 초기화
 
       router.push('/posts/question');
     } catch (err) {
@@ -59,6 +60,23 @@ export default function PostForm() {
       alert('게시글 생성 중 오류가 발생했습니다.');
     }
   };
+
+  // 로딩 중이거나 인증되지 않은 경우
+  if (authLoading) {
+    return (
+      <div className="p-4 max-w-lg mx-auto">
+        <p className="text-center">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="p-4 max-w-lg mx-auto">
+        <p className="text-center">로그인이 필요합니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 max-w-lg mx-auto">
