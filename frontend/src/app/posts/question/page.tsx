@@ -30,7 +30,6 @@ export default function QuestionBoardPage() {
   const [loading, setLoading] = useState(false);
 
   const [keyword, setKeyword] = useState("");        // 🔍 검색어
-  const [searchType, setSearchType] = useState("title"); // 🔽 검색 타입 (제목, 내용, 작성자)
   const [category, setCategory] = useState("all");   // 🏷 카테고리
 
   const PAGE_SIZE = 10;
@@ -45,10 +44,9 @@ export default function QuestionBoardPage() {
         size: String(PAGE_SIZE),
       });
 
-      // 검색어, 타입 추가
+      // 검색어
       if (searchKeyword.trim() !== "") {
         query.append("keyword", searchKeyword);
-        query.append("searchType", searchType);
       }
 
       // 카테고리 추가
@@ -124,17 +122,6 @@ export default function QuestionBoardPage() {
           <option value="fish">물고기</option>
           <option value="aquarium">수조</option>
           {/* 필요 시 다른 카테고리 추가 */}
-        </select>
-
-        {/* 검색 타입 */}
-        <select
-          value={searchType}
-          onChange={(e) => setSearchType(e.target.value)}
-          className="border rounded px-2 py-1 text-sm"
-        >
-          <option value="title">제목</option>
-          <option value="content">내용</option>
-          <option value="nickname">작성자</option>
         </select>
 
         {/* 검색어 입력 */}

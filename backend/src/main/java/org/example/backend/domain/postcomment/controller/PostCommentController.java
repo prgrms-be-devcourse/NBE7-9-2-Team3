@@ -33,28 +33,15 @@ public class PostCommentController {
 
     // 게시글에 달린 댓글 확인
     @GetMapping
-    @Transactional(readOnly = true)
     public ApiResponse<List<PostCommentReadResponseDto>> getPostComments(
         @RequestParam Long postId,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        List<PostComment> comments = postCommentService.findByPostId(postId);
+        List<PostCommentReadResponseDto> response =
+            postCommentService.getPostComments(postId, userDetails.getMember());
 
-        List<PostCommentReadResponseDto> response = comments.stream()
-            .sorted(Comparator.comparing(PostComment::getCreateDate).reversed())
-            .map(c -> new PostCommentReadResponseDto(
-                c.getId(),
-                c.getContent(),
-                c.getAuthor().getNickname(),
-                c.getAuthor().getMemberId().equals(userDetails.getMember().getMemberId())
-            ))
-            .toList();
-
-        return new ApiResponse<>("200-1",
-            "댓글 목록 조회",
-            response
-        );
+        return ApiResponse.ok("댓글 목록 조회", response);
     }
 
     @GetMapping("/my")
@@ -83,31 +70,18 @@ public class PostCommentController {
     }
 
     @DeleteMapping("/{commentId}")
-    @Transactional
     public ApiResponse<Void> deletePostComment(
         @PathVariable Long commentId,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        PostComment postComment = postCommentService.findById(commentId)
-            .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+        postCommentService.deletePostComment(commentId, userDetails.getMember());
 
-        // 작성자 검증
-        if (!postComment.getAuthor().getMemberId().equals(userDetails.getId())) {
-            throw new SecurityException("본인이 작성한 댓글만 삭제할 수 있습니다.");
-        }
-
-        postCommentService.deletePostComment(postComment);
-
-        return  new ApiResponse<>(
-            "200-1",
-            "%d번 댓글 삭제".formatted(commentId)
-        );
+        return ApiResponse.ok("%d번 댓글 삭제".formatted(commentId));
 
     }
 
     @PostMapping
-    @Transactional
     public ApiResponse<Void> createPostComment(
         @RequestBody PostCommentCreateRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -115,34 +89,20 @@ public class PostCommentController {
 
         postCommentService.createPostComment(reqBody, userDetails.getMember());
 
-        return new ApiResponse<>(
-            "201-1",
-            "댓글이 생성되었습니다."
-        );
+
+        return ApiResponse.ok("댓글이 생성되었습니다");
 
     }
 
     @PatchMapping("/{commentId}")
-    @Transactional
     public ApiResponse<Void> modifyItem(
         @PathVariable Long commentId,
         @RequestBody PostCommentModifyRequestDto reqBody,
         @AuthenticationPrincipal CustomUserDetails userDetails
     ){
 
-        PostComment postComment = postCommentService.findById(commentId)
-            .orElseThrow(() -> new RuntimeException("댓글을 찾을 수 없습니다."));
+        postCommentService.modifyPostComment(commentId, reqBody, userDetails.getMember());
 
-        // 작성자 검증
-        if (!postComment.getAuthor().getMemberId().equals(userDetails.getId())) {
-            throw new SecurityException("본인이 작성한 댓글만 수정할 수 있습니다.");
-        }
-
-        postCommentService.modifyPostComment(postComment, reqBody);
-
-        return new ApiResponse<>(
-            "200-1",
-            "%d번 댓글이 수정되었습니다.".formatted(commentId)
-        );
+        return ApiResponse.ok("%d번 댓글 수정".formatted(commentId));
     }
 }

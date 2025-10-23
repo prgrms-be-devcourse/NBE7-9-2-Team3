@@ -1,20 +1,27 @@
 package org.example.backend.domain.post.service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.follow.service.FollowService;
+import org.example.backend.domain.like.service.LikeService;
 import org.example.backend.domain.member.entity.Member;
+import org.example.backend.domain.post.dto.PostListResponse;
 import org.example.backend.domain.post.dto.PostModifyRequestDto;
+import org.example.backend.domain.post.dto.PostReadResponseDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
 import org.example.backend.domain.post.entity.Post;
 import org.example.backend.domain.post.entity.Post.BoardType;
 import org.example.backend.domain.post.entity.PostImage;
 import org.example.backend.domain.post.repository.PostRepository;
+import org.example.backend.global.exception.BusinessException;
+import org.example.backend.global.exception.ErrorCode;
 import org.example.backend.global.image.ImageService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,12 +29,24 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final ImageService imageService;
+    private final FollowService followService;
+    private final LikeService likeService;
 
     public Optional<Post> findById(Long id) {
+
         return postRepository.findById(id);
+
     }
 
-    public void delete(Post post) {
+    @Transactional
+    public void delete(Long id, Member member) {
+
+        Post post = postRepository.findByIdWithAuthorAndImages(id)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
+
+        if (!post.getAuthor().getMemberId().equals(member.getMemberId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
+        }
 
         if (!post.getImages().isEmpty()) {
             List<String> oldImageUrls = post.getImages().stream()
@@ -40,12 +59,13 @@ public class PostService {
         postRepository.delete(post);
     }
 
+    @Transactional
     public void write(PostWriteRequestDto reqBody, Member member) {
         Post post = new Post(reqBody, member);
 
         if (Post.BoardType.valueOf(reqBody.boardType()) == Post.BoardType.SHOWOFF
             && (reqBody.imageUrls() == null || reqBody.imageUrls().isEmpty())) {
-            throw new IllegalArgumentException("자랑 게시판 게시글은 최소 1개의 이미지가 필요합니다.");
+            throw new BusinessException(ErrorCode.IMAGE_FILE_EMPTY);
         }
 
         if (reqBody.imageUrls() != null && !reqBody.imageUrls().isEmpty()) {
@@ -56,7 +76,16 @@ public class PostService {
         postRepository.save(post);
     }
 
-    public void modify(Post post, PostModifyRequestDto reqBody) {
+    @Transactional
+    public void modify(Long id, PostModifyRequestDto reqBody, Member member) {
+
+        Post post = postRepository.findByIdWithAuthorAndImages(id)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
+
+        // 작성자 검증
+        if (!post.getAuthor().getMemberId().equals(member.getMemberId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ACCESS);
+        }
 
         post.updateTitle(reqBody.title());
         post.updateContent(reqBody.content());
@@ -66,7 +95,6 @@ public class PostService {
             List<String> oldImageUrls = post.getImages().stream()
                 .map(PostImage::getImageUrl)
                 .toList();
-
             List<String> newImageUrls = reqBody.imageUrls();
 
             // 삭제할 이미지 : 기존에는 있었는데 새 목록에는 없는 것
@@ -93,32 +121,104 @@ public class PostService {
         return postRepository.findByBoardType(boardType);
     }
 
-    public Page<Post> findByBoardTypeAndDisplayingAndAuthorIdInAndKeywordAndCategory(
-        BoardType boardType,
-        Post.Displaying displaying,
-        List<Long> authorIds,
-        String keyword,
-        String category,
-        Pageable pageable) {
+    @Transactional(readOnly = true)
+    public PostListResponse getPosts(BoardType boardType, String filterType, Member member,
+        String keyword, String category, Pageable pageable) {
 
-        return postRepository.searchByBoardTypeAndDisplayingAndAuthorIdInAndKeywordAndCategory(
-            boardType, displaying, authorIds, keyword, category, pageable
-        );
+        // 로그인 사용자가 좋아요한 postId를 한번에 가져오기
+        List<Long> likedPostIds = likeService.findPostIdsByMember(member);
+
+        // 로그인 사용자가 팔로우하는 회원 ID 리스트 미리 가져오기
+        List<Long> followingIds = followService.findFolloweeIdsByFollower(member);
+
+        Page<Post> postPage;
+
+        if (filterType.equals("following")) {
+
+            // 팔로잉 대상이 없으면 바로 빈 결과 반환
+            if (followingIds.isEmpty()) {
+                return new PostListResponse(Collections.emptyList(), 0);
+            }
+
+            postPage = postRepository.findByBoardTypeAndDisplayingWithAuthorAndImagesAndIds(
+                boardType, Post.Displaying.PUBLIC, followingIds, pageable);
+
+        } else {
+
+            if ((keyword == null || keyword.isBlank()) && (category == null || category.equals(
+                "all"))) {
+
+                postPage = postRepository.findByBoardTypeAndDisplayingWithAuthorAndImages(boardType,
+                    Post.Displaying.PUBLIC, pageable);
+
+            } else {
+
+                postPage = postRepository.searchByBoardTypeAndDisplayingAndKeywordAndCategoryWithAuthorAndImages(
+                    boardType, Post.Displaying.PUBLIC, keyword, category, pageable
+                );
+
+            }
+        }
+
+        List<PostReadResponseDto> postDtos = postPage.getContent().stream()
+            .map(post -> {
+
+                boolean liked = likedPostIds.contains(post.getId());
+                boolean following = followingIds.contains(post.getAuthor().getMemberId());
+                boolean isMine = post.getAuthor().getMemberId()
+                    .equals(member.getMemberId());
+
+                return new PostReadResponseDto(
+                    post.getId(),
+                    post.getTitle(),
+                    post.getContent(),
+                    post.getAuthor().getNickname(),
+                    post.getCreateDate(),
+                    post.getImages().stream().map(PostImage::getImageUrl).toList(),
+                    post.getLikeCount(),
+                    liked,
+                    following,
+                    post.getAuthor().getMemberId(),
+                    post.getCategory(),
+                    isMine
+                );
+            })
+            .toList();
+
+        int totalCount = (int) postPage.getTotalElements();
+        return new PostListResponse(postDtos, totalCount);
+
     }
 
-    // 전체 게시판 + keyword + category
-    public Page<Post> findByBoardTypeAndDisplayingAndKeywordAndCategory(
-        BoardType boardType,
-        Post.Displaying displaying,
-        String keyword,
-        String category,
-        Pageable pageable) {
+    @Transactional(readOnly = true)
+    public PostReadResponseDto getPostById(Long id, Member member) {
 
-        if ((keyword == null || keyword.isBlank()) && (category == null || category.equals("all"))) {
-            return postRepository.findByBoardTypeAndDisplaying(boardType, displaying, pageable);
-        }
-        return postRepository.searchByBoardTypeAndDisplayingAndKeywordAndCategory(
-            boardType, displaying, keyword, category, pageable
+        Post post = postRepository.findByIdWithAuthorAndImages(id)
+            .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_DATA));
+
+        boolean liked = likeService.existsByMemberAndPost(member, post);
+        boolean following = followService.existsByFollowerAndFollowee(
+            member,                     // 로그인 사용자
+            post.getAuthor()          // 게시글 작성자
+        );
+        boolean isMine = post.getAuthor().getMemberId()
+            .equals(member.getMemberId());
+
+        return new PostReadResponseDto(
+            post.getId(),
+            post.getTitle(),
+            post.getContent(),
+            post.getAuthor().getNickname(),
+            post.getCreateDate(),
+            post.getImages().stream()
+                .map(PostImage::getImageUrl)
+                .toList(),
+            post.getLikeCount(),
+            liked,
+            following,
+            post.getAuthor().getMemberId(),
+            post.getCategory(),
+            isMine
         );
     }
 }

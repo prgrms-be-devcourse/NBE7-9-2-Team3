@@ -8,6 +8,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -24,9 +26,11 @@ import org.example.backend.global.jpa.entity.BaseEntity;
 public class Post extends BaseEntity {
 
     @Column(nullable = false)
+    @NotBlank(message = "제목은 필수입니다.")
     private String title;
 
     @Column(nullable = false)
+    @NotBlank(message = "내용은 필수입니다.")
     private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -37,6 +41,7 @@ public class Post extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @NotNull(message = "게시판 종류는 필수입니다.")
     private BoardType boardType;
 
     public enum BoardType {
@@ -45,6 +50,7 @@ public class Post extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @NotNull(message = "공개 여부는 필수입니다.")
     private Displaying displaying;
 
     public enum Displaying {
