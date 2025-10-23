@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/comments")
+@RequestMapping("/api/posts/comments")
 @Tag(name = "Post", description = "질문/자랑 게시판 댓글 관리 API")
 public class PostCommentController {
 
