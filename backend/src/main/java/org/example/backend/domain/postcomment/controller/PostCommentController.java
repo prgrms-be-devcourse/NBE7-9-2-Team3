@@ -1,5 +1,6 @@
 package org.example.backend.domain.postcomment.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/comments")
+@Tag(name = "Post", description = "질문/자랑 게시판 댓글 관리 API")
 public class PostCommentController {
 
     private final PostCommentService postCommentService;
