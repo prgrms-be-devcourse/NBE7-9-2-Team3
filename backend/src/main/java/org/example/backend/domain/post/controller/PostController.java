@@ -3,7 +3,7 @@ package org.example.backend.domain.post.controller;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.post.dto.MyPostReadResponseDto;
-import org.example.backend.domain.post.dto.PostListResponse;
+import org.example.backend.domain.post.dto.PostListResponseDTO;
 import org.example.backend.domain.post.dto.PostModifyRequestDto;
 import org.example.backend.domain.post.dto.PostReadResponseDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
@@ -63,7 +63,7 @@ public class PostController {
     }
 
     @GetMapping
-    public ApiResponse<PostListResponse> getPosts(
+    public ApiResponse<PostListResponseDTO> getPosts(
         @RequestParam BoardType boardType,
         @RequestParam(defaultValue = "all") String filterType, // "all" or "following"
         @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -72,7 +72,7 @@ public class PostController {
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
 
-        PostListResponse response = postService.getPosts(
+        PostListResponseDTO response = postService.getPosts(
             boardType, filterType, userDetails.getMember(), keyword, category, pageable
         );
 
