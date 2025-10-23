@@ -21,8 +21,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "LEFT JOIN FETCH p.images " +
             "WHERE p.boardType = :boardType AND p.displaying = :displaying " +
             "AND p.author.memberId IN :authorIds",
-        countQuery = "SELECT COUNT(p) FROM Post p WHERE p.boardType = :boardType AND p.displaying = :displaying " +
-            "AND p.author.memberId IN :authorIds"
+        countQuery =
+            "SELECT COUNT(p) FROM Post p WHERE p.boardType = :boardType AND p.displaying = :displaying "
+                +
+                "AND p.author.memberId IN :authorIds"
     )
     Page<Post> findByBoardTypeAndDisplayingWithAuthorAndImagesAndIds(
         @Param("boardType") BoardType boardType,
@@ -78,4 +80,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
         "LEFT JOIN FETCH p.images " +
         "WHERE p.id = :id")
     Optional<Post> findByIdWithAuthorAndImages(@Param("id") Long id);
+
+    @Query("SELECT p FROM Post p " +
+        "JOIN FETCH p.author " +
+        "WHERE p.boardType = :boardType AND p.author.memberId = :id")
+    List<Post> findMyPostsWithAuthor(
+        @Param("boardType") BoardType boardType,
+        @Param("id") Long id);
+
+
 }

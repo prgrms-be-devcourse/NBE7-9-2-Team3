@@ -8,7 +8,6 @@ import org.example.backend.domain.post.dto.PostListResponseDto;
 import org.example.backend.domain.post.dto.PostModifyRequestDto;
 import org.example.backend.domain.post.dto.PostReadResponseDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
-import org.example.backend.domain.post.entity.Post;
 import org.example.backend.domain.post.entity.Post.BoardType;
 import org.example.backend.domain.post.service.PostService;
 import org.example.backend.global.response.ApiResponse;
@@ -41,27 +40,9 @@ public class PostController {
         @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
-        Long memberId = userDetails.getId();
+        List<MyPostReadResponseDto> response = postService.getMyPosts(boardType, userDetails.getId());
 
-        List<Post> posts = postService.findByBoardType(boardType);
-
-        List<Post> myPosts = posts.stream()
-            .filter(post -> post.getAuthor().getMemberId().equals(memberId))
-            .toList();
-
-        List<MyPostReadResponseDto> response = myPosts.stream()
-            .map(post -> new MyPostReadResponseDto(
-                post.getId(),
-                post.getTitle(),
-                post.getDisplaying()
-            ))
-            .toList();
-
-        return new ApiResponse<>(
-            "200-1",
-            "내가 쓴 게시글 다건 조회",
-            response
-        );
+        return ApiResponse.ok("내가 쓴 게시글 다건 조회", response);
     }
 
     @GetMapping

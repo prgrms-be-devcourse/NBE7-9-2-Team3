@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.follow.service.FollowService;
 import org.example.backend.domain.like.service.LikeService;
 import org.example.backend.domain.member.entity.Member;
+import org.example.backend.domain.post.dto.MyPostReadResponseDto;
 import org.example.backend.domain.post.dto.PostListResponseDto;
 import org.example.backend.domain.post.dto.PostModifyRequestDto;
 import org.example.backend.domain.post.dto.PostReadResponseDto;
@@ -220,5 +221,18 @@ public class PostService {
             post.getCategory(),
             isMine
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<MyPostReadResponseDto> getMyPosts(BoardType boardType, Long id) {
+
+        List<Post> posts = postRepository.findMyPostsWithAuthor(boardType, id);
+
+        List<MyPostReadResponseDto> response = posts.stream()
+            .map(p -> new MyPostReadResponseDto(p.getId(), p.getTitle(), p.getDisplaying()))
+            .toList();
+
+        return response;
+
     }
 }
