@@ -37,7 +37,7 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
         Pageable pageable
     );
 
-    // 결제 처리 시점에 레코드를 FOR UPDATE로 잠궈서 동시 접근을 직렬화
+    // 동시 접근을 직렬화
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT t FROM Trade t WHERE t.id = :id")
     Optional<Trade> findByIdForUpdate(@Param("id") Long id);
