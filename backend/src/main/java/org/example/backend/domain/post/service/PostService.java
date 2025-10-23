@@ -118,10 +118,6 @@ public class PostService {
 
     }
 
-    public List<Post> findByBoardType(BoardType boardType) {
-        return postRepository.findByBoardType(boardType);
-    }
-
     @Transactional(readOnly = true)
     public PostListResponseDto getPosts(BoardType boardType, String filterType, Member member,
         String keyword, String category, Pageable pageable) {
