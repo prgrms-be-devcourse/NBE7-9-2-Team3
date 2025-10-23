@@ -17,6 +17,19 @@ interface User {
   nickname: string;
 }
 
+interface ChatRoomDetail {
+  roomId: number;
+  tradeId: number;
+  tradeTitle: string;
+  boardType: 'FISH' | 'SECONDHAND';
+  sellerId: number;
+  sellerNickname: string;
+  buyerId: number;
+  buyerNickname: string;
+  createDate: string;
+  status: string;
+}
+
 export default function ChatRoomPage() {
   const router = useRouter();
   const params = useParams();
@@ -28,6 +41,7 @@ export default function ChatRoomPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
+  const [chatRoomInfo, setChatRoomInfo] = useState<ChatRoomDetail | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const wsClient = useRef(getWebSocketClient());
@@ -85,6 +99,21 @@ export default function ChatRoomPage() {
         unsubscribeRef.current();
       }
     };
+  }, [roomId]);
+
+  // 채팅방 정보 조회
+  useEffect(() => {
+    const loadChatRoomInfo = async () => {
+      try {
+        const response = await api.get<ApiResponse<ChatRoomDetail>>(
+          `/api/chat/rooms/${roomId}`
+        );
+        setChatRoomInfo(response.data);
+      } catch (err) {
+        console.error('채팅방 정보 조회 실패:', err);
+      }
+    };
+    loadChatRoomInfo();
   }, [roomId]);
 
   // 이전 메시지 불러오기
@@ -151,6 +180,17 @@ export default function ChatRoomPage() {
     });
   };
 
+  // 게시글로 이동
+  const goToTradePage = () => {
+    if (!chatRoomInfo) return;
+    
+    const path = chatRoomInfo.boardType === 'FISH' 
+      ? `/market/fish/${chatRoomInfo.tradeId}`
+      : `/market/secondhand/${chatRoomInfo.tradeId}`;
+    
+    router.push(path);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -190,6 +230,14 @@ export default function ChatRoomPage() {
           >
             ← 뒤로
           </button>
+          {chatRoomInfo && (
+            <button
+              onClick={goToTradePage}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+            >
+              게시글 보기
+            </button>
+          )}
           <div>
             <h1 className="font-semibold text-gray-900">채팅</h1>
             <div className="flex items-center gap-1 text-xs">
