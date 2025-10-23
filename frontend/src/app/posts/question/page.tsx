@@ -13,7 +13,7 @@ interface PostDto {
   commentCount: number;
 }
 
-interface PostListResponse {
+interface PostListResponseDto {
   posts: PostDto[];
   totalCount: number;
 }
@@ -65,7 +65,7 @@ export default function QuestionBoardPage() {
         query.append("category", searchCategory);
       }
 
-      const rsData: ApiResponse<PostListResponse> = await fetchApi(`/api/posts?${query.toString()}`);
+      const rsData: ApiResponse<PostListResponseDto> = await fetchApi(`/api/posts?${query.toString()}`);
 
       const data = rsData.data?.posts ?? [];
       setPosts(data);
