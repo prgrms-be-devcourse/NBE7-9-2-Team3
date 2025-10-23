@@ -376,6 +376,10 @@ export default function PostListPage() {
         setSearchResults(prev => prev.map(user => 
           user.memberId === memberId ? { ...user, following: true } : user
         ));
+
+        setPosts(prev => prev.map(post => 
+          post.authorId === memberId ? { ...post, following: true } : post
+        ));
         
         // 팔로잉 탭이 활성화되어 있으면 글 목록 새로고침
         if (activeTab === 'following') {
@@ -407,6 +411,10 @@ export default function PostListPage() {
         // 검색 결과에서 팔로우 상태만 업데이트 (제거하지 않음)
         setSearchResults(prev => prev.map(user => 
           user.memberId === memberId ? { ...user, following: false } : user
+        ));
+
+        setPosts(prev => prev.map(post => 
+          post.authorId === memberId ? { ...post, following: false } : post
         ));
         
         // 팔로잉 탭이 활성화되어 있으면 글 목록 새로고침
