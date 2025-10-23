@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 // 어항 데이터 타입
 interface Aquarium {
@@ -14,6 +15,9 @@ interface Aquarium {
 }
 
 export default function AquariumsPage() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const router = useRouter();
+  
   const [aquariums, setAquariums] = useState<Aquarium[]>([]);
   const [newAquariumName, setNewAquariumName] = useState('');
   const [isAdding, setIsAdding] = useState(false);  // "어항 추가" 버튼 클릭 여부 확인
@@ -23,7 +27,12 @@ export default function AquariumsPage() {
   const [editingAquariumId, setEditingAquariumId] = useState<number | null>(null);
   const [editingAquariumName, setEditingAquariumName] = useState('');
 
-  const router = useRouter();
+  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -90,6 +99,8 @@ export default function AquariumsPage() {
 
   // 어항 목록 (다건 조회)
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     fetch(`${baseUrl}/api/aquarium`, {
       credentials: 'include',
     })
@@ -109,8 +120,14 @@ export default function AquariumsPage() {
           setHasMyFishes(false);
         }
       })
-      .catch(err => console.error(err));
-  }, [refreshTrigger]); // refreshTrigger가 변경될 때마다 다시 조회
+      .catch(err => {
+        console.error(err);
+        // 인증 오류인 경우 로그인 페이지로 리다이렉트
+        if (err.message && (err.message.includes('CMN006') || err.message.includes('인증이 필요합니다'))) {
+          window.location.href = '/login';
+        }
+      });
+  }, [refreshTrigger, isAuthenticated]); // refreshTrigger가 변경될 때마다 다시 조회
 
   // "내가 키운 물고기" 어항의 물고기 개수 확인
   const checkMyFishesCount = async (aquariumId: number) => {
@@ -285,6 +302,23 @@ export default function AquariumsPage() {
       alert('알림 설정 중 오류가 발생했습니다.');
     }
   };
+
+  // 로딩 중이거나 인증되지 않은 경우
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-center">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <p className="text-center">로그인이 필요합니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchApi } from "@/lib/client";
+import { useAuth } from "@/context/AuthContext";
 
 interface PostDto {
   id: number;
@@ -24,6 +25,7 @@ interface ApiResponse<T> {
 }
 
 export default function QuestionBoardPage() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [posts, setPosts] = useState<PostDto[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -32,10 +34,19 @@ export default function QuestionBoardPage() {
   const [keyword, setKeyword] = useState("");        // 🔍 검색어
   const [category, setCategory] = useState("all");   // 🏷 카테고리
 
+  // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      window.location.href = '/login';
+    }
+  }, [isAuthenticated, authLoading]);
+
   const PAGE_SIZE = 10;
 
   // 🔹 게시글 로드
   const loadPosts = async (pageToLoad: number, searchKeyword = keyword, searchCategory = category) => {
+    if (!isAuthenticated) return;
+    
     setLoading(true);
     try {
       const query = new URLSearchParams({
@@ -65,6 +76,10 @@ export default function QuestionBoardPage() {
       setPage(pageToLoad);
     } catch (err) {
       console.error(err);
+      // 인증 오류인 경우 로그인 페이지로 리다이렉트
+      if (err instanceof Error && (err.message.includes('CMN006') || err.message.includes('인증이 필요합니다'))) {
+        window.location.href = '/login';
+      }
     } finally {
       setLoading(false);
     }
@@ -96,6 +111,23 @@ export default function QuestionBoardPage() {
     e.preventDefault();
     loadPosts(1, keyword, category);
   };
+
+  // 로딩 중이거나 인증되지 않은 경우
+  if (authLoading) {
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        <p className="text-center">로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        <p className="text-center">로그인이 필요합니다.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto p-6">
