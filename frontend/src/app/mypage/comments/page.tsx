@@ -10,6 +10,8 @@ interface PostComment {
   postId: number;
   postTitle: string;
   content: string;
+  boardType: string;
+  category: string;
 }
 
 interface TradeComment {
@@ -133,21 +135,19 @@ export default function MyCommentsPage() {
           <div className="flex space-x-4">
             <button
               onClick={() => setSelectedTab('posts')}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                selectedTab === 'posts'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors ${selectedTab === 'posts'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               게시글 댓글
             </button>
             <button
               onClick={() => setSelectedTab('trades')}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-                selectedTab === 'trades'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors ${selectedTab === 'trades'
+                ? 'bg-blue-500 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
             >
               거래글 댓글
             </button>
@@ -216,15 +216,28 @@ export default function MyCommentsPage() {
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             게시글 댓글
                           </span>
+
+                          {/* boardType에 따라 게시판 종류 표시 */}
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            {comment.boardType === "SHOWOFF"
+                              ? "자랑 게시판"
+                              : comment.boardType === "QUESTION"
+                                ? "질문 게시판"
+                                : comment.boardType}
+                          </span>
+                          {comment.boardType === "QUESTION" && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              {comment.category === "FISH" ? "물고기" : comment.category === "AQUARIUM" ? "수조" : comment.category}
+                            </span>
+                          )}
                         </div>
                       </div>
-                      
+
                       {/* 상세보기 버튼 */}
                       <div className="flex-shrink-0 flex items-center space-x-2">
                         <button
                           onClick={() => {
-                            // 게시글 상세보기 페이지로 이동 (게시글 타입을 알 수 없으므로 자랑게시판으로 가정)
-                            router.push(`/posts/showoff/${comment.postId}`);
+                            router.push(`/posts/${comment.boardType.toLowerCase()}/${comment.postId}`);
                           }}
                           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
                         >
@@ -278,7 +291,7 @@ export default function MyCommentsPage() {
                           </span>
                         </div>
                       </div>
-                      
+
                       {/* 상세보기 버튼 */}
                       <div className="flex-shrink-0 flex items-center space-x-2">
                         <button

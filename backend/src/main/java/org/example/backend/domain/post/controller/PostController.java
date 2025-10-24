@@ -3,12 +3,14 @@ package org.example.backend.domain.post.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.example.backend.domain.post.dto.FilterType;
 import org.example.backend.domain.post.dto.MyPostReadResponseDto;
 import org.example.backend.domain.post.dto.PostListResponseDto;
 import org.example.backend.domain.post.dto.PostModifyRequestDto;
 import org.example.backend.domain.post.dto.PostReadResponseDto;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
 import org.example.backend.domain.post.entity.Post.BoardType;
+import org.example.backend.domain.post.entity.Post.Category;
 import org.example.backend.domain.post.service.PostService;
 import org.example.backend.global.response.ApiResponse;
 import org.example.backend.global.security.CustomUserDetails;
@@ -48,10 +50,10 @@ public class PostController {
     @GetMapping
     public ApiResponse<PostListResponseDto> getPosts(
         @RequestParam BoardType boardType,
-        @RequestParam(defaultValue = "all") String filterType, // "all" or "following"
+        @RequestParam(defaultValue = "ALL") FilterType filterType, // "ALL" or "FOLLOWING"
         @AuthenticationPrincipal CustomUserDetails userDetails,
         @RequestParam(required = false) String keyword,
-        @RequestParam(defaultValue = "all") String category,
+        @RequestParam(defaultValue = "ALL") Category category,
         @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
     ) {
 

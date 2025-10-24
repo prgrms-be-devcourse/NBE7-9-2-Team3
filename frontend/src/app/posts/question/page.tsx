@@ -32,7 +32,7 @@ export default function QuestionBoardPage() {
   const [loading, setLoading] = useState(false);
 
   const [keyword, setKeyword] = useState("");        // 🔍 검색어
-  const [category, setCategory] = useState("all");   // 🏷 카테고리
+  const [category, setCategory] = useState("ALL");   // 🏷 카테고리
 
   // 로그인하지 않은 경우 로그인 페이지로 리다이렉트
   useEffect(() => {
@@ -61,7 +61,7 @@ export default function QuestionBoardPage() {
       }
 
       // 카테고리 추가
-      if (searchCategory !== "all") {
+      if (searchCategory !== "ALL") {
         query.append("category", searchCategory);
       }
 
@@ -150,9 +150,9 @@ export default function QuestionBoardPage() {
           onChange={(e) => setCategory(e.target.value)}
           className="border rounded px-2 py-1 text-sm"
         >
-          <option value="all">전체 카테고리</option>
-          <option value="fish">물고기</option>
-          <option value="aquarium">수조</option>
+          <option value="ALL">전체 카테고리</option>
+          <option value="FISH">물고기</option>
+          <option value="AQUARIUM">수조</option>
           {/* 필요 시 다른 카테고리 추가 */}
         </select>
 

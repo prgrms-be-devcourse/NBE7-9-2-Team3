@@ -165,7 +165,7 @@ function PostItem({
 // -------------------- PostListPage --------------------
 export default function PostListPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<"all" | "following">("all");
+  const [activeTab, setActiveTab] = useState<"ALL" | "FOLLOWING">("ALL");
   const [posts, setPosts] = useState<PostDto[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -376,9 +376,13 @@ export default function PostListPage() {
         setSearchResults(prev => prev.map(user => 
           user.memberId === memberId ? { ...user, following: true } : user
         ));
+
+        setPosts(prev => prev.map(post => 
+          post.authorId === memberId ? { ...post, following: true } : post
+        ));
         
         // 팔로잉 탭이 활성화되어 있으면 글 목록 새로고침
-        if (activeTab === 'following') {
+        if (activeTab === 'FOLLOWING') {
           loadPosts(true);
         }
       } else {
@@ -408,9 +412,13 @@ export default function PostListPage() {
         setSearchResults(prev => prev.map(user => 
           user.memberId === memberId ? { ...user, following: false } : user
         ));
+
+        setPosts(prev => prev.map(post => 
+          post.authorId === memberId ? { ...post, following: false } : post
+        ));
         
         // 팔로잉 탭이 활성화되어 있으면 글 목록 새로고침
-        if (activeTab === 'following') {
+        if (activeTab === 'FOLLOWING') {
           loadPosts(true);
         }
       } else {
@@ -448,14 +456,14 @@ export default function PostListPage() {
     <div className="max-w-2xl mx-auto p-6">
       <div className="flex items-center mb-6 justify-between">
         <div className="flex gap-4">
-          {["all", "following"].map((tab) => (
+          {["ALL", "FOLLOWING"].map((tab) => (
             <button
               key={tab}
               className={`px-4 py-2 rounded ${activeTab === tab ? "bg-gray-800 text-white" : "bg-gray-100"
                 }`}
-              onClick={() => setActiveTab(tab as "all" | "following")}
+              onClick={() => setActiveTab(tab as "ALL" | "FOLLOWING")}
             >
-              {tab === "all" ? "전체" : "팔로잉"}
+              {tab === "ALL" ? "전체" : "팔로잉"}
             </button>
           ))}
         </div>

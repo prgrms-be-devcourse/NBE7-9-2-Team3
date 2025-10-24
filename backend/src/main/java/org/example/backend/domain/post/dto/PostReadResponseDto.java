@@ -2,6 +2,7 @@ package org.example.backend.domain.post.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.example.backend.domain.post.entity.Post.Category;
 
 public record PostReadResponseDto(
 
@@ -15,7 +16,7 @@ public record PostReadResponseDto(
     boolean liked,
     boolean following,
     Long authorId,
-    String category,
+    Category category,
     boolean isMine
 
 ) {

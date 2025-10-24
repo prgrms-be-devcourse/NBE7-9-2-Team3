@@ -10,7 +10,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface PostCommentRepository extends JpaRepository<PostComment, Long> {
 
-    List<PostComment> findByAuthor_MemberId(Long memberId);
+    @Query("SELECT c FROM PostComment c JOIN FETCH c.post WHERE c.author.memberId = :memberId")
+    List<PostComment> findByAuthor_MemberIdWithPost(@Param("memberId") Long memberId);
 
     List<PostComment> findByAuthor_MemberIdAndPost_BoardType(Long memberId, BoardType boardType);
 

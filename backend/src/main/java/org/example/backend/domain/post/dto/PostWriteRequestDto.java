@@ -2,6 +2,8 @@ package org.example.backend.domain.post.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
+import org.example.backend.domain.post.entity.Post;
+import org.example.backend.domain.post.entity.Post.Category;
 
 public record PostWriteRequestDto(
 
@@ -11,11 +13,11 @@ public record PostWriteRequestDto(
     String content,
 
     @NotBlank(message = "게시판 타입은 필수입니다.")
-    String boardType,
+    Post.BoardType boardType,
 
     List<String> imageUrls,
 
-    String category
+    Category category
 
 ) {
 
