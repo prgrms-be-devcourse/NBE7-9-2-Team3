@@ -1,8 +1,5 @@
 package org.example.backend.domain.tradechat.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.tradechat.dto.TradeChatMessageDto;
 import org.example.backend.domain.tradechat.dto.TradeChatRoomDto;
@@ -19,8 +16,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chat")
-@Tag(name = "Trade Chat", description = "거래 채팅 관리 API")
-public class TradeChatController {
+public class TradeChatController implements TradeChatControllerSpec {
 
     private final TradeChatService tradeChatService;
 
@@ -29,6 +25,7 @@ public class TradeChatController {
         - 클라이언트 /receive/{roomId} 경로로 수신
         - 서버는 /send/{roomId} 로 메세지를 캐스팅
      */
+    @Override
     @MessageMapping("/{roomId}")
     public void sendMessage(@DestinationVariable Long roomId, TradeChatMessageDto request) {
         tradeChatService.sendMessage(roomId, request, request.senderId());
@@ -38,10 +35,9 @@ public class TradeChatController {
      현재 거래게시글에 대한 채팅방 생성
         - 채팅방이 존재하지 않을 때만 채팅방 새로 생성
      */
-    @Operation(summary = "채팅방 생성", description = "현재 거래게시글에 대한 채팅방을 생성합니다.")
+    @Override
     @PostMapping("/{tradeId}/room")
     public ApiResponse<Long> createChatRoom(
-            @Parameter(description = "거래 게시글 ID", required = true)
             @PathVariable Long tradeId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -51,10 +47,9 @@ public class TradeChatController {
     }
 
     // 해당 채팅방의 게시글 경로 확인
-    @Operation(summary = "채팅방 거래정보 조회", description = "채팅방의 거래정보를 조회합니다.")
+    @Override
     @GetMapping("/rooms/{roomId}")
     public ApiResponse<TradeChatRoomDto> getChatRoomDetail(
-            @Parameter(description = "채팅방 ID", required = true)
             @PathVariable Long roomId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -65,10 +60,9 @@ public class TradeChatController {
 
 
     // 특정 채팅방의 이전 채팅 내역 조회
-    @Operation(summary = "채팅 내역 조회", description = "특정 채팅방의 이전 채팅 내역을 조회합니다.")
+    @Override
     @GetMapping("/rooms/messages/{roomId}")
     public ApiResponse<List<TradeChatMessageDto>> getMessages(
-            @Parameter(description = "채팅방 ID", required = true)
             @PathVariable Long roomId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
@@ -81,7 +75,7 @@ public class TradeChatController {
     내 채팅방 목록 조회
         - ONGOING 상태의 채팅방만 조회
      */
-    @Operation(summary = "내 채팅방 목록 조회", description = "내가 참여한 채팅방 목록을 조회합니다.")
+    @Override
     @GetMapping("/rooms/me")
     public ApiResponse<List<TradeChatRoomDto>> getMyChatRooms(@AuthenticationPrincipal CustomUserDetails userDetails) {
 

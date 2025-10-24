@@ -1,6 +1,5 @@
 package org.example.backend.domain.post.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.post.dto.FilterType;
@@ -31,11 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/posts")
-@Tag(name = "Post", description = "질문/자랑 게시판 관리 API")
-public class PostController {
+public class PostController implements PostControllerSpec {
 
     private final PostService postService;
 
+    @Override
     @GetMapping("/my")
     public ApiResponse<List<MyPostReadResponseDto>> getMyPosts(
         @RequestParam BoardType boardType,
@@ -47,6 +46,7 @@ public class PostController {
         return ApiResponse.ok("내가 쓴 게시글 다건 조회", response);
     }
 
+    @Override
     @GetMapping
     public ApiResponse<PostListResponseDto> getPosts(
         @RequestParam BoardType boardType,
@@ -64,6 +64,7 @@ public class PostController {
         return ApiResponse.ok("게시글 다건 조회", response);
     }
 
+    @Override
     @GetMapping("/{id}")
     public ApiResponse<PostReadResponseDto> getPost(
         @PathVariable Long id,
@@ -77,6 +78,7 @@ public class PostController {
 
     }
 
+    @Override
     @DeleteMapping("/{id}")
     public ApiResponse<Void> deletePost(
         @PathVariable Long id,
@@ -89,6 +91,7 @@ public class PostController {
 
     }
 
+    @Override
     @PostMapping
     public ApiResponse<Void> createPost(
         @RequestBody PostWriteRequestDto reqBody,
@@ -101,6 +104,7 @@ public class PostController {
 
     }
 
+    @Override
     @PatchMapping("/{id}")
     public ApiResponse<Void> modifyPost(
         @PathVariable Long id,

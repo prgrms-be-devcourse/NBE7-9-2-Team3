@@ -1,6 +1,5 @@
 package org.example.backend.domain.postcomment.controller;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.postcomment.dto.MyPostCommentReadResponseDto;
@@ -24,12 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/posts/comments")
-@Tag(name = "PostComment", description = "질문/자랑 게시판 댓글 관리 API")
-public class PostCommentController {
+public class PostCommentController implements PostCommentControllerSpec {
 
     private final PostCommentService postCommentService;
 
-    // 게시글에 달린 댓글 확인
+    @Override
     @GetMapping
     public ApiResponse<List<PostCommentReadResponseDto>> getPostComments(
         @RequestParam Long postId,
@@ -42,6 +40,7 @@ public class PostCommentController {
         return ApiResponse.ok("댓글 목록 조회", response);
     }
 
+    @Override
     @GetMapping("/my")
     public ApiResponse<List<MyPostCommentReadResponseDto>> getMyPostComments(
         @AuthenticationPrincipal CustomUserDetails userDetails
@@ -54,6 +53,7 @@ public class PostCommentController {
         );
     }
 
+    @Override
     @DeleteMapping("/{commentId}")
     public ApiResponse<Void> deletePostComment(
         @PathVariable Long commentId,
@@ -66,6 +66,7 @@ public class PostCommentController {
 
     }
 
+    @Override
     @PostMapping
     public ApiResponse<Void> createPostComment(
         @RequestBody PostCommentCreateRequestDto reqBody,
@@ -79,6 +80,7 @@ public class PostCommentController {
 
     }
 
+    @Override
     @PatchMapping("/{commentId}")
     public ApiResponse<Void> modifyItem(
         @PathVariable Long commentId,
