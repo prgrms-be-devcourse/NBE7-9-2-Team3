@@ -1,8 +1,5 @@
 package org.example.backend.domain.point.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.example.backend.domain.point.dto.PointHistoryResponseDto;
 import org.example.backend.domain.point.dto.PurchaseRequestDto;
@@ -17,15 +14,13 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/points")
-@Tag(name = "Point", description = "포인트 관리 API")
-public class PointController {
+public class PointController implements PointControllerSpec {
 
     private final PointService pointService;
 
-    @Operation(summary = "포인트 충전", description = "회원의 포인트를 충전합니다.")
+    @Override
     @PostMapping("/members/charge/{amount}")
     public ApiResponse<Void> chargePoint(
-            @Parameter(description = "포인트 충전 금액", required = true)
             @PathVariable Long amount,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long memberId = userDetails.getId();
@@ -33,7 +28,7 @@ public class PointController {
         return ApiResponse.ok("포인트 충전 완료");
     }
 
-    @Operation(summary = "포인트 내역 조회", description = "회원의 포인트 사용 내역을 조회합니다.")
+    @Override
     @GetMapping("/members/{id}/history")
     public ApiResponse<List<PointHistoryResponseDto>> getPointHistory(
         @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -42,10 +37,9 @@ public class PointController {
         return ApiResponse.ok(pointHistory);
     }
 
-    @Operation(summary = "포인트 결제", description = "포인트를 사용하여 아이템을 구매합니다.")
+    @Override
     @PostMapping("/members/purchase")
     public ApiResponse<Void> purchaseItem(
-        @Parameter(description = "판매 정보", required = true)
         @RequestBody PurchaseRequestDto request,
         @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long buyerId = userDetails.getId();
