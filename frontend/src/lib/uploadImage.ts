@@ -29,7 +29,7 @@ async function getPresignedUrl(
     fileName: string,
     directory: string
 ): Promise<PresignedURLResponse> {
-  const response = await fetchApi('/api/images/presigned-url', {
+  const response = await fetchApi('/api/images/upload', {
     method: 'POST',
     body: JSON.stringify({ fileName, directory })
   });
