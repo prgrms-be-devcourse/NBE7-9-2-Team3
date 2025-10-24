@@ -8,7 +8,7 @@ import { uploadImages } from '@/lib/uploadImage';
 export default function PostForm() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [category, setCategory] = useState('fish'); // 🏷 기본 카테고리
+  const [category, setCategory] = useState('FISH'); // 🏷 기본 카테고리
   const [images, setImages] = useState<File[]>([]);
   const router = useRouter();
 
@@ -51,7 +51,7 @@ export default function PostForm() {
       setTitle('');
       setContent('');
       setImages([]);
-      setCategory('fish');
+      setCategory('FISH');
 
       router.push('/posts/question');
     } catch (err) {
@@ -76,8 +76,8 @@ export default function PostForm() {
         onChange={(e) => setCategory(e.target.value)}
         className="w-full p-2 mb-4 border"
       >
-        <option value="fish">물고기</option>
-        <option value="aquarium">수조</option>
+        <option value="FISH">물고기</option>
+        <option value="AQUARIUM">수조</option>
         {/* 필요하면 다른 카테고리 추가 */}
       </select>
 

@@ -227,7 +227,7 @@ export default function MyCommentsPage() {
                           </span>
                           {comment.boardType === "QUESTION" && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                              {comment.category === "fish" ? "물고기" : comment.category === "aquarium" ? "수조" : comment.category}
+                              {comment.category === "FISH" ? "물고기" : comment.category === "AQUARIUM" ? "수조" : comment.category}
                             </span>
                           )}
                         </div>
@@ -237,7 +237,6 @@ export default function MyCommentsPage() {
                       <div className="flex-shrink-0 flex items-center space-x-2">
                         <button
                           onClick={() => {
-                            // 게시글 상세보기 페이지로 이동 (게시글 타입을 알 수 없으므로 자랑게시판으로 가정)
                             router.push(`/posts/${comment.boardType.toLowerCase()}/${comment.postId}`);
                           }}
                           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"

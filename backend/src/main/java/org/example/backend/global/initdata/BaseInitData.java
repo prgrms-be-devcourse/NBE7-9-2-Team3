@@ -11,6 +11,7 @@ import org.example.backend.domain.member.entity.Member;
 import org.example.backend.domain.member.repository.MemberRepository;
 import org.example.backend.domain.post.dto.PostWriteRequestDto;
 import org.example.backend.domain.post.entity.Post;
+import org.example.backend.domain.post.entity.Post.BoardType;
 import org.example.backend.domain.post.entity.PostImage;
 import org.example.backend.domain.post.repository.PostRepository;
 import org.example.backend.domain.trade.entity.Trade;
@@ -232,7 +233,7 @@ public class BaseInitData {
             PostWriteRequestDto requestDto = new PostWriteRequestDto(
                 title,
                 content,
-                "SHOWOFF",
+                BoardType.SHOWOFF,
                 List.of(selectedImage), // 자랑게시판은 이미지 필수
                 null
             );
@@ -281,7 +282,7 @@ public class BaseInitData {
             PostWriteRequestDto requestDto = new PostWriteRequestDto(
                 title,
                 content,
-                "QUESTION",
+                BoardType.QUESTION,
                 null, // 질문게시판은 이미지 없음
                 null
             );

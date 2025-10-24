@@ -56,7 +56,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(a.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND (:category IS NULL OR :category = 'all' OR p.category = :category)",
+            "AND (:category IS NULL OR :category = 'ALL' OR p.category = :category)",
         countQuery = "SELECT COUNT(p) FROM Post p " +
             "JOIN p.author a " +
             "WHERE p.boardType = :boardType " +
@@ -65,13 +65,13 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             "LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
             "LOWER(a.nickname) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-            "AND (:category IS NULL OR :category = 'all' OR p.category = :category)"
+            "AND (:category IS NULL OR :category = 'ALL' OR p.category = :category)"
     )
     Page<Post> searchByBoardTypeAndDisplayingAndKeywordAndCategoryWithAuthorAndImages(
         @Param("boardType") Post.BoardType boardType,
         @Param("displaying") Post.Displaying displaying,
         @Param("keyword") String keyword,
-        @Param("category") String category,
+        @Param("category") Post.Category category,
         Pageable pageable
     );
 

@@ -70,7 +70,13 @@ public class Post extends BaseEntity {
         if (this.likeCount > 0) this.likeCount--;
     }
 
-    private String category;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private Category category;
+
+    public enum Category {
+        ALL, FISH, AQUARIUM
+    }
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Like> likes = new ArrayList<>();
@@ -79,7 +85,7 @@ public class Post extends BaseEntity {
         this.title = reqBody.title();
         this.content = reqBody.content();
         this.author = member;
-        this.boardType = BoardType.valueOf(reqBody.boardType());
+        this.boardType = reqBody.boardType();
         this.displaying = Post.Displaying.PUBLIC;
         this.images = new ArrayList<>();
         this.category = reqBody.category();

@@ -79,7 +79,7 @@ public class PostCommentService {
                 c.getPost().getId(),
                 c.getPost().getTitle(),
                 c.getContent(),
-                c.getPost().getBoardType().name(),
+                c.getPost().getBoardType(),
                 c.getPost().getCategory()
             ))
             .toList();

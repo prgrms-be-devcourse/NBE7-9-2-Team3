@@ -230,7 +230,7 @@ export default function MyPostsPage() {
               <p className="mt-1 text-sm text-gray-500">첫 번째 게시글을 작성해보세요.</p>
               <div className="mt-4">
                 <button
-                  onClick={() => router.push(`/community/${selectedBoardType === 'SHOWOFF' ? 'boast' : 'question'}`)}
+                  onClick={() => router.push(`/posts/${selectedBoardType === 'SHOWOFF' ? 'showoff' : 'question'}`)}
                   className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   게시글 작성하기
