@@ -1,7 +1,5 @@
 package org.example.backend.global.image;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
