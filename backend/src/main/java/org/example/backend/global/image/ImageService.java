@@ -1,7 +1,5 @@
 package org.example.backend.global.image;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -11,7 +9,10 @@ import org.example.backend.global.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
@@ -80,24 +81,39 @@ public class ImageService {
      * @param fileUrl 삭제할 파일의 S3 URL
      */
     public void deleteFile(String fileUrl) {
-        try {
-            String fileName = extractNameFromUrl(fileUrl);
+        String key = extractNameFromUrl(fileUrl);
 
-            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                .bucket(bucket)
-                .key(fileName)
-                .build();
+        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+            .bucket(bucket)
+            .key(key)
+            .build();
 
-            s3Client.deleteObject(deleteObjectRequest);
-
-        } catch (Exception e) {
-            throw new BusinessException(ErrorCode.IMAGE_NOT_UPLOADED);
-        }
+        s3Client.deleteObject(deleteObjectRequest);
     }
 
     /** S3에서 여러 파일 삭제 */
     public void deleteFiles(List<String> fileUrls) {
-        fileUrls.forEach(this::deleteFile);
+        if (fileUrls == null || fileUrls.isEmpty()) {
+            return;
+        }
+
+        // URL -> S3 키로 변경
+        List<ObjectIdentifier> objectidentifiers = fileUrls.stream()
+            .map(this::extractNameFromUrl)
+            .map(key -> ObjectIdentifier.builder().key(key).build())
+            .toList();
+
+        // 한 번의 요청으로 여러 파일 삭제
+        Delete delete = Delete.builder()
+            .objects(objectidentifiers)
+            .build();
+
+        DeleteObjectsRequest deleteObjectsRequest = DeleteObjectsRequest.builder()
+            .bucket(bucket)
+            .delete(delete)
+            .build();
+
+        s3Client.deleteObjects(deleteObjectsRequest);
     }
 
     /** 파일 확장자 추출 */
@@ -109,24 +125,24 @@ public class ImageService {
         return filename.substring(lastIndexOf + 1);
     }
 
-    /**
-     * S3 URL에서 파일명(키) 추출
-     * 보안을 위해 자체 S3 버킷의 URL만 허용
-     */
+    /** S3 URL에서 키(경로) 추출 및 검증 */
     private String extractNameFromUrl(String fileUrl) {
-        try {
-            URL url = new URL(fileUrl);
+        validateS3Url(fileUrl);
 
-            // S3 URL 검증 (자체 버킷만 허용)
-            String expectedHost = bucket + ".s3." + region + ".amazonaws.com";
-            if (!url.getHost().equals(expectedHost)) {
-                throw new BusinessException(ErrorCode.IMAGE_URL_NOT_ALLOWED);
-            }
-            String path = url.getPath();
-            return path.startsWith("/") ? path.substring(1) : path;
+        String expectedPrefix = "https://" + bucket + ".s3." + region + ".amazonaws.com/";
+        return fileUrl.substring(expectedPrefix.length());
+    }
 
-        } catch (MalformedURLException e) {
+    /** S3 URL 형식 및 버킷 검증 */
+    private void validateS3Url(String fileUrl) {
+        if (fileUrl == null || fileUrl.isBlank()) {
             throw new BusinessException(ErrorCode.IMAGE_URL_INVALID);
+        }
+
+        String expectedPrefix = "https://" + bucket + ".s3." + region + ".amazonaws.com/";
+
+        if (!fileUrl.startsWith(expectedPrefix)) {
+            throw new BusinessException(ErrorCode.IMAGE_URL_NOT_ALLOWED);
         }
     }
 }

@@ -16,7 +16,7 @@ public class ImageController {
     private final ImageService imageService;
 
     @Operation(summary = "Presigned URL 발급", description = "S3 직접 업로드를 위한 Presigned URL을 생성합니다.")
-    @PostMapping("/presigned-url")
+    @PostMapping("/upload")
     public ApiResponse<PresignedUrlResponse> generatePresignedUrl(
         @RequestBody PresignedUrlRequest request) {
 
