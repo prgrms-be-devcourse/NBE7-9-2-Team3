@@ -276,7 +276,7 @@ export default function AquariumDetailPage() {
     })
       .then(res => res.json())
       .then(json => {
-        setFishStatuses(prev => [json, ...prev]);
+        setFishStatuses(prev => [json.data, ...prev]);
         setNewFishStatus('');
         setNewFishStatusDate('');
         setAddingStatusFishId(null);
@@ -409,7 +409,7 @@ export default function AquariumDetailPage() {
       .then(res => res.json())
       .then(json => {
         setEnvironmentData(prev => {
-          const updated = [json, ...prev];
+          const updated = [json.data, ...prev];
           return updated.sort((a, b) => new Date(b.logDate).getTime() - new Date(a.logDate).getTime());
         });
         setNewTemperature('');
