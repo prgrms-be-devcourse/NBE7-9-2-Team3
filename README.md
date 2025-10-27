@@ -10,6 +10,7 @@
 | <img src="https://github.com/do04080.png" width="120px;" alt=""/> | <img src="https://github.com/BE9koo.png" width="120px;" alt=""/> | <img src="https://github.com/kimwonmin.png" width="120px;" alt=""/> | <img src="https://github.com/premierbell.png" width="120px;" alt=""/> | <img src="https://github.com/qivvoon.png" width="120px;" alt=""/> | <img src="https://github.com/xoxoisme.png" width="120px;" alt=""/> |
 | :----------------------------------------------------: | :----------------------------------------------------: | :----------------------------------------------------: | :----------------------------------------------------: | :----------------------------------------------------: | :----------------------------------------------------: |
 |   [도석환](https://github.com/do04080)   |   [구본황](https://github.com/BE9koo)   |   [김원민](https://github.com/kimwonmin)   |   [박종원](https://github.com/premierbell)   |   [강지원](https://github.com/qivvoon)   |   [권태현](https://github.com/xoxoisme)   |
+|   팀장, 회원관리   |   커뮤니티 게시판   |   물고기 및 어항 기록, 알림   |   거래 게시판, 이미지 업로드(S3)   |   물고기 및 어항 관리   |   채팅 및 결제   |
 
 ---
 
